@@ -1,6 +1,6 @@
 # Spark
 
-A personal capture-and-reflect app: jot down what's pulling at you, organise sparks into collections, and write about them. Single-file HTML/CSS/JS, no framework, no build step.
+A personal capture-and-reflect app — jot down what's pulling at you, organise sparks into collections, and write about them. Single-file HTML/CSS/JS, no framework, no build step.
 
 Live: https://spark-v2-chabes-devs-projects.vercel.app
 
