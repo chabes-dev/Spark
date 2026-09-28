@@ -147,9 +147,6 @@ input,textarea{font-family:inherit;color:inherit;background:none;border:none;out
 .coltab.on{background:var(--ember);border-color:var(--ember);color:#fff}
 .dumpclock{position:fixed;left:32px;bottom:26px;font-family:var(--mono);font-size:11px;color:var(--ink-3);
   opacity:.45;letter-spacing:.06em;pointer-events:none;z-index:2}
-.cpopnew{width:100%;margin-top:4px;padding:9px 12px;font-family:var(--mono);font-size:13px;color:var(--ink);
-  border-top:1px solid var(--ash);background:transparent}
-.cpopnew::placeholder{color:var(--ink-3);font-style:italic}
 .dumprow{padding:14px 0;border-bottom:1px solid var(--ash-2)}
 .dumpmeta{display:flex;align-items:center;gap:12px;font-family:var(--mono);font-size:12px;color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px}
 .dumptitle{color:var(--ink);font-weight:700}
@@ -205,6 +202,8 @@ input,textarea{font-family:inherit;color:inherit;background:none;border:none;out
   border-radius:12px;box-shadow:var(--shadow-2);padding:6px;z-index:50;display:flex;flex-direction:column;min-width:150px}
 .cpopitem{text-align:left;font-family:var(--mono);font-size:13px;padding:9px 12px;border-radius:8px;color:var(--ink-2)}
 .cpopitem:hover{background:var(--ash-2);color:var(--ink)}
+.cpopitem.on{color:var(--caccent);font-weight:600}
+.cpopitem small{display:block;font-size:11px;color:var(--ink-3);font-weight:400;margin-top:1px}
 .cbody{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px 40px;overflow:auto}
 .dumpbody,.writebody{width:100%;max-width:760px;margin:0 auto}
 .pickbody{max-width:760px;width:100%;text-align:left;align-items:stretch;margin:0 auto}
@@ -248,7 +247,44 @@ input,textarea{font-family:inherit;color:inherit;background:none;border:none;out
 .swrap-stat{font-family:var(--mono);font-size:14px;color:var(--ink-2);letter-spacing:.06em;text-transform:uppercase;margin-bottom:30px}
 .swrap-acts{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
 
-@media(max-width:640px){body{padding:0 18px 90px}.sparkgrid{grid-template-columns:1fr}.durchips{gap:8px}.cbar{padding:16px 18px}.cbody{padding:16px 20px}}
+/* ---- nav + desk ---- */
+.nav{display:flex;gap:4px;align-self:center}
+.navb{font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);
+  padding:7px 14px;border-radius:999px;border:1.5px solid transparent;transition:.15s}
+.navb:hover{color:var(--ink)}
+.navb.on{border-color:var(--ash);background:var(--surface);color:var(--ink)}
+.card{background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);padding:24px 26px;margin-top:22px}
+.card .sechead{margin-bottom:4px}
+.bigstats{display:flex;gap:34px;flex-wrap:wrap;margin:14px 0 22px}
+.bigstat b{display:block;font-family:var(--serif);font-size:36px;font-weight:400;line-height:1.1;letter-spacing:-.02em}
+.bigstat span{font-family:var(--mono);font-size:11.5px;color:var(--ink-3);letter-spacing:.08em;text-transform:uppercase}
+.heat{overflow-x:auto;padding-bottom:4px}
+.heatmonths,.heatgrid{display:grid;grid-auto-flow:column;grid-auto-columns:13px;gap:3px;width:max-content}
+.heatmonths{height:16px;font-family:var(--mono);font-size:10.5px;color:var(--ink-3);letter-spacing:.05em}
+.heatmonths span{white-space:nowrap;overflow:visible}
+.heatgrid{grid-template-rows:repeat(7,13px)}
+.hc{display:block;width:13px;height:13px;border-radius:3px;background:var(--ash-2)}
+.hc.l1{background:#D3E0D8}.hc.l2{background:var(--ember-2)}.hc.l3{background:#7C968C}.hc.l4{background:var(--ember)}
+.hc.future{background:transparent}
+.hc.today{outline:1.5px solid var(--ink-3);outline-offset:1px}
+.heatlegend{display:flex;align-items:center;justify-content:flex-end;gap:4px;margin-top:10px;font-family:var(--mono);font-size:11px;color:var(--ink-3)}
+.heatlegend .hc{width:11px;height:11px}
+.todayline{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:18px;padding-top:16px;
+  border-top:1.5px solid var(--ash-2);font-size:16px;color:var(--ink-2)}
+.projgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;margin-top:16px}
+.proj{position:relative;overflow:hidden;text-align:left;background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);padding:20px 22px;
+  transition:box-shadow .32s cubic-bezier(.2,.7,.3,1),transform .32s cubic-bezier(.2,.7,.3,1)}
+.proj:hover{box-shadow:var(--shadow-2);transform:translateY(-2px)}
+.proj .pn,.proj .pm{display:block}
+.proj .pn{font-family:var(--serif);font-size:20px;font-weight:400;line-height:1.3}
+.proj .pm{font-family:var(--mono);font-size:11.5px;color:var(--ink-3);letter-spacing:.07em;text-transform:uppercase;margin-top:10px;line-height:1.7}
+.proj.new{background:transparent;border:1.5px dashed var(--ash);box-shadow:none;color:var(--ink-3);font-family:var(--mono);font-size:13px;
+  font-weight:600;letter-spacing:.08em;text-transform:uppercase;display:flex;align-items:center;justify-content:center;min-height:110px}
+.proj.new:hover{border-color:var(--ember);color:var(--ember);transform:none}
+.ptag{color:var(--ember)}
+.picktile.on{border-color:var(--ember);background:var(--surface)}
+
+@media(max-width:640px){body{padding:0 18px 90px}.top{flex-wrap:wrap}.stat{width:100%;text-align:left;margin-left:0}.card{padding:20px 18px}.bigstats{gap:22px}.sparkgrid{grid-template-columns:1fr}.durchips{gap:8px}.cbar{padding:16px 18px}.cbody{padding:16px 20px}}
 @media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 </style>
 </head>
@@ -267,10 +303,24 @@ function autosize(el){el.style.height='auto';el.style.height=el.scrollHeight+'px
 function ago(ts){const d=Math.floor((Date.now()-ts)/86400000);if(d<=0)return'today';if(d===1)return'1d';return d+'d'}
 function wc(t){return t&&t.trim()?t.trim().split(/\s+/).length:0}
 
-let S=load()||{sparks:[],sessions:[],dumps:[],motivators:[],collections:[],active:null,dumpDraft:null,settings:{},ui:{showExplored:false}};
-S.sparks=S.sparks||[];S.sessions=S.sessions||[];S.dumps=S.dumps||[];S.motivators=S.motivators||[];S.collections=S.collections||[];
-S.ui=Object.assign({showExplored:false},S.ui||{});
-S.settings=Object.assign({soundscape:'off',typing:'clicky',theme:'default',dumpMin:2},S.settings||{});
+let S=load()||{sparks:[],sessions:[],dumps:[],motivators:[],active:null,dumpDraft:null,settings:{},ui:{showExplored:false}};
+S.sparks=S.sparks||[];S.sessions=S.sessions||[];S.dumps=S.dumps||[];S.motivators=S.motivators||[];
+S.ui=Object.assign({showExplored:false,view:'sparks'},S.ui||{});
+S.settings=Object.assign({soundscape:'off',typing:'classic',theme:'default',dumpMin:2},S.settings||{});
+
+/* ---- migration: string collections (dumps only) -> projects (sparks, sessions, dumps) ---- */
+if(!Array.isArray(S.projects)){
+  S.projects=[];
+  const byName={};
+  const ensure=name=>{if(!byName[name]){const p={id:nid(),name,created:Date.now()};S.projects.push(p);byName[name]=p.id}return byName[name]};
+  (S.collections||[]).forEach(ensure);
+  S.dumps.forEach(d=>{if(d.collection)d.projectId=ensure(d.collection);delete d.collection});
+  delete S.collections;
+  save();
+}
+/* old keyboard presets were replaced by typewriters */
+if(!['off','classic','portable','electric','muffled'].includes(S.settings.typing)){S.settings.typing='classic';save()}
+const projById=id=>id?S.projects.find(p=>p.id===id)||null:null;
 
 /* ---- sparks ---- */
 function addSpark(text){
@@ -310,7 +360,7 @@ function clickRipple(e,el){
   el.appendChild(r);setTimeout(()=>r.remove(),650);
 }
 document.addEventListener('click',e=>{
-  const t=e.target.closest('.cpill,.durchip,.picktile,.btn,.quickbtn,.startbtn,.act,.spark,.motivhome');
+  const t=e.target.closest('.cpill,.durchip,.picktile,.btn,.quickbtn,.startbtn,.act,.spark,.motivhome,.proj');
   if(t)clickRipple(e,t);
 });
 
@@ -345,6 +395,33 @@ function motivStrip(){
   return `<button class="motivhome" id="motivhome" title="Click to manage">${esc(m.text)}</button>`;
 }
 
+/* ---- projects: picker ---- */
+function pickProject(currentId,onPick,onBack){
+  sheet(`<h3>Project</h3>
+    <p>Where does this belong?</p>
+    <div class="pickgrid" style="margin-top:16px">
+      ${S.projects.map(p=>`<button class="picktile ${p.id===currentId?'on':''}" data-pp="${p.id}">${esc(p.name)}</button>`).join('')}
+      <button class="picktile ${!currentId?'on':''}" data-pp="" style="font-style:italic;color:var(--ink-3)">No project</button>
+    </div>
+    <input class="field" id="ppnew" placeholder="New project…" />
+    <div class="sheet-acts"><button class="btn" id="no">Cancel</button></div>`,
+  el=>{
+    el.querySelectorAll('[data-pp]').forEach(b=>b.onclick=()=>{onPick(b.dataset.pp||null);save();onBack()});
+    const inp=el.querySelector('#ppnew');
+    inp.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();const v=inp.value.trim();if(!v)return;
+      onPick(newProject(v).id);save();onBack()}};
+    el.querySelector('#no').onclick=onBack;
+  });
+}
+function newProject(name){
+  const hit=S.projects.find(p=>p.name.toLowerCase()===name.toLowerCase());if(hit)return hit;
+  const p={id:nid(),name,created:Date.now()};S.projects.push(p);save();return p;
+}
+function projButton(attr,id,pid){
+  const p=projById(pid);
+  return `<button class="act" ${attr}="${id}">${p?esc(p.name):'+ Project'}</button>`;
+}
+
 /* ---- history ---- */
 function openHistory(){
   const list=S.sessions;
@@ -355,6 +432,7 @@ function openHistory(){
     const preview=(s.notes&&s.notes.trim())?esc(s.notes):'<span style="opacity:.55;font-style:italic">Nothing written this session.</span>';
     return `<div class="dumprow">
       <div class="dumpmeta"><span>${esc(s.sparkText||'Freewriting')}</span><span>${d} · ${tm}</span><span>${mins}${s.completed?'':'/'+s.minutes} min</span>
+        ${projButton('data-hproj',s.id,s.projectId)}
         <button class="act" data-hedit="${s.id}">Edit</button></div>
       <div class="dumptext">${preview}</div>
     </div>`;
@@ -365,26 +443,30 @@ function openHistory(){
     <div class="sheet-acts"><button class="btn" id="ok">Close</button></div>`,
   el=>{
     el.querySelectorAll('[data-hedit]').forEach(b=>b.onclick=()=>openReview('session',b.dataset.hedit));
+    el.querySelectorAll('[data-hproj]').forEach(b=>b.onclick=()=>{
+      const s=S.sessions.find(x=>x.id===b.dataset.hproj);if(!s)return;
+      pickProject(s.projectId,v=>{s.projectId=v},openHistory);
+    });
     el.querySelector('#ok').onclick=closeSheet;
   });
 }
 
-/* ---- dumps archive ---- */
+/* ---- dumps archive (morning pages) ---- */
 function openDumps(filter){
-  filter=filter||'all';
-  const cols=S.collections||[];
-  const list=(S.dumps||[]).filter(d=>filter==='all'?true:filter==='none'?!d.collection:d.collection===filter);
+  filter=typeof filter==='string'?filter:'all';
+  const projs=S.projects;
+  const list=(S.dumps||[]).filter(d=>filter==='all'?true:filter==='none'?!projById(d.projectId):d.projectId===filter);
   const tabs=`<div class="coltabs">
     <button class="coltab ${filter==='all'?'on':''}" data-colf="all">All</button>
-    ${cols.map(c=>`<button class="coltab ${filter===c?'on':''}" data-colf="${esc(c)}">${esc(c)}</button>`).join('')}
-    <button class="coltab ${filter==='none'?'on':''}" data-colf="none">Uncategorized</button>
+    ${projs.map(p=>`<button class="coltab ${filter===p.id?'on':''}" data-colf="${p.id}">${esc(p.name)}</button>`).join('')}
+    <button class="coltab ${filter==='none'?'on':''}" data-colf="none">No project</button>
   </div>`;
   const rows=list.length?list.map(d=>{
     const dt=new Date(d.created).toLocaleDateString(undefined,{day:'numeric',month:'short'});
     const tm=new Date(d.created).toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'});
     return `<div class="dumprow">
       <div class="dumpmeta">${d.title?`<span class="dumptitle">${esc(d.title)}</span>`:''}<span>${dt} · ${tm}</span><span>${d.words} words</span>
-        <button class="act" data-dcol="${d.id}">${d.collection?esc(d.collection):'+ Collection'}</button>
+        ${projButton('data-dcol',d.id,d.projectId)}
         <button class="act" data-dedit="${d.id}">Edit</button>
         <button class="act del" data-ddel="${d.id}">Delete</button></div>
       <div class="dumptext">${esc(d.text)}</div>
@@ -392,14 +474,17 @@ function openDumps(filter){
   }).join(''):`<p style="margin-top:16px">${filter==='all'?'Nothing dumped yet.':'Nothing here yet.'}</p>`;
   sheet(`<h3>Dumps</h3>
     <p>What you cleared your head of before each session. Open one to read it back or keep going.</p>
-    ${cols.length?tabs:''}
+    ${projs.length?tabs:''}
     ${list.length||S.dumps.length?`<div class="sheet-acts" style="margin-top:0;margin-bottom:18px;justify-content:flex-start"><button class="btn" id="dexport">↓ Export all as .txt</button></div>`:''}
     <div class="dumplist">${rows}</div>
     <div class="sheet-acts"><button class="btn btn-hot" id="ok">Close</button></div>`,
   el=>{
     el.querySelectorAll('[data-colf]').forEach(b=>b.onclick=()=>{closeSheet();openDumps(b.dataset.colf)});
     el.querySelectorAll('[data-dedit]').forEach(b=>b.onclick=()=>openReview('dump',b.dataset.dedit));
-    el.querySelectorAll('[data-dcol]').forEach(b=>b.onclick=e=>{e.stopPropagation();collectionPopover(b,b.dataset.dcol,filter)});
+    el.querySelectorAll('[data-dcol]').forEach(b=>b.onclick=()=>{
+      const d=S.dumps.find(x=>x.id===b.dataset.dcol);if(!d)return;
+      pickProject(d.projectId,v=>{d.projectId=v},()=>openDumps(filter));
+    });
     el.querySelectorAll('[data-ddel]').forEach(b=>b.onclick=()=>{
       const d=S.dumps.find(x=>x.id===b.dataset.ddel);if(!d)return;
       sheetConfirm('Delete this dump?','This removes it permanently — it won\'t be recoverable.','Delete',()=>{
@@ -409,31 +494,6 @@ function openDumps(filter){
     const dexp=el.querySelector('#dexport');if(dexp)dexp.onclick=exportDumps;
     const ok=el.querySelector('#ok');if(ok)ok.onclick=closeSheet;
   });
-}
-function closeMiniPop(){const p=document.getElementById('colpop');if(p)p.remove()}
-function collectionPopover(btn,dumpId,filter){
-  closeMiniPop();
-  const cols=S.collections||[];
-  const pop=document.createElement('div');pop.className='cpop';pop.id='colpop';
-  pop.innerHTML=cols.map(c=>`<button class="cpopitem" data-assign="${esc(c)}">${esc(c)}</button>`).join('')
-    +(cols.length?`<button class="cpopitem" data-assign="__none">Uncategorized</button>`:'')
-    +`<input type="text" class="cpopnew" id="newcolinput" placeholder="New collection…" />`;
-  btn.parentNode.style.position='relative';
-  btn.insertAdjacentElement('afterend',pop);
-  const assign=(val)=>{
-    const d=S.dumps.find(x=>x.id===dumpId);if(!d)return;
-    d.collection=val;save();closeSheet();openDumps(filter);
-  };
-  pop.querySelectorAll('[data-assign]').forEach(b=>b.onclick=e=>{e.stopPropagation();assign(b.dataset.assign==='__none'?null:b.dataset.assign)});
-  const inp=pop.querySelector('#newcolinput');
-  inp.onclick=e=>e.stopPropagation();
-  inp.addEventListener('keydown',e=>{
-    if(e.key==='Enter'){e.preventDefault();const v=inp.value.trim();if(!v)return;
-      S.collections=S.collections||[];if(!S.collections.includes(v))S.collections.push(v);
-      assign(v);
-    }
-  });
-  setTimeout(()=>document.addEventListener('click',closeMiniPop,{once:true}),0);
 }
 function exportDumps(){
   const list=S.dumps||[];if(!list.length)return;
@@ -536,16 +596,70 @@ function startScape(id){
   node.connect(scapeGain);src.start();scapeNodes.push(src);
 }
 
-/* ---- typing sounds: fixed pitch per key-kind, never randomized ---- */
-const TYPE_OPTS=['off','clicky','soft','thock','cream','typewriter'];
-const TYPE_LABEL={off:'Off',clicky:'Clicky',soft:'Soft',thock:'Thock',cream:'Cream',typewriter:'Typewriter'};
-const TYPING_PRESETS={
-  clicky:{letter:1600,space:900,enter:2000,back:1200,tone:'square',dur:0.045,vol:0.22},
-  soft:{letter:700,space:500,enter:850,back:600,tone:'sine',dur:0.06,vol:0.18},
-  thock:{letter:220,space:160,enter:260,back:190,tone:'sine',dur:0.09,vol:0.28},
-  cream:{letter:420,space:320,enter:480,back:360,tone:'triangle',dur:0.07,vol:0.2},
-  typewriter:{letter:1100,space:400,enter:1800,back:1400,tone:'square',dur:0.03,vol:0.25}
+/* ---- typing sounds: synthesized typewriters ----
+   Each keystroke layers a sharp strike, the type-bar clack, a low platen thud and (on metal
+   machines) a faint ring. Enter plays the margin bell, the carriage ratchet and the return slam.
+   Pitch and level wobble slightly per key so it never sounds like a loop. */
+const TYPE_OPTS=['off','classic','portable','electric','muffled'];
+const TYPE_LABEL={off:'Off',classic:'Classic',portable:'Portable',electric:'Electric',muffled:'Muffled'};
+const TYPE_DESC={classic:'heavy office manual',portable:'light travel machine',electric:'soft Selectric-style thud',muffled:'typewriter in the next room'};
+const TW={
+  classic: {pitch:1,   len:1,   vol:.9,  body:1,   ring:.5, lp:9000,  bell:1},
+  portable:{pitch:1.35,len:.7,  vol:.75, body:.45, ring:.8, lp:11000, bell:1.2},
+  electric:{pitch:.8,  len:.8,  vol:.85, body:1.5, ring:0,  lp:4500,  bell:.5},
+  muffled: {pitch:.85, len:1.2, vol:.8,  body:1.1, ring:.1, lp:1300,  bell:.6}
 };
+let TW_NOISE=null,TW_OUT=null;
+function twNoise(ctx){if(!TW_NOISE||TW_NOISE.sampleRate!==ctx.sampleRate)TW_NOISE=makeNoiseBuffer(ctx,1,'white');return TW_NOISE}
+function twOut(ctx,id){
+  if(TW_OUT&&TW_OUT.id===id&&TW_OUT.ctx===ctx)return TW_OUT.node;
+  if(TW_OUT){try{TW_OUT.lp.disconnect()}catch(e){}}
+  const p=TW[id],g=ctx.createGain(),lp=ctx.createBiquadFilter();
+  g.gain.value=p.vol;lp.type='lowpass';lp.frequency.value=p.lp;g.connect(lp);lp.connect(ctx.destination);
+  TW_OUT={id,ctx,node:g,lp};return g;
+}
+function nHit(ctx,out,t,f,q,dur,vol){
+  const s=ctx.createBufferSource();s.buffer=twNoise(ctx);
+  const bp=ctx.createBiquadFilter();bp.type='bandpass';bp.frequency.value=f;bp.Q.value=q;
+  const g=ctx.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+0.0015);g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  s.connect(bp);bp.connect(g);g.connect(out);s.start(t,Math.random()*0.8);s.stop(t+dur+0.02);
+}
+function tHit(ctx,out,t,f,dur,vol,drop){
+  const o=ctx.createOscillator();o.type='sine';o.frequency.setValueAtTime(f,t);
+  if(drop)o.frequency.exponentialRampToValueAtTime(f*drop,t+dur);
+  const g=ctx.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+0.002);g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  o.connect(g);g.connect(out);o.start(t);o.stop(t+dur+0.02);
+}
+function twStrike(ctx,out,p,t,kind){
+  const j=()=>1+(Math.random()-.5)*.12,v=.85+Math.random()*.3,P=p.pitch,L=p.len;
+  if(kind==='space'){
+    nHit(ctx,out,t,900*P*j(),1.5,.06*L,.5*v);
+    tHit(ctx,out,t,105*P*j(),.1*L,.45*p.body*v,.7);
+    nHit(ctx,out,t+.004,2600*P*j(),1,.015*L,.22*v);
+    return;
+  }
+  if(kind==='back'){
+    nHit(ctx,out,t,1700*P*j(),2,.03*L,.35*v);
+    tHit(ctx,out,t,190*P*j(),.045*L,.2*p.body*v,.8);
+    return;
+  }
+  nHit(ctx,out,t,3000*P*j(),1.1,.018*L,.55*v);
+  nHit(ctx,out,t+.002,1250*P*j(),3,.05*L,.38*v);
+  tHit(ctx,out,t,150*P*j(),.07*L,.35*p.body*v,.6);
+  if(p.ring)nHit(ctx,out,t+.003,4300*P*j(),14,.1*L,.12*p.ring*v);
+}
+function twReturn(ctx,out,p,t){
+  if(p.bell){tHit(ctx,out,t,2093,1.4,.22*p.bell);tHit(ctx,out,t,5240,.6,.05*p.bell)}
+  const r=t+(p.bell?.14:.02);
+  for(let i=0;i<9;i++)nHit(ctx,out,r+i*.028,2200*p.pitch,4,.018,.12);
+  const s=ctx.createBufferSource();s.buffer=twNoise(ctx);
+  const bp=ctx.createBiquadFilter();bp.type='bandpass';bp.Q.value=1.2;
+  bp.frequency.setValueAtTime(500*p.pitch,r);bp.frequency.exponentialRampToValueAtTime(1600*p.pitch,r+.28);
+  const g=ctx.createGain();g.gain.setValueAtTime(0,r);g.gain.linearRampToValueAtTime(.14,r+.05);g.gain.exponentialRampToValueAtTime(0.0001,r+.3);
+  s.connect(bp);bp.connect(g);g.connect(out);s.start(r);s.stop(r+.32);
+  tHit(ctx,out,r+.3,90*p.pitch,.14,.5*p.body,.7);
+  nHit(ctx,out,r+.3,700*p.pitch,1.5,.08,.45);
+}
 function keyKind(e){
   if(e.key==='Backspace'||e.key==='Delete')return'back';
   if(e.key==='Enter')return'enter';
@@ -553,22 +667,22 @@ function keyKind(e){
   return'letter';
 }
 function keySound(kind){
-  const id=S.settings.typing;if(id==='off')return;
-  const p=TYPING_PRESETS[id];if(!p)return;
+  const id=S.settings.typing,p=TW[id];if(!p)return;
   const ctx=ensureAudio();if(!ctx)return;
   try{
-    const f=p[kind]||p.letter;
-    const o=ctx.createOscillator();o.type=p.tone;o.frequency.value=f;
-    const g=ctx.createGain();g.gain.value=0;
-    const noise=ctx.createBufferSource();noise.buffer=makeNoiseBuffer(ctx,0.03,'white');
-    const ng=ctx.createGain();ng.gain.value=0;
-    const hp=ctx.createBiquadFilter();hp.type='highpass';hp.frequency.value=2500;
-    noise.connect(hp);hp.connect(ng);ng.connect(ctx.destination);
-    o.connect(g);g.connect(ctx.destination);
-    const t=ctx.currentTime;
-    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(p.vol,t+0.004);g.gain.exponentialRampToValueAtTime(0.0001,t+p.dur);
-    ng.gain.setValueAtTime(0,t);ng.gain.linearRampToValueAtTime(p.vol*0.5,t+0.002);ng.gain.exponentialRampToValueAtTime(0.0001,t+p.dur*0.6);
-    o.start(t);o.stop(t+p.dur+0.02);noise.start(t);noise.stop(t+p.dur*0.6+0.02);
+    const out=twOut(ctx,id),t=ctx.currentTime+.005;
+    if(kind==='enter')twReturn(ctx,out,p,t);else twStrike(ctx,out,p,t,kind);
+  }catch(e){}
+}
+function previewTypewriter(id){
+  const p=TW[id];if(!p)return;
+  const ctx=ensureAudio();if(!ctx)return;
+  try{
+    const out=twOut(ctx,id);let t=ctx.currentTime+.05;
+    ['letter','letter','letter','letter','letter','space','letter','letter','letter','letter','enter'].forEach(k=>{
+      if(k==='enter')twReturn(ctx,out,p,t+.12);else twStrike(ctx,out,p,t,k);
+      t+=.085+Math.random()*.08;
+    });
   }catch(e){}
 }
 function wireTypingSound(ta){
@@ -628,24 +742,37 @@ function togglePopover(kind){
   const btn=document.getElementById(kind==='sound'?'csound':'ckeys');if(!btn)return;
   const opts=kind==='sound'?SCAPE_OPTS:TYPE_OPTS;
   const pop=document.createElement('div');pop.className='cpop';pop.id='cpop';
-  pop.innerHTML=opts.map(o=>`<button class="cpopitem" data-set="${o}">${kind==='sound'?SCAPE_LABEL[o]:TYPE_LABEL[o]}</button>`).join('');
+  pop.innerHTML=opts.map(o=>kind==='sound'
+    ?`<button class="cpopitem" data-set="${o}">${SCAPE_LABEL[o]}</button>`
+    :`<button class="cpopitem ${S.settings.typing===o?'on':''}" data-set="${o}">${TYPE_LABEL[o]}${TYPE_DESC[o]?`<small>${TYPE_DESC[o]}</small>`:''}</button>`).join('');
   btn.parentNode.style.position='relative';btn.insertAdjacentElement('afterend',pop);
   pop.querySelectorAll('[data-set]').forEach(b=>b.onclick=e=>{
     e.stopPropagation();
-    if(kind==='sound'){S.settings.soundscape=b.dataset.set;startScape(S.settings.soundscape)}
-    else{S.settings.typing=b.dataset.set}
-    save();closePopover();renderPhase();
+    if(kind==='sound'){S.settings.soundscape=b.dataset.set;startScape(S.settings.soundscape);save();closePopover();renderPhase();return}
+    // typing: stay open and play a demo so the models can be compared side by side
+    S.settings.typing=b.dataset.set;save();
+    pop.querySelectorAll('[data-set]').forEach(x=>x.classList.toggle('on',x===b));
+    btn.textContent='Keys · '+TYPE_LABEL[S.settings.typing];
+    previewTypewriter(S.settings.typing);
   });
   setTimeout(()=>document.addEventListener('click',closePopover,{once:true}),0);
 }
 
 /* ---- session state machine ---- */
-let PHASE=null,pendingKind=null,DUR=null,TICK=null,DUMPTICK=null,REVIEW_ID=null,REVIEW_KIND=null;
+let PHASE=null,pendingKind=null,DUR=null,TICK=null,DUMPTICK=null,REVIEW_ID=null,REVIEW_KIND=null,REVIEW_BACK=null;
 let dumpStart=0,dumpText='',dumpTypingStart=null;
 
-function openReview(kind,id){
-  REVIEW_KIND=kind;REVIEW_ID=id;closeSheet();
+function openReview(kind,id,back){
+  REVIEW_KIND=kind;REVIEW_ID=id;REVIEW_BACK=back||null;closeSheet();
   PHASE='review';openCanvas();
+}
+function exitReview(){
+  closeCanvas();
+  const back=REVIEW_BACK;REVIEW_BACK=null;
+  if(back)back();
+  else if(REVIEW_KIND==='session')openHistory();
+  else if(REVIEW_KIND==='dump')openDumps();
+  else render();
 }
 function reviewLookup(){
   if(REVIEW_KIND==='session')return S.sessions.find(x=>x.id===REVIEW_ID);
@@ -797,13 +924,7 @@ function wireCanvas(c){
   if(ex)ex.onclick=()=>{
     if(PHASE==='write'&&S.active&&!S.active.wrapped){endEarly();return}
     if(PHASE==='dump')commitDump();
-    if(PHASE==='review'){
-      closeCanvas();
-      if(REVIEW_KIND==='session')openHistory();
-      else if(REVIEW_KIND==='dump')openDumps();
-      else render();
-      return;
-    }
+    if(PHASE==='review'){exitReview();return}
     S.active=null;save();closeCanvas();render();
   };
   const sb=c.querySelector('#csound');if(sb)sb.onclick=()=>togglePopover('sound');
@@ -878,7 +999,7 @@ function dumpReady(){
 function startWrite(sparkId,minutes){
   const spark=sparkId?S.sparks.find(s=>s.id===sparkId):null;
   const now=Date.now();
-  S.active={sparkId:sparkId||null,sparkText:spark?spark.text:null,minutes,totalMs:minutes*60000,
+  S.active={sparkId:sparkId||null,sparkText:spark?spark.text:null,projectId:spark?spark.projectId||null:null,minutes,totalMs:minutes*60000,
     startedAt:now,endsAt:now+minutes*60000,notes:'',wrapped:false,entryId:nid()};
   save();PHASE='write';renderPhase();startTick();
 }
@@ -912,7 +1033,7 @@ function saveCheckpoint(){
   const actualMs=Date.now()-a.startedAt;
   const existing=S.sessions.find(s=>s.id===a.entryId);
   if(existing){existing.notes=a.notes||'';existing.actualMs=actualMs;existing.endedAt=Date.now()}
-  else S.sessions.unshift({id:a.entryId,sparkId:a.sparkId,sparkText:a.sparkText,minutes:a.minutes,
+  else S.sessions.unshift({id:a.entryId,sparkId:a.sparkId,sparkText:a.sparkText,projectId:a.projectId||null,minutes:a.minutes,
     startedAt:a.startedAt,endedAt:Date.now(),actualMs,notes:a.notes||'',completed:false});
   save();toast('saved');
 }
@@ -922,7 +1043,7 @@ function finishSession(markExplored,early){
   const endedAt=Date.now(),actualMs=endedAt-a.startedAt;
   const existing=S.sessions.find(s=>s.id===a.entryId);
   if(existing){existing.notes=a.notes||'';existing.actualMs=actualMs;existing.endedAt=endedAt;existing.completed=!early}
-  else S.sessions.unshift({id:a.entryId,sparkId:a.sparkId,sparkText:a.sparkText,minutes:a.minutes,
+  else S.sessions.unshift({id:a.entryId,sparkId:a.sparkId,sparkText:a.sparkText,projectId:a.projectId||null,minutes:a.minutes,
     startedAt:a.startedAt,endedAt,actualMs,notes:a.notes||'',completed:!early});
   if(markExplored&&a.sparkId){const s=S.sparks.find(x=>x.id===a.sparkId);if(s){s.explored=true;s.exploredAt=Date.now()}}
   S.active=null;save();closeCanvas();render();
@@ -934,9 +1055,10 @@ const app=document.getElementById('app');
 function sparkCard(s){
   return `<div class="spark ${s.fresh?'landing':''} ${s.explored?'explored':''}" data-id="${s.id}">
     <div class="t" data-edit="${s.id}" title="Double-click to edit">${esc(s.text)}</div>
-    <div class="age">${ago(s.created)}</div>
+    <div class="age">${ago(s.created)}${projById(s.projectId)?` · <span class="ptag">${esc(projById(s.projectId).name)}</span>`:''}</div>
     <div class="floatbar">
       <button class="act" data-sedit="${s.id}">Edit</button>
+      <button class="act" data-sproj="${s.id}">Project</button>
       <button class="act" data-explore="${s.id}">${s.explored?'Bring back':'Explored'}</button>
       <button class="act del" data-del="${s.id}">Delete</button>
     </div></div>`;
@@ -944,10 +1066,18 @@ function sparkCard(s){
 function render(){
   const active=S.sparks.filter(s=>!s.explored),explored=S.sparks.filter(s=>s.explored);
   const last=S.sessions[0];
+  const desk=S.ui.view==='desk';
   app.innerHTML=`<div class="wrap">
     <div class="top"><div class="title">Spark</div>
+      <nav class="nav"><button class="navb ${desk?'':'on'}" data-view="sparks">Sparks</button><button class="navb ${desk?'on':''}" data-view="desk">Desk</button></nav>
       <div class="stat">${active.length} waiting${last?` · last session ${ago(last.startedAt)}`:''}</div></div>
     ${!STORE_OK?`<div class="alarm"><b>This copy can't save.</b> Storage is blocked here. Download the file and open it from your own machine.</div>`:''}
+    ${desk?deskHtml():sparksHtml(active,explored)}
+  </div>`;
+  wire();
+}
+function sparksHtml(active,explored){
+  return `
     <div class="capture" id="capbox">
       <textarea id="cap" rows="1" placeholder="What's pulling at you?"></textarea>
       <div class="capture-key">⏎ keep · ⇧⏎ new line</div>
@@ -963,11 +1093,135 @@ function render(){
     <div class="foot">
       <button class="btn" id="historybtn">History${S.sessions.length?' · '+S.sessions.length:''}</button>
       <button class="btn" id="dumpsbtn">Dumps${S.dumps.length?' · '+S.dumps.length:''}</button>
+    </div>`;
+}
+
+/* ---- desk: morning pages streak, creative time, projects ---- */
+const pad2=n=>String(n).padStart(2,'0');
+function dayKey(ts){const d=new Date(ts);return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate())}
+function startOfDay(ts){const d=new Date(ts);d.setHours(0,0,0,0);return d}
+function addDays(d,n){const x=new Date(d);x.setDate(x.getDate()+n);return x}
+function pagesByDay(){const m={};S.dumps.forEach(d=>{const k=dayKey(d.created);m[k]=(m[k]||0)+(d.words||0)});return m}
+function streaks(days){
+  const today=startOfDay(Date.now());
+  // today not written yet doesn't break the streak until the day is over
+  let cur=0,d=days[dayKey(today)]!==undefined?today:addDays(today,-1);
+  while(days[dayKey(d)]!==undefined){cur++;d=addDays(d,-1)}
+  const keys=Object.keys(days).sort();let best=0,run=0,prev=null;
+  keys.forEach(k=>{const dt=new Date(k+'T00:00:00');run=(prev&&Math.round((dt-prev)/86400000)===1)?run+1:1;best=Math.max(best,run);prev=dt});
+  return {cur,best:Math.max(best,cur),total:keys.length};
+}
+function heatLevel(w){return !w?0:w<150?1:w<400?2:w<750?3:4}
+function heatmapHtml(days){
+  const WEEKS=26,today=startOfDay(Date.now());
+  const monOffset=(today.getDay()+6)%7; // Monday = row 0
+  const start=addDays(today,-(monOffset+(WEEKS-1)*7));
+  let cells='',months='',lastMonth=-1;
+  for(let w=0;w<WEEKS;w++){
+    const wk=addDays(start,w*7);
+    const m=addDays(wk,6).getMonth();
+    months+=`<span>${m!==lastMonth&&w<WEEKS-1?addDays(wk,6).toLocaleDateString(undefined,{month:'short'}):''}</span>`;lastMonth=m;
+    for(let i=0;i<7;i++){
+      const d=addDays(wk,i),k=dayKey(d);
+      if(d>today){cells+='<span class="hc future"></span>';continue}
+      const words=days[k];
+      const label=d.toLocaleDateString(undefined,{weekday:'short',day:'numeric',month:'short'})+' · '+(words!==undefined?words+' words':'no pages');
+      cells+=`<span class="hc l${words!==undefined?Math.max(1,heatLevel(words)):0} ${d.getTime()===today.getTime()?'today':''}" title="${label}"></span>`;
+    }
+  }
+  return `<div class="heat" id="heat"><div class="heatmonths">${months}</div><div class="heatgrid">${cells}</div></div>
+    <div class="heatlegend">less <span class="hc"></span><span class="hc l1"></span><span class="hc l2"></span><span class="hc l3"></span><span class="hc l4"></span> more · 750 words = full pages</div>`;
+}
+function projStats(id){
+  const sp=S.sparks.filter(x=>x.projectId===id),se=S.sessions.filter(x=>x.projectId===id),du=S.dumps.filter(x=>x.projectId===id);
+  const words=se.reduce((a,x)=>a+wc(x.notes),0)+du.reduce((a,x)=>a+(x.words||0),0);
+  const lastTs=Math.max(0,...sp.map(x=>x.created),...se.map(x=>x.endedAt||x.startedAt),...du.map(x=>x.created));
+  return {sp,se,du,words,lastTs};
+}
+function deskHtml(){
+  const days=pagesByDay(),st=streaks(days),todayW=days[dayKey(Date.now())];
+  const weekStart=addDays(startOfDay(Date.now()),-((new Date().getDay()+6)%7)).getTime();
+  const wk=S.sessions.filter(x=>x.startedAt>=weekStart);
+  const wkMin=Math.round(wk.reduce((a,x)=>a+(x.actualMs||0),0)/60000),wkWords=wk.reduce((a,x)=>a+wc(x.notes),0);
+  const projCards=S.projects.map(p=>{
+    const ps=projStats(p.id);
+    return `<button class="proj" data-proj="${p.id}"><span class="pn">${esc(p.name)}</span>
+      <span class="pm">${ps.sp.length} sparks · ${ps.se.length} sessions · ${ps.du.length} pages<br>${ps.words.toLocaleString()} words${ps.lastTs?' · '+ago(ps.lastTs):''}</span></button>`;
+  }).join('');
+  return `
+    <div class="card">
+      <div class="sechead"><h2>Morning pages</h2><span>${st.cur?'🔥 on a roll':'start a streak'}</span></div>
+      <div class="bigstats">
+        <div class="bigstat"><b>${st.cur}</b><span>day streak</span></div>
+        <div class="bigstat"><b>${st.best}</b><span>best streak</span></div>
+        <div class="bigstat"><b>${st.total}</b><span>days written</span></div>
+      </div>
+      ${heatmapHtml(days)}
+      <div class="todayline">
+        <span>${todayW!==undefined?`Today's pages ✓ · ${todayW} words`:'No pages yet today.'}</span>
+        ${todayW!==undefined?'':`<button class="btn btn-hot" id="deskpages">Write today's pages</button>`}
+      </div>
     </div>
-  </div>`;
-  wire();
+    <div class="card">
+      <div class="sechead"><h2>Creative time</h2><span>this week</span></div>
+      <div class="bigstats" style="margin-bottom:4px">
+        <div class="bigstat"><b>${wk.length}</b><span>sessions</span></div>
+        <div class="bigstat"><b>${wkMin}</b><span>minutes</span></div>
+        <div class="bigstat"><b>${wkWords.toLocaleString()}</b><span>words</span></div>
+      </div>
+    </div>
+    <div class="sechead" style="margin-top:36px"><h2>Projects</h2><span>${S.projects.length}</span></div>
+    <div class="projgrid">${projCards}<button class="proj new" id="newproj">+ New project</button></div>`;
+}
+function openProject(id){
+  const p=projById(id);if(!p){render();return}
+  const ps=projStats(id),back=()=>openProject(id);
+  const dt=ts=>new Date(ts).toLocaleDateString(undefined,{day:'numeric',month:'short'});
+  const sec=(label,items,row)=>`<div class="seg-label">${label} · ${items.length}</div>${items.length?items.map(row).join(''):'<p style="color:var(--ink-3);font-size:15px">Nothing yet.</p>'}`;
+  sheet(`<input class="field" id="pname" value="${esc(p.name)}" style="font-size:28px;margin-top:0" />
+    <p>${ps.words.toLocaleString()} words${ps.lastTs?' · last touched '+ago(ps.lastTs):''}</p>
+    <div class="dumplist">
+      ${sec('Sparks',ps.sp,x=>`<div class="mrow"><span class="mt">${esc(x.text)}</span><button class="act" data-pe="spark:${x.id}">Edit</button></div>`)}
+      ${sec('Sessions',ps.se,x=>`<div class="mrow"><span class="mt">${esc(x.sparkText||'Freewriting')} <span style="color:var(--ink-3)">· ${dt(x.startedAt)} · ${wc(x.notes)} words</span></span><button class="act" data-pe="session:${x.id}">Open</button></div>`)}
+      ${sec('Morning pages',ps.du,x=>`<div class="mrow"><span class="mt">${esc(x.title||dt(x.created))} <span style="color:var(--ink-3)">· ${x.words} words</span></span><button class="act" data-pe="dump:${x.id}">Open</button></div>`)}
+    </div>
+    <div class="sheet-acts"><button class="btn btn-danger" id="pdel">Delete project</button><button class="btn btn-hot" id="ok">Close</button></div>`,
+  el=>{
+    const nm=el.querySelector('#pname');
+    const commitName=()=>{const v=nm.value.trim();if(v&&v!==p.name){p.name=v;save()}};
+    nm.addEventListener('blur',commitName);
+    nm.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();nm.blur()}});
+    el.querySelectorAll('[data-pe]').forEach(b=>b.onclick=()=>{commitName();const [k,i]=b.dataset.pe.split(':');openReview(k,i,back)});
+    el.querySelector('#pdel').onclick=()=>sheetConfirm('Delete "'+p.name+'"?','Its sparks, sessions and pages stay — they just won\'t belong to a project anymore.','Delete',()=>{
+      [S.sparks,S.sessions,S.dumps].forEach(list=>list.forEach(x=>{if(x.projectId===id)x.projectId=null}));
+      S.projects=S.projects.filter(x=>x.id!==id);save();render();
+    });
+    el.querySelector('#ok').onclick=()=>{commitName();closeSheet();render()};
+  });
+}
+function openNewProject(){
+  sheet(`<h3>New project</h3>
+    <p>A home for related sparks, writing sessions and morning pages.</p>
+    <input class="field" id="npname" placeholder="e.g. The novel" />
+    <div class="sheet-acts"><button class="btn" id="no">Cancel</button><button class="btn btn-hot" id="yes">Create</button></div>`,
+  el=>{
+    const inp=el.querySelector('#npname');inp.focus();
+    const go=()=>{const v=inp.value.trim();if(!v)return;const p=newProject(v);closeSheet();render();openProject(p.id)};
+    inp.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();go()}};
+    el.querySelector('#yes').onclick=go;
+    el.querySelector('#no').onclick=closeSheet;
+  });
 }
 function wire(){
+  app.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{S.ui.view=b.dataset.view;save();render()});
+  const dp=document.getElementById('deskpages');if(dp)dp.onclick=()=>beginFlow('full');
+  const np=document.getElementById('newproj');if(np)np.onclick=openNewProject;
+  app.querySelectorAll('[data-proj]').forEach(b=>b.onclick=()=>openProject(b.dataset.proj));
+  const heat=document.getElementById('heat');if(heat)heat.scrollLeft=heat.scrollWidth;
+  app.querySelectorAll('[data-sproj]').forEach(b=>b.onclick=e=>{e.stopPropagation();
+    const s=S.sparks.find(x=>x.id===b.dataset.sproj);if(!s)return;
+    pickProject(s.projectId,v=>{s.projectId=v},()=>{closeSheet();render()});
+  });
   const cap=document.getElementById('cap');
   if(cap){autosize(cap);cap.addEventListener('input',()=>autosize(cap));
     cap.addEventListener('keydown',e=>{
@@ -1012,13 +1266,7 @@ document.addEventListener('keydown',e=>{
     if(e.key==='Escape'){
       if(PHASE==='write'&&S.active&&!S.active.wrapped){endEarly();return}
       if(PHASE==='dump')commitDump();
-      if(PHASE==='review'){
-        closeCanvas();
-        if(REVIEW_KIND==='session')openHistory();
-        else if(REVIEW_KIND==='dump')openDumps();
-        else render();
-        return;
-      }
+      if(PHASE==='review'){exitReview();return}
       S.active=null;save();closeCanvas();render();
     }
     return;

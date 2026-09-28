@@ -20,6 +20,11 @@ There is **no framework, no build step, no package.json**. Vercel serves `index.
 - It is tied to the domain. A new project or domain means the owner loses their data.
 - **Never change the localStorage key or the shape of the stored data without a migration** that reads the old
   format and upgrades it in place. Loading must never throw on older data.
+- Shape (top level): `sparks`, `sessions` (creative writing), `dumps` (= the owner's **morning pages**), `motivators`,
+  `projects` (`{id,name,created}`), `active`, `dumpDraft`, `settings`, `ui`. Sparks, sessions and dumps can carry a `projectId`.
+- Existing migrations (keep them): string `collections` + `dump.collection` → `projects` + `projectId`;
+  old keyboard typing presets → `classic` typewriter.
+- The Desk streak counts days with at least one dump (morning pages), in local time.
 
 ## History
 - The old, Git-less project `spark` (`prj_AOg9SkC0ySUGtLadqnBrXS5LdCsc`, spark-chabes-devs-projects.vercel.app) was
