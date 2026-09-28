@@ -2,11 +2,11 @@
 
 A personal capture-and-reflect app: jot down what's pulling at you, organise sparks into collections, and write about them. Single-file HTML/CSS/JS, no framework, no build step.
 
-Live: https://spark-chabes-devs-projects.vercel.app
+Live: https://spark-v2-chabes-devs-projects.vercel.app
 
 ## How deploys work
 
-The GitHub repo is connected to the existing Vercel project `spark` (team `chabes-devs-projects`).
+The GitHub repo is connected to the Vercel project `spark-v2` (team `chabes-devs-projects`).
 Every push to `main` deploys to production automatically. Pushes to other branches get preview URLs.
 
 ## ⚠️ Your data lives in your browser
