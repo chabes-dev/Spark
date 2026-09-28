@@ -15,3 +15,7 @@ All data is stored in `localStorage` under the key `spark_v1`, per browser and p
 - Never move the app to a new Vercel project or domain. Your data won't come with it.
 - Never rename the key or change the data shape without a migration.
 - Clearing site data in your browser wipes your data. There is no server backup.
+
+## Sounds
+The "Real" typing sound uses three recorded typewriter samples (key, space, bell) supplied by the owner and embedded
+in `index.html` as base64 MP3. The other typing sounds and all soundscapes are synthesized in the browser.
