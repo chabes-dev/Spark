@@ -17,5 +17,6 @@ All data is stored in `localStorage` under the key `spark_v1`, per browser and p
 - Clearing site data in your browser wipes your data. There is no server backup.
 
 ## Sounds
-The "Real" typing sound uses three recorded typewriter samples (key, space, bell) supplied by the owner and embedded
+The "Real" typing sound uses three recorded typewriter samples (key, space, bell) from
+[BigSoundBank](https://bigsoundbank.com), released under CC0 (free for any use, no attribution required), embedded
 in `index.html` as base64 MP3. The other typing sounds and all soundscapes are synthesized in the browser.
