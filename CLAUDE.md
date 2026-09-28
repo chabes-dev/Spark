@@ -22,6 +22,8 @@ There is **no framework, no build step, no package.json**. Vercel serves `index.
   format and upgrades it in place. Loading must never throw on older data.
 - Shape (top level): `sparks`, `sessions` (creative writing), `dumps` (= the owner's **morning pages**), `motivators`,
   `projects` (`{id,name,created}`), `active`, `dumpDraft`, `settings`, `ui`. Sparks, sessions and dumps can carry a `projectId`.
+  Sessions with `untimed:true` are free entries written from a project page (no timer, no dump). `ui.view` is
+  `sparks` | `desk` | `project` (+ `ui.projectId`).
 - Existing migrations (keep them): string `collections` + `dump.collection` → `projects` + `projectId`;
   old keyboard typing presets → `classic` typewriter.
 - The Desk streak counts days with at least one dump (morning pages), in local time.

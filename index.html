@@ -182,17 +182,17 @@ input,textarea{font-family:inherit;color:inherit;background:none;border:none;out
 .fadeui{transition:opacity .6s ease}
 #canvas.idle .fadeui{opacity:0;pointer-events:none}
 .cbar{display:flex;align-items:center;gap:10px;padding:22px 32px;flex-wrap:wrap}
-.cpill{position:relative;overflow:hidden;font-family:var(--mono);font-size:17px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
-  color:var(--ink-3);padding:16px 24px;border:1.5px solid var(--ash);border-radius:999px;background:var(--surface);
+.cpill{position:relative;overflow:hidden;font-family:var(--mono);font-size:14px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--ink-3);padding:13px 18px;border:1.5px solid var(--ash);border-radius:999px;background:var(--surface);
   transition:font-size .45s cubic-bezier(.3,.7,.3,1),padding .45s cubic-bezier(.3,.7,.3,1),color .15s,border-color .15s}
 .cpill:hover{border-color:var(--caccent);color:var(--caccent)}
-.ctimerinput{font-family:var(--mono);font-size:17px;font-weight:600;letter-spacing:.06em;color:var(--caccent);
-  padding:16px 20px;border:1.5px solid var(--caccent);border-radius:999px;background:var(--surface);width:90px;text-align:center}
+.ctimerinput{font-family:var(--mono);font-size:14px;font-weight:600;letter-spacing:.06em;color:var(--caccent);
+  padding:13px 18px;border:1.5px solid var(--caccent);border-radius:999px;background:var(--surface);width:90px;text-align:center}
 .canvaswrap.typing .ctimerinput{font-size:12.5px;padding:9px 12px;width:64px}
-.cmotiv{flex:1;text-align:center;font-family:var(--serif);font-size:19px;font-weight:300;font-style:italic;color:var(--ink-3);min-width:100px;padding:0 12px;
+.cmotiv{flex:1;text-align:center;font-family:var(--serif);font-size:19px;font-weight:300;font-style:italic;color:var(--ink-3);min-width:0;padding:0 12px;
   transition:font-size .45s cubic-bezier(.3,.7,.3,1)}
-.cexit{position:relative;overflow:hidden;font-family:var(--mono);font-size:15px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
-  color:var(--ink-3);padding:14px 22px;border:1.5px solid var(--ash);border-radius:999px;
+.cexit{position:relative;overflow:hidden;font-family:var(--mono);font-size:14px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--ink-3);padding:13px 18px;border:1.5px solid var(--ash);border-radius:999px;
   transition:font-size .45s cubic-bezier(.3,.7,.3,1),padding .45s cubic-bezier(.3,.7,.3,1),color .15s,border-color .15s}
 .cexit:hover{color:var(--ink);border-color:var(--ink-3)}
 .canvaswrap.typing .cpill{font-size:12.5px;padding:9px 14px}
@@ -283,8 +283,23 @@ input,textarea{font-family:inherit;color:inherit;background:none;border:none;out
 .proj.new:hover{border-color:var(--ember);color:var(--ember);transform:none}
 .ptag{color:var(--ember)}
 .picktile.on{border-color:var(--ember);background:var(--surface)}
+.cpopnew{width:100%;margin-top:4px;padding:9px 12px;font-family:var(--mono);font-size:13px;color:var(--ink);border-top:1px solid var(--ash)}
+.cpopnew::placeholder{color:var(--ink-3);font-style:italic}
+.backlink{font-family:var(--mono);font-size:12.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin-top:26px}
+.backlink:hover{color:var(--ember)}
+.ptitle{width:100%;font-family:var(--serif);font-size:clamp(32px,4vw,44px);font-weight:400;letter-spacing:-.02em;margin-top:8px;
+  border-bottom:2px solid transparent;padding-bottom:2px;transition:border-color .2s}
+.ptitle:hover{border-color:var(--ash)}.ptitle:focus{border-color:var(--ember)}
+.pstat{font-family:var(--mono);font-size:12.5px;color:var(--ink-3);letter-spacing:.07em;text-transform:uppercase;margin-top:6px}
+.pbtns{display:grid;grid-template-columns:2fr 1fr;gap:12px;margin:30px 0 36px}
+.pbtns .startbtn,.pbtns .quickbtn{margin:0;height:100%}
+.entry{display:flex;align-items:baseline;gap:14px;width:100%;text-align:left;padding:13px 0;border-bottom:1px solid var(--ash-2)}
+.entry:hover .et{color:var(--ember)}
+.entry .et{flex:1;min-width:0;font-family:var(--serif);font-size:17px;font-weight:300;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:color .15s}
+.entry .em{font-family:var(--mono);font-size:12px;color:var(--ink-3);letter-spacing:.05em;white-space:nowrap}
+.psec{margin-top:40px}
 
-@media(max-width:640px){body{padding:0 18px 90px}.top{flex-wrap:wrap}.stat{width:100%;text-align:left;margin-left:0}.card{padding:20px 18px}.bigstats{gap:22px}.sparkgrid{grid-template-columns:1fr}.durchips{gap:8px}.cbar{padding:16px 18px}.cbody{padding:16px 20px}}
+@media(max-width:640px){body{padding:0 18px 90px}.pbtns{grid-template-columns:1fr}.top{flex-wrap:wrap}.stat{width:100%;text-align:left;margin-left:0}.card{padding:20px 18px}.bigstats{gap:22px}.sparkgrid{grid-template-columns:1fr}.durchips{gap:8px}.cbar{padding:16px 18px}.cbody{padding:16px 20px}}
 @media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 </style>
 </head>
@@ -323,10 +338,10 @@ if(!['off','classic','portable','electric','muffled'].includes(S.settings.typing
 const projById=id=>id?S.projects.find(p=>p.id===id)||null:null;
 
 /* ---- sparks ---- */
-function addSpark(text){
+function addSpark(text,projectId){
   const made=[];
   text.split('\n').map(t=>t.trim()).filter(Boolean).forEach(t=>{
-    const x={id:nid(),text:t,created:Date.now(),explored:false,exploredAt:null};
+    const x={id:nid(),text:t,created:Date.now(),explored:false,exploredAt:null,projectId:projectId||null};
     S.sparks.unshift(x);made.push(x)});
   save();return made;
 }
@@ -431,7 +446,7 @@ function openHistory(){
     const mins=Math.round(s.actualMs/60000);
     const preview=(s.notes&&s.notes.trim())?esc(s.notes):'<span style="opacity:.55;font-style:italic">Nothing written this session.</span>';
     return `<div class="dumprow">
-      <div class="dumpmeta"><span>${esc(s.sparkText||'Freewriting')}</span><span>${d} · ${tm}</span><span>${mins}${s.completed?'':'/'+s.minutes} min</span>
+      <div class="dumpmeta"><span>${esc(s.sparkText||(s.untimed?'Untitled entry':'Freewriting'))}</span><span>${d} · ${tm}</span><span>${s.untimed?'entry':mins+(s.completed?'':'/'+s.minutes)+' min'}</span>
         ${projButton('data-hproj',s.id,s.projectId)}
         <button class="act" data-hedit="${s.id}">Edit</button></div>
       <div class="dumptext">${preview}</div>
@@ -759,15 +774,23 @@ function togglePopover(kind){
 }
 
 /* ---- session state machine ---- */
-let PHASE=null,pendingKind=null,DUR=null,TICK=null,DUMPTICK=null,REVIEW_ID=null,REVIEW_KIND=null,REVIEW_BACK=null;
+let PHASE=null,pendingKind=null,DUR=null,TICK=null,DUMPTICK=null,REVIEW_ID=null,REVIEW_KIND=null,REVIEW_BACK=null,REVIEW_OPENED=0;
+let FLOW_PROJECT=null; // project chosen for the current dump -> session flow
 let dumpStart=0,dumpText='',dumpTypingStart=null;
 
 function openReview(kind,id,back){
-  REVIEW_KIND=kind;REVIEW_ID=id;REVIEW_BACK=back||null;closeSheet();
+  REVIEW_KIND=kind;REVIEW_ID=id;REVIEW_BACK=back||null;REVIEW_OPENED=Date.now();closeSheet();
   PHASE='review';openCanvas();
 }
 function exitReview(){
   closeCanvas();
+  const item=reviewLookup();
+  if(item&&item.untimed){
+    // free entries: drop if left empty, otherwise count the time spent writing
+    if(!(item.notes||'').trim()&&!item.sparkText)S.sessions=S.sessions.filter(x=>x!==item);
+    else{item.actualMs=(item.actualMs||0)+(Date.now()-REVIEW_OPENED);item.endedAt=Date.now()}
+    save();
+  }
   const back=REVIEW_BACK;REVIEW_BACK=null;
   if(back)back();
   else if(REVIEW_KIND==='session')openHistory();
@@ -791,13 +814,13 @@ function reviewSetTitle(item,v){
   else item.title=v;
 }
 function reviewTitlePlaceholder(item){
-  if(REVIEW_KIND==='session')return'Freewriting';
+  if(REVIEW_KIND==='session')return item.untimed?'Untitled entry':'Freewriting';
   const d=new Date(item.created).toLocaleDateString(undefined,{day:'numeric',month:'short'});
   return (REVIEW_KIND==='dump'?'Dump · ':'Spark · ')+d;
 }
-function beginFlow(kind){
+function beginFlow(kind,projectId){
   ensureAudio();
-  pendingKind=kind;pickMotivator();
+  pendingKind=kind;pickMotivator();FLOW_PROJECT=projectId||null;
   dumpStart=Date.now();dumpText='';dumpTypingStart=null;
   S.dumpDraft=null;save();
   PHASE='dump';openCanvas();
@@ -847,8 +870,42 @@ function cbarInner(){
     <button class="cpill" id="ckeys">Keys · ${TYPE_LABEL[S.settings.typing]}</button>
     <button class="cpill" id="ctheme">Theme · ${THEME_LABEL[S.settings.theme]}</button>
     ${timerPill}
+    <button class="cpill" id="cproj">Project · ${esc((projById(currentProjectId())||{name:'None'}).name)}</button>
     <div class="cmotiv">${currentMotivator?esc(currentMotivator.text):''}</div>
     <button class="cexit" id="cexit">${PHASE==='write'&&S.active&&!S.active.wrapped?'Esc · end early':'Esc'}</button>`;
+}
+/* ---- project pill: which project the thing being written belongs to ---- */
+function currentProjectId(){
+  if(PHASE==='write'&&S.active)return S.active.projectId||null;
+  if(PHASE==='review'){const it=reviewLookup();return it?it.projectId||null:null}
+  return FLOW_PROJECT;
+}
+function setCurrentProject(id){
+  if(PHASE==='write'&&S.active){S.active.projectId=id;const ss=S.sessions.find(x=>x.id===S.active.entryId);if(ss)ss.projectId=id}
+  else if(PHASE==='review'){const it=reviewLookup();if(it)it.projectId=id}
+  else{FLOW_PROJECT=id;if(S.dumpDraft)S.dumpDraft.projectId=id}
+  save();
+}
+function toggleProjPopover(){
+  const already=document.getElementById('cpop');closePopover();if(already)return;
+  const btn=document.getElementById('cproj');if(!btn)return;
+  const cur=currentProjectId();
+  const pop=document.createElement('div');pop.className='cpop';pop.id='cpop';
+  pop.innerHTML=S.projects.map(p=>`<button class="cpopitem ${p.id===cur?'on':''}" data-setp="${p.id}">${esc(p.name)}</button>`).join('')
+    +`<button class="cpopitem ${!cur?'on':''}" data-setp="">None</button>`
+    +`<input type="text" class="cpopnew" id="cpopnew" placeholder="New project…" />`;
+  btn.parentNode.style.position='relative';btn.insertAdjacentElement('afterend',pop);
+  pop.style.left=btn.offsetLeft+'px';
+  pop.addEventListener('click',e=>e.stopPropagation());
+  const pick=id=>{setCurrentProject(id);closePopover();renderPhase()};
+  pop.querySelectorAll('[data-setp]').forEach(b=>b.onclick=()=>pick(b.dataset.setp||null));
+  const inp=pop.querySelector('#cpopnew');
+  inp.addEventListener('keydown',e=>{
+    e.stopPropagation();
+    if(e.key==='Escape'){e.preventDefault();closePopover();return}
+    if(e.key==='Enter'){e.preventDefault();const v=inp.value.trim();if(v)pick(newProject(v).id)}
+  });
+  setTimeout(()=>document.addEventListener('click',closePopover,{once:true}),0);
 }
 function dumpHtml(){
   const dmin=S.settings.dumpMin||2;
@@ -863,7 +920,7 @@ function dumpHtml(){
     <div class="dumpclock" id="dumpclock">${dumpTypingStart?`<span id="dumptimer">00:00</span> / ${String(dmin).padStart(2,'0')}:00`:''}</div>`;
 }
 function pickHtml(){
-  const opts=[30,45,60],active=S.sparks.filter(s=>!s.explored);
+  const opts=[30,45,60],active=S.sparks.filter(s=>!s.explored&&(!FLOW_PROJECT||s.projectId===FLOW_PROJECT));
   return `<div class="cbar fadeui">${cbarInner()}</div>
     <div class="cbody pickbody">
       <div class="seg-label">How long have you got?</div>
@@ -930,6 +987,7 @@ function wireCanvas(c){
   const sb=c.querySelector('#csound');if(sb)sb.onclick=()=>togglePopover('sound');
   const kb=c.querySelector('#ckeys');if(kb)kb.onclick=()=>togglePopover('keys');
   const tb=c.querySelector('#ctheme');if(tb)tb.onclick=cycleTheme;
+  const pb=c.querySelector('#cproj');if(pb)pb.onclick=toggleProjPopover;
 
   if(PHASE==='dump'){
     const ta=c.querySelector('#dtext');autosize(ta);ta.focus();
@@ -938,7 +996,7 @@ function wireCanvas(c){
       dumpText=ta.value;const w=c.querySelector('#cwc');if(w)w.textContent=wc(dumpText)+' words';autosize(ta);
       c.classList.toggle('typing',dumpText.trim().length>0);
       if(!dumpTypingStart&&dumpText.trim()){dumpTypingStart=Date.now();armDumpTimer()}
-      S.dumpDraft={text:dumpText,startedAt:dumpStart};save();
+      S.dumpDraft={text:dumpText,startedAt:dumpStart,projectId:FLOW_PROJECT};save();
     };
     wireAppendOnly(ta);
     wireTypingSound(ta);
@@ -976,6 +1034,7 @@ function wireCanvas(c){
       ta.oninput=()=>{reviewSetText(item,ta.value);save();autosize(ta);const w=c.querySelector('#cwc3');if(w)w.textContent=wc(ta.value)+' words'};
       wireTypingSound(ta);
       const sv=c.querySelector('#savebtn');if(sv)sv.onclick=()=>{save();toast('saved')};
+      if(!reviewGetText(item))ta.focus();
       const sn=c.querySelector('#sname');
       if(sn){
         sn.addEventListener('blur',()=>{reviewSetTitle(item,sn.textContent.trim());save()});
@@ -986,20 +1045,20 @@ function wireCanvas(c){
 }
 function commitDump(){
   clearInterval(DUMPTICK);
-  if(dumpText&&dumpText.trim())S.dumps.unshift({id:nid(),text:dumpText,created:Date.now(),words:wc(dumpText)});
+  if(dumpText&&dumpText.trim())S.dumps.unshift({id:nid(),text:dumpText,created:Date.now(),words:wc(dumpText),projectId:FLOW_PROJECT});
   S.dumpDraft=null;save();
 }
 function dumpReady(){
   commitDump();
   if(pendingKind==='quick'){
-    const active=S.sparks.filter(s=>!s.explored);
+    const active=S.sparks.filter(s=>!s.explored&&(!FLOW_PROJECT||s.projectId===FLOW_PROJECT));
     startWrite(active.length?active[0].id:null,10);
   }else{DUR=null;PHASE='pick';renderPhase()}
 }
 function startWrite(sparkId,minutes){
   const spark=sparkId?S.sparks.find(s=>s.id===sparkId):null;
   const now=Date.now();
-  S.active={sparkId:sparkId||null,sparkText:spark?spark.text:null,projectId:spark?spark.projectId||null:null,minutes,totalMs:minutes*60000,
+  S.active={sparkId:sparkId||null,sparkText:spark?spark.text:null,projectId:(spark&&spark.projectId)||FLOW_PROJECT||null,minutes,totalMs:minutes*60000,
     startedAt:now,endsAt:now+minutes*60000,notes:'',wrapped:false,entryId:nid()};
   save();PHASE='write';renderPhase();startTick();
 }
@@ -1066,13 +1125,14 @@ function sparkCard(s){
 function render(){
   const active=S.sparks.filter(s=>!s.explored),explored=S.sparks.filter(s=>s.explored);
   const last=S.sessions[0];
-  const desk=S.ui.view==='desk';
+  if(S.ui.view==='project'&&!projById(S.ui.projectId))S.ui.view='desk';
+  const view=S.ui.view,desk=view==='desk'||view==='project';
   app.innerHTML=`<div class="wrap">
     <div class="top"><div class="title">Spark</div>
       <nav class="nav"><button class="navb ${desk?'':'on'}" data-view="sparks">Sparks</button><button class="navb ${desk?'on':''}" data-view="desk">Desk</button></nav>
       <div class="stat">${active.length} waiting${last?` · last session ${ago(last.startedAt)}`:''}</div></div>
     ${!STORE_OK?`<div class="alarm"><b>This copy can't save.</b> Storage is blocked here. Download the file and open it from your own machine.</div>`:''}
-    ${desk?deskHtml():sparksHtml(active,explored)}
+    ${view==='project'?projectHtml(projById(S.ui.projectId)):desk?deskHtml():sparksHtml(active,explored)}
   </div>`;
   wire();
 }
@@ -1173,30 +1233,53 @@ function deskHtml(){
     <div class="sechead" style="margin-top:36px"><h2>Projects</h2><span>${S.projects.length}</span></div>
     <div class="projgrid">${projCards}<button class="proj new" id="newproj">+ New project</button></div>`;
 }
-function openProject(id){
-  const p=projById(id);if(!p){render();return}
-  const ps=projStats(id),back=()=>openProject(id);
+function openProject(id){closeSheet();S.ui.view='project';S.ui.projectId=id;save();render();window.scrollTo(0,0)}
+function projectHtml(p){
+  const ps=projStats(p.id);
   const dt=ts=>new Date(ts).toLocaleDateString(undefined,{day:'numeric',month:'short'});
-  const sec=(label,items,row)=>`<div class="seg-label">${label} · ${items.length}</div>${items.length?items.map(row).join(''):'<p style="color:var(--ink-3);font-size:15px">Nothing yet.</p>'}`;
-  sheet(`<input class="field" id="pname" value="${esc(p.name)}" style="font-size:28px;margin-top:0" />
-    <p>${ps.words.toLocaleString()} words${ps.lastTs?' · last touched '+ago(ps.lastTs):''}</p>
-    <div class="dumplist">
-      ${sec('Sparks',ps.sp,x=>`<div class="mrow"><span class="mt">${esc(x.text)}</span><button class="act" data-pe="spark:${x.id}">Edit</button></div>`)}
-      ${sec('Sessions',ps.se,x=>`<div class="mrow"><span class="mt">${esc(x.sparkText||'Freewriting')} <span style="color:var(--ink-3)">· ${dt(x.startedAt)} · ${wc(x.notes)} words</span></span><button class="act" data-pe="session:${x.id}">Open</button></div>`)}
-      ${sec('Morning pages',ps.du,x=>`<div class="mrow"><span class="mt">${esc(x.title||dt(x.created))} <span style="color:var(--ink-3)">· ${x.words} words</span></span><button class="act" data-pe="dump:${x.id}">Open</button></div>`)}
+  const writing=ps.se.slice().sort((a,b)=>b.startedAt-a.startedAt);
+  const entryRow=(attr,id,title,meta)=>`<button class="entry" ${attr}="${id}"><span class="et">${title}</span><span class="em">${meta}</span></button>`;
+  return `
+    <button class="backlink" id="toDesk">← Desk</button>
+    <input class="ptitle" id="pname" value="${esc(p.name)}" title="Click to rename" />
+    <div class="pstat">${ps.words.toLocaleString()} words · ${ps.sp.length} sparks · ${ps.se.length} writing · ${ps.du.length} pages${ps.lastTs?' · last touched '+ago(ps.lastTs):''}</div>
+    <div class="capture" id="capbox">
+      <textarea id="cap" rows="1" placeholder="New spark for ${esc(p.name)}…"></textarea>
+      <div class="capture-key">⏎ keep · ⇧⏎ new line</div>
     </div>
-    <div class="sheet-acts"><button class="btn btn-danger" id="pdel">Delete project</button><button class="btn btn-hot" id="ok">Close</button></div>`,
-  el=>{
-    const nm=el.querySelector('#pname');
-    const commitName=()=>{const v=nm.value.trim();if(v&&v!==p.name){p.name=v;save()}};
-    nm.addEventListener('blur',commitName);
-    nm.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();nm.blur()}});
-    el.querySelectorAll('[data-pe]').forEach(b=>b.onclick=()=>{commitName();const [k,i]=b.dataset.pe.split(':');openReview(k,i,back)});
-    el.querySelector('#pdel').onclick=()=>sheetConfirm('Delete "'+p.name+'"?','Its sparks, sessions and pages stay — they just won\'t belong to a project anymore.','Delete',()=>{
-      [S.sparks,S.sessions,S.dumps].forEach(list=>list.forEach(x=>{if(x.projectId===id)x.projectId=null}));
-      S.projects=S.projects.filter(x=>x.id!==id);save();render();
-    });
-    el.querySelector('#ok').onclick=()=>{commitName();closeSheet();render()};
+    <div class="pbtns">
+      <button class="startbtn" id="pstart">Start a session</button>
+      <button class="quickbtn" id="pentry">+ New entry</button>
+    </div>
+    <div class="sechead"><h2>Sparks</h2><span>${ps.sp.length}</span></div>
+    ${ps.sp.length?`<div class="sparkgrid">${ps.sp.map(sparkCard).join('')}</div>`:`<div class="empty">No sparks here yet — drop one above.</div>`}
+    <div class="psec"><div class="sechead"><h2>Writing</h2><span>${writing.length}</span></div>
+      ${writing.length?writing.map(x=>entryRow('data-pe-s',x.id,esc(x.sparkText||(x.untimed?'Untitled entry':'Freewriting')),
+        `${dt(x.startedAt)} · ${wc(x.notes)} words${x.untimed?'':' · session'}`)).join(''):`<div class="empty">Nothing written here yet.</div>`}</div>
+    <div class="psec"><div class="sechead"><h2>Morning pages</h2><span>${ps.du.length}</span></div>
+      ${ps.du.length?ps.du.map(x=>entryRow('data-pe-d',x.id,esc(x.title||x.text.slice(0,80)),`${dt(x.created)} · ${x.words} words`)).join('')
+        :`<div class="empty">No pages here yet. Start a session from this page and they'll land here.</div>`}</div>
+    <div class="foot"><button class="btn btn-danger" id="pdel">Delete project</button></div>`;
+}
+function newEntry(projectId){
+  const now=Date.now();
+  const e={id:nid(),sparkId:null,sparkText:null,projectId,minutes:0,startedAt:now,endedAt:now,actualMs:0,notes:'',completed:true,untimed:true};
+  S.sessions.unshift(e);save();openReview('session',e.id,render);
+}
+function wireProject(){
+  const id=S.ui.projectId,p=projById(id);if(!p)return;
+  const td=document.getElementById('toDesk');if(td)td.onclick=()=>{S.ui.view='desk';save();render()};
+  const nm=document.getElementById('pname');
+  if(nm){nm.addEventListener('blur',()=>{const v=nm.value.trim();if(v&&v!==p.name){p.name=v;save();render()}else nm.value=p.name});
+    nm.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();nm.blur()}if(e.key==='Escape'){nm.value=p.name;nm.blur()}})}
+  const ps=document.getElementById('pstart');if(ps)ps.onclick=()=>beginFlow('full',id);
+  const pe=document.getElementById('pentry');if(pe)pe.onclick=()=>newEntry(id);
+  app.querySelectorAll('[data-pe-s]').forEach(b=>b.onclick=()=>openReview('session',b.dataset.peS,render));
+  app.querySelectorAll('[data-pe-d]').forEach(b=>b.onclick=()=>openReview('dump',b.dataset.peD,render));
+  const del=document.getElementById('pdel');
+  if(del)del.onclick=()=>sheetConfirm('Delete "'+p.name+'"?','Its sparks, writing and pages stay — they just won\'t belong to a project anymore.','Delete',()=>{
+    [S.sparks,S.sessions,S.dumps].forEach(list=>list.forEach(x=>{if(x.projectId===id)x.projectId=null}));
+    S.projects=S.projects.filter(x=>x.id!==id);S.ui.view='desk';save();render();
   });
 }
 function openNewProject(){
@@ -1206,7 +1289,7 @@ function openNewProject(){
     <div class="sheet-acts"><button class="btn" id="no">Cancel</button><button class="btn btn-hot" id="yes">Create</button></div>`,
   el=>{
     const inp=el.querySelector('#npname');inp.focus();
-    const go=()=>{const v=inp.value.trim();if(!v)return;const p=newProject(v);closeSheet();render();openProject(p.id)};
+    const go=()=>{const v=inp.value.trim();if(!v)return;openProject(newProject(v).id)};
     inp.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();go()}};
     el.querySelector('#yes').onclick=go;
     el.querySelector('#no').onclick=closeSheet;
@@ -1214,6 +1297,7 @@ function openNewProject(){
 }
 function wire(){
   app.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{S.ui.view=b.dataset.view;save();render()});
+  if(S.ui.view==='project')wireProject();
   const dp=document.getElementById('deskpages');if(dp)dp.onclick=()=>beginFlow('full');
   const np=document.getElementById('newproj');if(np)np.onclick=openNewProject;
   app.querySelectorAll('[data-proj]').forEach(b=>b.onclick=()=>openProject(b.dataset.proj));
@@ -1227,7 +1311,7 @@ function wire(){
     cap.addEventListener('keydown',e=>{
       if(e.key==='Enter'&&!e.shiftKey){
         e.preventDefault();const v=cap.value.trim();if(!v)return;
-        const made=addSpark(v);made.forEach(x=>x.fresh=true);
+        const made=addSpark(v,S.ui.view==='project'?S.ui.projectId:null);made.forEach(x=>x.fresh=true);
         document.getElementById('capbox').classList.add('flash');
         cap.value='';autosize(cap);
         setTimeout(()=>{render();const c=document.getElementById('cap');if(c)c.focus();
@@ -1276,7 +1360,7 @@ document.addEventListener('keydown',e=>{
 
 /* ---- boot ---- */
 if(S.dumpDraft&&S.dumpDraft.text&&S.dumpDraft.text.trim()){
-  S.dumps.unshift({id:nid(),text:S.dumpDraft.text,created:S.dumpDraft.startedAt||Date.now(),words:wc(S.dumpDraft.text)});
+  S.dumps.unshift({id:nid(),text:S.dumpDraft.text,created:S.dumpDraft.startedAt||Date.now(),words:wc(S.dumpDraft.text),projectId:S.dumpDraft.projectId||null});
   S.dumpDraft=null;save();
 }
 pickMotivator();
