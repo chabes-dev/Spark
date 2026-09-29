@@ -203,6 +203,9 @@ input,textarea{font-family:inherit;color:inherit;background:none;border:none;out
 .cpopitem{text-align:left;font-family:var(--mono);font-size:13px;padding:9px 12px;border-radius:8px;color:var(--ink-2)}
 .cpopitem:hover{background:var(--ash-2);color:var(--ink)}
 .cpopitem.on{color:var(--caccent);font-weight:600}
+.cpopvol{padding:10px 12px 6px;margin-top:4px;border-top:1px solid var(--ash)}
+.cpopvol label{display:block;font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin-bottom:6px}
+.cpopvol input{width:100%;accent-color:var(--caccent);cursor:pointer}
 .cpopitem small{display:block;font-size:11px;color:var(--ink-3);font-weight:400;margin-top:1px}
 .cbody{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px 40px;overflow:auto}
 .dumpbody,.writebody{width:100%;max-width:760px;margin:0 auto}
@@ -329,7 +332,7 @@ function wc(t){return t&&t.trim()?t.trim().split(/\s+/).length:0}
 let S=load()||{sparks:[],sessions:[],dumps:[],motivators:[],active:null,dumpDraft:null,settings:{},ui:{showExplored:false}};
 S.sparks=S.sparks||[];S.sessions=S.sessions||[];S.dumps=S.dumps||[];S.motivators=S.motivators||[];
 S.ui=Object.assign({showExplored:false,view:'sparks'},S.ui||{});
-S.settings=Object.assign({soundscape:'off',typing:'classic',theme:'default',dumpMin:2},S.settings||{});
+S.settings=Object.assign({soundscape:'off',typing:'classic',typingVol:.5,theme:'default',dumpMin:2},S.settings||{});
 
 /* ---- migration: string collections (dumps only) -> projects (sparks, sessions, dumps) ---- */
 if(!Array.isArray(S.projects)){
@@ -635,11 +638,12 @@ const TW={
 };
 let TW_NOISE=null,TW_OUT=null;
 function twNoise(ctx){if(!TW_NOISE||TW_NOISE.sampleRate!==ctx.sampleRate)TW_NOISE=makeNoiseBuffer(ctx,1,'white');return TW_NOISE}
+function typingGain(id){return TW[id].vol*Math.max(0,Math.min(1,S.settings.typingVol))}
 function twOut(ctx,id){
-  if(TW_OUT&&TW_OUT.id===id&&TW_OUT.ctx===ctx)return TW_OUT.node;
+  if(TW_OUT&&TW_OUT.id===id&&TW_OUT.ctx===ctx){TW_OUT.node.gain.value=typingGain(id);return TW_OUT.node}
   if(TW_OUT){try{TW_OUT.lp.disconnect()}catch(e){}}
   const p=TW[id],g=ctx.createGain(),lp=ctx.createBiquadFilter();
-  g.gain.value=p.vol;lp.type='lowpass';lp.frequency.value=p.lp;g.connect(lp);lp.connect(ctx.destination);
+  g.gain.value=typingGain(id);lp.type='lowpass';lp.frequency.value=p.lp;g.connect(lp);lp.connect(ctx.destination);
   TW_OUT={id,ctx,node:g,lp};return g;
 }
 function nHit(ctx,out,t,f,q,dur,vol){
@@ -805,7 +809,16 @@ function togglePopover(kind){
   pop.innerHTML=opts.map(o=>kind==='sound'
     ?`<button class="cpopitem" data-set="${o}">${SCAPE_LABEL[o]}</button>`
     :`<button class="cpopitem ${S.settings.typing===o?'on':''}" data-set="${o}">${TYPE_LABEL[o]}${TYPE_DESC[o]?`<small>${TYPE_DESC[o]}</small>`:''}</button>`).join('');
+  if(kind==='keys')pop.insertAdjacentHTML('beforeend',`<div class="cpopvol"><label for="tvol">Volume · <span id="tvolv">${Math.round(S.settings.typingVol*100)}%</span></label>
+    <input type="range" id="tvol" min="0" max="100" step="5" value="${Math.round(S.settings.typingVol*100)}" /></div>`);
   btn.parentNode.style.position='relative';btn.insertAdjacentElement('afterend',pop);
+  if(kind==='keys'){
+    pop.addEventListener('click',e=>e.stopPropagation());
+    const vol=pop.querySelector('#tvol');
+    vol.addEventListener('input',()=>{S.settings.typingVol=vol.value/100;pop.querySelector('#tvolv').textContent=vol.value+'%';
+      if(TW_OUT&&TW[TW_OUT.id])TW_OUT.node.gain.value=typingGain(TW_OUT.id)});
+    vol.addEventListener('change',()=>{save();keySound('letter');setTimeout(()=>keySound('letter'),140)});
+  }
   pop.querySelectorAll('[data-set]').forEach(b=>b.onclick=e=>{
     e.stopPropagation();
     if(kind==='sound'){S.settings.soundscape=b.dataset.set;startScape(S.settings.soundscape);save();closePopover();renderPhase();return}
@@ -1410,6 +1423,7 @@ if(S.dumpDraft&&S.dumpDraft.text&&S.dumpDraft.text.trim()){
   S.dumpDraft=null;save();
 }
 pickMotivator();
+S.ui.view='desk'; // the app always opens on the Desk
 render();
 if(S.active){
   if(Date.now()>=S.active.endsAt)S.active.wrapped=true;

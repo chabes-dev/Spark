@@ -27,6 +27,7 @@ There is **no framework, no build step, no package.json**. Vercel serves `index.
 - Existing migrations (keep them): string `collections` + `dump.collection` → `projects` + `projectId`;
   old keyboard typing presets → `classic` typewriter.
 - The Desk streak counts days with at least one dump (morning pages), in local time.
+- The app always opens on the Desk (boot sets `ui.view='desk'`). `settings.typingVol` (0–1, default 0.5) scales typing sounds.
 
 ## History
 - The old, Git-less project `spark` (`prj_AOg9SkC0ySUGtLadqnBrXS5LdCsc`, spark-chabes-devs-projects.vercel.app) was
