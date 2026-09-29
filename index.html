@@ -216,8 +216,13 @@ input,textarea{font-family:inherit;color:inherit;background:none;border:none;out
   transition:font-size .45s cubic-bezier(.3,.7,.3,1)}
 .cwrite::placeholder{color:var(--ink-3);font-style:italic;opacity:.6}
 .cwrite.big{font-size:clamp(34px,4vw,52px);min-height:320px;user-select:none;-webkit-user-select:none}
-.canvaswrap.typing .cwrite{font-size:22px;line-height:1.65}
-.canvaswrap.typing .cwrite.big{font-size:clamp(24px,2.6vw,30px)}
+.canvaswrap.typing .cwrite,.canvaswrap.typing .cwrite.big{font-size:var(--wsize,22px);line-height:1.65}
+.cbody.tw{justify-content:flex-start;min-height:0;padding-top:0;padding-bottom:0}
+.cbody.tw>*{flex-shrink:0}
+.cbody.tw::before{content:'';flex:none;height:var(--twtop,16px)}
+.cbody.tw::after{content:'';flex:none;height:50vh}
+.cbody.tw .cwrite{min-height:0}
+.sizeaa{display:inline-block;width:44px;font-family:var(--serif);color:var(--ink)}
 .cfoot{display:flex;align-items:center;justify-content:space-between;padding:20px 40px 34px;max-width:760px;margin:0 auto;width:100%}
 .cwc{font-family:var(--mono);font-size:12.5px;color:var(--ink-3);letter-spacing:.07em;text-transform:uppercase}
 .cready{position:relative;overflow:hidden;font-family:var(--mono);font-size:15px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
@@ -325,14 +330,19 @@ function load(){try{const r=localStorage.getItem(KEY);return r?JSON.parse(r):nul
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){STORE_OK=false}}
 const nid=()=>Math.random().toString(36).slice(2,10);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-function autosize(el){el.style.height='auto';el.style.height=el.scrollHeight+'px'}
+function autosize(el){
+  // keep the scroll container still while the textarea briefly collapses to measure itself
+  const sc=el.closest&&el.closest('.cbody'),st=sc?sc.scrollTop:0;
+  el.style.height='auto';el.style.height=el.scrollHeight+'px';
+  if(sc&&sc.scrollTop!==st)sc.scrollTop=st;
+}
 function ago(ts){const d=Math.floor((Date.now()-ts)/86400000);if(d<=0)return'today';if(d===1)return'1d';return d+'d'}
 function wc(t){return t&&t.trim()?t.trim().split(/\s+/).length:0}
 
 let S=load()||{sparks:[],sessions:[],dumps:[],motivators:[],active:null,dumpDraft:null,settings:{},ui:{showExplored:false}};
 S.sparks=S.sparks||[];S.sessions=S.sessions||[];S.dumps=S.dumps||[];S.motivators=S.motivators||[];
 S.ui=Object.assign({showExplored:false,view:'sparks'},S.ui||{});
-S.settings=Object.assign({soundscape:'off',typing:'classic',typingVol:.5,theme:'default',dumpMin:2},S.settings||{});
+S.settings=Object.assign({soundscape:'off',typing:'classic',typingVol:.5,wsize:2,theme:'default',dumpMin:2},S.settings||{});
 
 /* ---- migration: string collections (dumps only) -> projects (sparks, sessions, dumps) ---- */
 if(!Array.isArray(S.projects)){
@@ -928,6 +938,7 @@ function cbarInner(){
   return `<button class="cpill" id="csound">Sound · ${SCAPE_LABEL[S.settings.soundscape]}</button>
     <button class="cpill" id="ckeys">Keys · ${TYPE_LABEL[S.settings.typing]}</button>
     <button class="cpill" id="ctheme">Theme · ${THEME_LABEL[S.settings.theme]}</button>
+    <button class="cpill" id="csize">Aa · ${WSIZE_LABEL[S.settings.wsize]}</button>
     ${timerPill}
     <button class="cpill" id="cproj">Project · ${esc((projById(currentProjectId())||{name:'None'}).name)}</button>
     <div class="cmotiv">${currentMotivator?esc(currentMotivator.text):''}</div>
@@ -969,7 +980,7 @@ function toggleProjPopover(){
 function dumpHtml(){
   const dmin=S.settings.dumpMin||2;
   return `<div class="cbar fadeui">${cbarInner()}</div>
-    <div class="cbody dumpbody">
+    <div class="cbody dumpbody tw">
       <textarea class="cwrite big" id="dtext" placeholder="Whatever's rattling around. Nobody reads this back.">${esc(dumpText)}</textarea>
     </div>
     <div class="cfoot fadeui">
@@ -1008,7 +1019,7 @@ function writeHtml(){
       </div>`;
   }
   return `<div class="cbar fadeui">${cbarInner()}</div>
-    <div class="cbody writebody">
+    <div class="cbody writebody tw">
       <div class="sring fadeui" id="sring" style="--pct:100"><i class="core"></i><span class="stime" id="stime">${String(a.minutes).padStart(2,'0')}:00</span></div>
       <div class="sname" id="sname" contenteditable="true" data-ph="Freewriting">${esc(a.sparkText||'')}</div>
       <textarea class="cwrite" id="wtext" placeholder="Go.">${esc(a.notes||'')}</textarea>
@@ -1020,7 +1031,7 @@ function reviewHtml(){
   if(!item)return `<div class="cbar fadeui">${cbarInner()}</div><div class="cbody writebody"><div class="empty">That entry is gone.</div></div>`;
   const text=reviewGetText(item);
   return `<div class="cbar fadeui">${cbarInner()}</div>
-    <div class="cbody writebody">
+    <div class="cbody writebody tw">
       <div class="sname" id="sname" contenteditable="true" data-ph="${esc(reviewTitlePlaceholder(item))}">${esc(reviewGetTitle(item))}</div>
       <textarea class="cwrite" id="rtext" placeholder="Nothing written.">${esc(text)}</textarea>
     </div>
@@ -1029,6 +1040,7 @@ function reviewHtml(){
 function renderPhase(){
   const c=document.getElementById('canvas');if(!c)return;
   c.classList.add('canvaswrap');c.setAttribute('data-theme',S.settings.theme);
+  c.style.setProperty('--wsize',WSIZES[S.settings.wsize]+'px');
   if(PHASE==='dump')c.innerHTML=dumpHtml();
   else if(PHASE==='pick')c.innerHTML=pickHtml();
   else if(PHASE==='write')c.innerHTML=writeHtml();
@@ -1046,6 +1058,7 @@ function wireCanvas(c){
   const sb=c.querySelector('#csound');if(sb)sb.onclick=()=>togglePopover('sound');
   const kb=c.querySelector('#ckeys');if(kb)kb.onclick=()=>togglePopover('keys');
   const tb=c.querySelector('#ctheme');if(tb)tb.onclick=cycleTheme;
+  const zb=c.querySelector('#csize');if(zb)zb.onclick=toggleSizePopover;
   const pb=c.querySelector('#cproj');if(pb)pb.onclick=toggleProjPopover;
 
   if(PHASE==='dump'){
@@ -1101,7 +1114,79 @@ function wireCanvas(c){
       }
     }
   }
+  wireTypewriterScroll(c);
 }
+
+/* ---- writing size ---- */
+const WSIZES=[18,20,22,25,28,32],WSIZE_LABEL=['XS','S','M','L','XL','XXL'];
+function toggleSizePopover(){
+  const already=document.getElementById('cpop');closePopover();if(already)return;
+  const btn=document.getElementById('csize');if(!btn)return;
+  const pop=document.createElement('div');pop.className='cpop';pop.id='cpop';
+  pop.innerHTML=WSIZES.map((px,i)=>`<button class="cpopitem ${S.settings.wsize===i?'on':''}" data-wsize="${i}"><span class="sizeaa" style="font-size:${px}px">Aa</span>${WSIZE_LABEL[i]} · ${px}px</button>`).join('');
+  btn.parentNode.style.position='relative';btn.insertAdjacentElement('afterend',pop);
+  pop.style.left=btn.offsetLeft+'px';
+  pop.addEventListener('click',e=>e.stopPropagation());
+  pop.querySelectorAll('[data-wsize]').forEach(b=>b.onclick=()=>{
+    // stay open so sizes can be compared against the text behind
+    S.settings.wsize=+b.dataset.wsize;save();
+    const c=document.getElementById('canvas');if(c)c.style.setProperty('--wsize',WSIZES[S.settings.wsize]+'px');
+    pop.querySelectorAll('[data-wsize]').forEach(x=>x.classList.toggle('on',x===b));
+    btn.textContent='Aa · '+WSIZE_LABEL[S.settings.wsize];
+    const ta=document.querySelector('#canvas .cbody.tw textarea.cwrite');if(ta){autosize(ta);recenter(ta,true)}
+  });
+  setTimeout(()=>document.addEventListener('click',closePopover,{once:true}),0);
+}
+
+/* ---- typewriter scrolling: the line being written stays in the middle, text glides up ---- */
+let TW_MIRROR=null;
+function caretTop(ta){
+  if(!TW_MIRROR){TW_MIRROR=document.createElement('div');document.body.appendChild(TW_MIRROR)}
+  const m=TW_MIRROR,cs=getComputedStyle(ta);
+  m.style.cssText='position:absolute;visibility:hidden;left:-9999px;top:0;white-space:pre-wrap;word-wrap:break-word;overflow-wrap:break-word;';
+  ['boxSizing','width','fontFamily','fontSize','fontWeight','fontStyle','lineHeight','letterSpacing','wordSpacing','textTransform',
+   'paddingTop','paddingRight','paddingBottom','paddingLeft','borderTopWidth','borderRightWidth','borderBottomWidth','borderLeftWidth','tabSize']
+   .forEach(k=>m.style[k]=cs[k]);
+  m.style.borderStyle='solid';m.style.borderColor='transparent';
+  m.textContent=ta.value.slice(0,ta.selectionEnd);
+  const mark=document.createElement('span');mark.textContent='\u200b';m.appendChild(mark);
+  return mark.offsetTop;
+}
+function recenter(ta,immediate){
+  const body=ta.closest('.cbody.tw');if(!body)return;
+  const lh=parseFloat(getComputedStyle(ta).lineHeight)||30;
+  const half=body.clientHeight/2,pad=body.__twTop||0;
+  const taTop=ta.getBoundingClientRect().top-body.getBoundingClientRect().top+body.scrollTop-pad;
+  // top padding lets the very first line sit in the middle too
+  const pt=Math.max(16,half-lh/2-taTop);
+  if(Math.abs(pt-pad)>1){body.style.setProperty('--twtop',pt+'px');body.__twTop=pt}
+  const target=Math.max(0,Math.min(taTop+pt+caretTop(ta)+lh/2-half,body.scrollHeight-body.clientHeight));
+  if(immediate){cancelAnimationFrame(body.__twRaf);body.__twRaf=null;body.__twPos=body.scrollTop=target;return}
+  body.__twTarget=target;
+  if(body.__twRaf)return;
+  body.__twPos=body.scrollTop;
+  const step=()=>{
+    const d=body.__twTarget-body.__twPos;
+    if(Math.abs(d)<0.5){body.scrollTop=body.__twPos=body.__twTarget;body.__twRaf=null;return}
+    body.__twPos+=d*0.14;body.scrollTop=body.__twPos;body.__twRaf=requestAnimationFrame(step);
+  };
+  body.__twRaf=requestAnimationFrame(step);
+}
+function wireTypewriterScroll(c){
+  const ta=c.querySelector('.cbody.tw textarea.cwrite');if(!ta)return;
+  const body=ta.closest('.cbody.tw');
+  const go=()=>recenter(ta,false);
+  ta.addEventListener('input',go);
+  ta.addEventListener('click',go);
+  ta.addEventListener('keyup',e=>{if(e.key.startsWith('Arrow')||e.key==='Home'||e.key==='End'||e.key.startsWith('Page'))go()});
+  ta.addEventListener('transitionend',()=>{autosize(ta);go()}); // font size animates (typing starts, size picker)
+  body.addEventListener('wheel',()=>{cancelAnimationFrame(body.__twRaf);body.__twRaf=null},{passive:true});
+  body.addEventListener('touchmove',()=>{cancelAnimationFrame(body.__twRaf);body.__twRaf=null},{passive:true});
+  if(ta.value.length)ta.setSelectionRange(ta.value.length,ta.value.length);
+  recenter(ta,true);
+}
+window.addEventListener('resize',()=>{const ta=document.querySelector('#canvas .cbody.tw textarea.cwrite');if(ta)recenter(ta,true)});
+
 function commitDump(){
   clearInterval(DUMPTICK);
   if(dumpText&&dumpText.trim())S.dumps.unshift({id:nid(),text:dumpText,created:Date.now(),words:wc(dumpText),projectId:FLOW_PROJECT});

@@ -28,6 +28,8 @@ There is **no framework, no build step, no package.json**. Vercel serves `index.
   old keyboard typing presets → `classic` typewriter.
 - The Desk streak counts days with at least one dump (morning pages), in local time.
 - The app always opens on the Desk (boot sets `ui.view='desk'`). `settings.typingVol` (0–1, default 0.5) scales typing sounds.
+  `settings.wsize` (0–5, default 2) picks the writing font size from `WSIZES`.
+- Writing screens use typewriter scrolling (`.cbody.tw` + `recenter()`): the caret line is kept at the vertical middle.
 
 ## History
 - The old, Git-less project `spark` (`prj_AOg9SkC0ySUGtLadqnBrXS5LdCsc`, spark-chabes-devs-projects.vercel.app) was
