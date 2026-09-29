@@ -218,6 +218,8 @@ input,textarea{font-family:inherit;color:inherit;background:none;border:none;out
 .cwrite.big{font-size:clamp(34px,4vw,52px);min-height:320px;user-select:none;-webkit-user-select:none}
 .canvaswrap.typing .cwrite,.canvaswrap.typing .cwrite.big{font-size:var(--wsize,22px);line-height:1.65}
 .cbody.tw{justify-content:flex-start;min-height:0;padding-top:0;padding-bottom:0}
+.cbody.tw{scrollbar-width:none;-ms-overflow-style:none}
+.cbody.tw::-webkit-scrollbar{display:none;width:0;height:0}
 .cbody.tw>*{flex-shrink:0}
 .cbody.tw::before{content:'';flex:none;height:var(--twtop,16px)}
 .cbody.tw::after{content:'';flex:none;height:50vh}
