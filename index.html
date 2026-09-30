@@ -1154,6 +1154,7 @@ function caretTop(ta){
   const mark=document.createElement('span');mark.textContent='\u200b';m.appendChild(mark);
   return mark.offsetTop;
 }
+const TW_TAU=.07,TW_W=11; // glide feel: softening time (s) and spring stiffness (rad/s); ~0.5s to settle
 function recenter(ta,immediate){
   const body=ta.closest('.cbody.tw');if(!body)return;
   const lh=parseFloat(getComputedStyle(ta).lineHeight)||30;
@@ -1165,12 +1166,20 @@ function recenter(ta,immediate){
   const target=Math.max(0,Math.min(taTop+pt+caretTop(ta)+lh/2-half,body.scrollHeight-body.clientHeight));
   if(immediate){cancelAnimationFrame(body.__twRaf);body.__twRaf=null;body.__twPos=body.scrollTop=target;return}
   body.__twTarget=target;
-  if(body.__twRaf)return;
-  body.__twPos=body.scrollTop;
-  const step=()=>{
-    const d=body.__twTarget-body.__twPos;
-    if(Math.abs(d)<0.5){body.scrollTop=body.__twPos=body.__twTarget;body.__twRaf=null;return}
-    body.__twPos+=d*0.14;body.scrollTop=body.__twPos;body.__twRaf=requestAnimationFrame(step);
+  if(body.__twRaf)return; // already gliding: it bends toward the new target, keeping its speed
+  // organic glide: a softened target pulled by a critically damped spring.
+  // starts from rest, accelerates, then settles exactly on the line (no bounce); time-based, so any refresh rate feels the same
+  body.__twPos=body.__twSoft=body.scrollTop;body.__twVel=0;
+  let last=null;
+  const step=now=>{
+    const dt=last===null?1/60:Math.min(.05,(now-last)/1000);last=now;
+    const T=body.__twTarget;
+    body.__twSoft+=(T-body.__twSoft)*(1-Math.exp(-dt/TW_TAU));
+    const acc=TW_W*TW_W*(body.__twSoft-body.__twPos)-2*TW_W*body.__twVel;
+    body.__twVel+=acc*dt;body.__twPos+=body.__twVel*dt;
+    if(Math.abs(T-body.__twPos)<0.3&&Math.abs(body.__twVel)<4&&Math.abs(T-body.__twSoft)<0.3){
+      body.scrollTop=body.__twPos=T;body.__twVel=0;body.__twRaf=null;return}
+    body.scrollTop=body.__twPos;body.__twRaf=requestAnimationFrame(step);
   };
   body.__twRaf=requestAnimationFrame(step);
 }
