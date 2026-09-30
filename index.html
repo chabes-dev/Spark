@@ -1154,7 +1154,7 @@ function caretTop(ta){
   const mark=document.createElement('span');mark.textContent='\u200b';m.appendChild(mark);
   return mark.offsetTop;
 }
-const TW_TAU=.13,TW_W=7.5; // glide feel: softening time (s) and spring stiffness (rad/s); lazy ~0.8s to settle
+const TW_TAU=.1,TW_W=9; // glide feel: softening time (s) and spring stiffness (rad/s); calm ~0.65s to settle
 function recenter(ta,immediate){
   const body=ta.closest('.cbody.tw');if(!body)return;
   const lh=parseFloat(getComputedStyle(ta).lineHeight)||30;
