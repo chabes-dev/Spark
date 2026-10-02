@@ -30,6 +30,13 @@ There is **no framework, no build step, no package.json**. Vercel serves `index.
 - The app always opens on the Desk (boot sets `ui.view='desk'`). `settings.typingVol` (0–1, default 0.5) scales typing sounds.
   `settings.wsize` (0–5, default 2) picks the writing font size from `WSIZES`.
 - Writing screens use typewriter scrolling (`.cbody.tw` + `recenter()`): the caret line is kept at the vertical middle.
+- `prompts` (top level, `{id,text,created}`) are the owner's own thought starters, mixed with `BUILTIN_PROMPTS`; shown
+  only when the owner clicks ✦ Prompt. A dump written with one shown stores it as `dump.prompt`.
+- Flow: morning pages → Ready → "pages done" screen (Back to Desk / Continue to a creative session). Never jump straight
+  into the duration picker after Ready.
+- `active.paused` (ms left) marks a session paused by swipe-back; Desk/Sparks show a Resume/Finish bar.
+- Swipe/browser back is handled in-app (`appBack`, `goView`, one trap history entry). All exits go through `leaveCanvas()`
+  so written text is always saved.
 
 ## History
 - The old, Git-less project `spark` (`prj_AOg9SkC0ySUGtLadqnBrXS5LdCsc`, spark-chabes-devs-projects.vercel.app) was

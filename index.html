@@ -145,8 +145,8 @@ input,textarea{font-family:inherit;color:inherit;background:none;border:none;out
   padding:8px 14px;border:1.5px solid var(--ash);border-radius:999px;transition:.15s}
 .coltab:hover{border-color:var(--ember);color:var(--ember)}
 .coltab.on{background:var(--ember);border-color:var(--ember);color:#fff}
-.dumpclock{position:fixed;left:32px;bottom:26px;font-family:var(--mono);font-size:11px;color:var(--ink-3);
-  opacity:.45;letter-spacing:.06em;pointer-events:none;z-index:2}
+.dumpclock{position:fixed;left:32px;bottom:26px;font-family:var(--mono);font-size:12px;color:var(--ink-2);
+  opacity:.7;letter-spacing:.06em;pointer-events:none;z-index:2}
 .dumprow{padding:14px 0;border-bottom:1px solid var(--ash-2)}
 .dumpmeta{display:flex;align-items:center;gap:12px;font-family:var(--mono);font-size:12px;color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px}
 .dumptitle{color:var(--ink);font-weight:700}
@@ -292,6 +292,19 @@ input,textarea{font-family:inherit;color:inherit;background:none;border:none;out
   font-weight:600;letter-spacing:.08em;text-transform:uppercase;display:flex;align-items:center;justify-content:center;min-height:110px}
 .proj.new:hover{border-color:var(--ember);color:var(--ember);transform:none}
 .ptag{color:var(--ember)}
+.tprompt{flex:none;width:100%;max-width:760px;margin:0 auto;padding:2px 40px 14px;text-align:left}
+.tprompt.hide{display:none}
+.tpq{font-family:var(--serif);font-size:20px;font-weight:300;font-style:italic;line-height:1.45;color:var(--ink-2)}
+.tpq::before{content:'✦ ';font-style:normal;color:var(--caccent)}
+.tpacts{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.tpacts button{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);padding:5px 9px;border-radius:8px}
+.tpacts button:hover{color:var(--caccent);background:var(--ash-2)}
+.tpacts input{flex:1;min-width:220px;font-family:var(--serif);font-size:17px;font-weight:300;border-bottom:2px solid var(--caccent);padding:4px 0}
+.dumpprompt{font-family:var(--serif);font-size:14px;font-style:italic;color:var(--ink-3);margin-bottom:6px}
+.pausebar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:22px;padding:14px 18px;border-radius:var(--r);
+  background:var(--ember-soft);border:1.5px solid var(--ember-2);font-size:16px;color:var(--ink-2)}
+.pausebar span{flex:1;min-width:200px}
+.pausebar .btn{padding:9px 16px;font-size:12.5px}
 .picktile.on{border-color:var(--ember);background:var(--surface)}
 .cpopnew{width:100%;margin-top:4px;padding:9px 12px;font-family:var(--mono);font-size:13px;color:var(--ink);border-top:1px solid var(--ash)}
 .cpopnew::placeholder{color:var(--ink-3);font-style:italic}
@@ -358,6 +371,7 @@ if(!Array.isArray(S.projects)){
 }
 /* old keyboard presets were replaced by typewriters */
 if(!['off','real','classic','portable','electric','muffled'].includes(S.settings.typing)){S.settings.typing='classic';save()}
+S.prompts=Array.isArray(S.prompts)?S.prompts:[]; // the owner's own thought starters {id,text,created}
 const projById=id=>id?S.projects.find(p=>p.id===id)||null:null;
 
 /* ---- sparks ---- */
@@ -507,6 +521,7 @@ function openDumps(filter){
         ${projButton('data-dcol',d.id,d.projectId)}
         <button class="act" data-dedit="${d.id}">Edit</button>
         <button class="act del" data-ddel="${d.id}">Delete</button></div>
+      ${d.prompt?`<div class="dumpprompt">✦ ${esc(d.prompt)}</div>`:''}
       <div class="dumptext">${esc(d.text)}</div>
     </div>`;
   }).join(''):`<p style="margin-top:16px">${filter==='all'?'Nothing dumped yet.':'Nothing here yet.'}</p>`;
@@ -843,6 +858,83 @@ function togglePopover(kind){
   setTimeout(()=>document.addEventListener('click',closePopover,{once:true}),0);
 }
 
+/* ---- thought starters for morning pages (shown only when asked for) ---- */
+const BUILTIN_PROMPTS=[
+  "If you looked back on this month, what would have made it amazing?",
+  "Imagine it's the last day of this year and it was a great one. What happened?",
+  "What's taking up the most room in your head right now?",
+  "What are you avoiding, and what would it cost to stop avoiding it?",
+  "What would you do today if you weren't afraid of doing it badly?",
+  "What did yesterday teach you?",
+  "Three small things you're grateful for — and why each one matters.",
+  "What does your body need today?",
+  "Who do you want to be this week? What would that person do first?",
+  "What's one conversation you keep postponing?",
+  "Describe a perfect ordinary day, five years from now.",
+  "What are you holding onto that you could let go of?",
+  "What would make today feel worthwhile, even if nothing else went right?",
+  "What's a belief about yourself you're ready to question?",
+  "Where did you feel most alive recently?",
+  "What's draining your energy, and what's giving it back?",
+  "Write a short letter to yourself one year from now.",
+  "What are you curious about lately?",
+  "If a friend described your current situation to you, what advice would you give them?",
+  "What's within your control today, and what isn't?",
+  "What would you create if no one would ever see it?",
+  "What are you pretending not to know?",
+  "What does 'enough' look like for you right now?",
+  "Which relationship deserves more of your attention?",
+  "What's one thing you'd like to stop doing, and one you'd like to start?",
+  "What made you smile in the last few days?",
+  "What would future you thank you for doing this week?",
+  "What's the story you keep telling yourself? Is it true?",
+  "What does success look like for you this season — in your own words?",
+  "What's quietly asking for your attention?"
+];
+let DUMP_PROMPT=null;
+function promptPool(){return BUILTIN_PROMPTS.concat(S.prompts.map(p=>p.text))}
+function nextPrompt(){
+  const pool=promptPool().filter(t=>t!==DUMP_PROMPT);
+  DUMP_PROMPT=pool.length?pool[Math.floor(Math.random()*pool.length)]:DUMP_PROMPT;
+}
+function promptBarInner(){
+  if(!DUMP_PROMPT)return '';
+  const own=S.prompts.find(p=>p.text===DUMP_PROMPT);
+  return `<div class="tpq">${esc(DUMP_PROMPT)}</div>
+    <div class="tpacts" id="tpacts"><button data-tp="next">↻ Another</button><button data-tp="add">+ Add your own</button>
+      ${own?`<button data-tp="del">Remove this one</button>`:''}<button data-tp="close">× Hide</button></div>`;
+}
+function refocusDump(){
+  const ta=document.getElementById('dtext');if(!ta)return;
+  ta.focus();ta.setSelectionRange(ta.value.length,ta.value.length);recenter(ta,true);
+}
+function showPromptBar(){
+  const bar=document.getElementById('tprompt');if(!bar)return;
+  bar.innerHTML=promptBarInner();bar.classList.toggle('hide',!DUMP_PROMPT);
+  if(S.dumpDraft)S.dumpDraft.prompt=DUMP_PROMPT;
+  wirePromptBar(bar);refocusDump();
+}
+function wirePromptBar(bar){
+  bar.querySelectorAll('[data-tp]').forEach(b=>b.onclick=()=>{
+    const k=b.dataset.tp;
+    if(k==='next'){nextPrompt();showPromptBar()}
+    else if(k==='close'){DUMP_PROMPT=null;showPromptBar()}
+    else if(k==='del'){S.prompts=S.prompts.filter(p=>p.text!==DUMP_PROMPT);save();nextPrompt();showPromptBar();toast('removed')}
+    else if(k==='add'){
+      const acts=bar.querySelector('#tpacts');
+      acts.innerHTML=`<input type="text" id="tpnew" placeholder="Your own thought starter…  (Enter to save, Esc to cancel)" />`;
+      const inp=acts.querySelector('#tpnew');inp.focus();
+      inp.addEventListener('keydown',e=>{
+        e.stopPropagation();
+        if(e.key==='Escape'){e.preventDefault();showPromptBar()}
+        if(e.key==='Enter'){e.preventDefault();const v=inp.value.trim();if(!v)return;
+          if(!S.prompts.some(p=>p.text===v))S.prompts.push({id:nid(),text:v,created:Date.now()});
+          DUMP_PROMPT=v;save();showPromptBar();toast('added to your starters')}
+      });
+    }
+  });
+}
+
 /* ---- session state machine ---- */
 let PHASE=null,pendingKind=null,DUR=null,TICK=null,DUMPTICK=null,REVIEW_ID=null,REVIEW_KIND=null,REVIEW_BACK=null,REVIEW_OPENED=0;
 let FLOW_PROJECT=null; // project chosen for the current dump -> session flow
@@ -890,19 +982,25 @@ function reviewTitlePlaceholder(item){
 }
 function beginFlow(kind,projectId){
   ensureAudio();
-  pendingKind=kind;pickMotivator();FLOW_PROJECT=projectId||null;
+  pendingKind=kind;pickMotivator();FLOW_PROJECT=projectId||null;DUMP_PROMPT=null;
   dumpStart=Date.now();dumpText='';dumpTypingStart=null;
   S.dumpDraft=null;save();
   PHASE='dump';openCanvas();
+}
+function dumpClockText(){
+  const dmin=S.settings.dumpMin||2;
+  if(!dumpTypingStart)return `${dmin}:00 · starts when you type`;
+  const left=Math.ceil((dmin*60000-(Date.now()-dumpTypingStart))/1000);
+  if(left<=0)return `✓ ${dmin} min done · keep going or hit Ready`;
+  return `${Math.floor(left/60)}:${String(left%60).padStart(2,'0')} left`;
 }
 function armDumpTimer(){
   clearInterval(DUMPTICK);
   const thresholdMs=(S.settings.dumpMin||2)*60000;
   const tickFn=()=>{
+    const el=document.getElementById('dumpclock');if(el)el.textContent=dumpClockText();
     if(!dumpTypingStart)return;
     const elapsed=Date.now()-dumpTypingStart;
-    const el=document.getElementById('dumptimer');
-    if(el){const s=Math.floor(elapsed/1000);el.textContent=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')}
     if(elapsed>=thresholdMs){
       clearInterval(DUMPTICK);
       const r=document.getElementById('cready');
@@ -936,7 +1034,8 @@ function closeCanvas(){
   document.body.style.overflow='';stopScape();clearInterval(TICK);clearInterval(DUMPTICK);
 }
 function cbarInner(){
-  const timerPill=PHASE==='dump'?`<button class="cpill" id="ctimer">Timer · ${S.settings.dumpMin||2} min</button>`:'';
+  if(PHASE==='pagesdone')return `<div class="cmotiv"></div><button class="cexit" id="cexit">Esc</button>`;
+  const timerPill=PHASE==='dump'?`<button class="cpill" id="cprompt">✦ Prompt</button><button class="cpill" id="ctimer">Timer · ${S.settings.dumpMin||2} min</button>`:'';
   return `<button class="cpill" id="csound">Sound · ${SCAPE_LABEL[S.settings.soundscape]}</button>
     <button class="cpill" id="ckeys">Keys · ${TYPE_LABEL[S.settings.typing]}</button>
     <button class="cpill" id="ctheme">Theme · ${THEME_LABEL[S.settings.theme]}</button>
@@ -945,6 +1044,19 @@ function cbarInner(){
     <button class="cpill" id="cproj">Project · ${esc((projById(currentProjectId())||{name:'None'}).name)}</button>
     <div class="cmotiv">${currentMotivator?esc(currentMotivator.text):''}</div>
     <button class="cexit" id="cexit">${PHASE==='write'&&S.active&&!S.active.wrapped?'Esc · end early':'Esc'}</button>`;
+}
+function pagesDoneHtml(){
+  const d=LAST_DUMP,st=streaks(pagesByDay());
+  const mins=d&&dumpTypingStart?Math.max(1,Math.round((d.created-dumpTypingStart)/60000)):0;
+  return `<div class="cbar fadeui">${cbarInner()}</div>
+    <div class="cbody wrapbody">
+      <div class="swrap-h">Today's pages are done.</div>
+      <div class="swrap-stat">${d?d.words+' words':''}${mins?' · '+mins+' min':''}${st.cur?' · 🔥 '+st.cur+'-day streak':''}</div>
+      <div class="swrap-acts">
+        <button class="btn" id="pdcontinue">Continue to a creative session</button>
+        <button class="btn btn-hot" id="pdback">${S.ui.view==='project'?'Back to project':'Back to Desk'}</button>
+      </div>
+    </div>`;
 }
 /* ---- project pill: which project the thing being written belongs to ---- */
 function currentProjectId(){
@@ -982,6 +1094,7 @@ function toggleProjPopover(){
 function dumpHtml(){
   const dmin=S.settings.dumpMin||2;
   return `<div class="cbar fadeui">${cbarInner()}</div>
+    <div class="tprompt ${DUMP_PROMPT?'':'hide'}" id="tprompt">${promptBarInner()}</div>
     <div class="cbody dumpbody tw">
       <textarea class="cwrite big" id="dtext" placeholder="Whatever's rattling around. Nobody reads this back.">${esc(dumpText)}</textarea>
     </div>
@@ -989,7 +1102,7 @@ function dumpHtml(){
       <span class="cwc" id="cwc">${wc(dumpText)} words</span>
       <button class="cready" id="cready" disabled>Ready</button>
     </div>
-    <div class="dumpclock" id="dumpclock">${dumpTypingStart?`<span id="dumptimer">00:00</span> / ${String(dmin).padStart(2,'0')}:00`:''}</div>`;
+    <div class="dumpclock" id="dumpclock">${dumpClockText()}</div>`;
 }
 function pickHtml(){
   const opts=[30,45,60],active=S.sparks.filter(s=>!s.explored&&(!FLOW_PROJECT||s.projectId===FLOW_PROJECT));
@@ -1047,16 +1160,16 @@ function renderPhase(){
   else if(PHASE==='pick')c.innerHTML=pickHtml();
   else if(PHASE==='write')c.innerHTML=writeHtml();
   else if(PHASE==='review')c.innerHTML=reviewHtml();
+  else if(PHASE==='pagesdone')c.innerHTML=pagesDoneHtml();
   wireCanvas(c);
 }
 function wireCanvas(c){
   const ex=c.querySelector('#cexit');
-  if(ex)ex.onclick=()=>{
-    if(PHASE==='write'&&S.active&&!S.active.wrapped){endEarly();return}
-    if(PHASE==='dump')commitDump();
-    if(PHASE==='review'){exitReview();return}
-    S.active=null;save();closeCanvas();render();
-  };
+  if(ex)ex.onclick=()=>leaveCanvas(false);
+  const pr=c.querySelector('#cprompt');if(pr)pr.onclick=()=>{nextPrompt();showPromptBar()};
+  const tpb=c.querySelector('#tprompt');if(tpb)wirePromptBar(tpb);
+  const pdc=c.querySelector('#pdcontinue');if(pdc)pdc.onclick=continueAfterPages;
+  const pdb=c.querySelector('#pdback');if(pdb)pdb.onclick=pagesDoneBack;
   const sb=c.querySelector('#csound');if(sb)sb.onclick=()=>togglePopover('sound');
   const kb=c.querySelector('#ckeys');if(kb)kb.onclick=()=>togglePopover('keys');
   const tb=c.querySelector('#ctheme');if(tb)tb.onclick=cycleTheme;
@@ -1070,12 +1183,12 @@ function wireCanvas(c){
       dumpText=ta.value;const w=c.querySelector('#cwc');if(w)w.textContent=wc(dumpText)+' words';autosize(ta);
       c.classList.toggle('typing',dumpText.trim().length>0);
       if(!dumpTypingStart&&dumpText.trim()){dumpTypingStart=Date.now();armDumpTimer()}
-      S.dumpDraft={text:dumpText,startedAt:dumpStart,projectId:FLOW_PROJECT};save();
+      S.dumpDraft={text:dumpText,startedAt:dumpStart,projectId:FLOW_PROJECT,prompt:DUMP_PROMPT};save();
     };
     wireAppendOnly(ta);
     wireTypingSound(ta);
     const ctb=c.querySelector('#ctimer');if(ctb)ctb.onclick=()=>editTimerPill(ctb);
-    if(dumpTypingStart)armDumpTimer();
+    armDumpTimer();
     const rb=c.querySelector('#cready');
     rb.onclick=()=>{if(!rb.disabled)dumpReady()};
   }else if(PHASE==='pick'){
@@ -1198,17 +1311,41 @@ function wireTypewriterScroll(c){
 }
 window.addEventListener('resize',()=>{const ta=document.querySelector('#canvas .cbody.tw textarea.cwrite');if(ta)recenter(ta,true)});
 
+let LAST_DUMP=null;
 function commitDump(){
-  clearInterval(DUMPTICK);
-  if(dumpText&&dumpText.trim())S.dumps.unshift({id:nid(),text:dumpText,created:Date.now(),words:wc(dumpText),projectId:FLOW_PROJECT});
+  clearInterval(DUMPTICK);LAST_DUMP=null;
+  if(dumpText&&dumpText.trim()){
+    LAST_DUMP={id:nid(),text:dumpText,created:Date.now(),words:wc(dumpText),projectId:FLOW_PROJECT};
+    if(DUMP_PROMPT)LAST_DUMP.prompt=DUMP_PROMPT;
+    S.dumps.unshift(LAST_DUMP);
+  }
   S.dumpDraft=null;save();
 }
-function dumpReady(){
-  commitDump();
+function dumpReady(){commitDump();PHASE='pagesdone';renderPhase()}
+function continueAfterPages(){
   if(pendingKind==='quick'){
     const active=S.sparks.filter(s=>!s.explored&&(!FLOW_PROJECT||s.projectId===FLOW_PROJECT));
     startWrite(active.length?active[0].id:null,10);
   }else{DUR=null;PHASE='pick';renderPhase()}
+}
+function pagesDoneBack(){closeCanvas();if(S.ui.view!=='project')S.ui.view='desk';save();render()}
+/* one exit path for Esc, the Esc button and swipe-back; nothing written is ever dropped */
+function leaveCanvas(fromSwipe){
+  if(PHASE==='write'&&S.active&&!S.active.wrapped){if(fromSwipe)pauseSession();else endEarly();return}
+  if(PHASE==='write'&&S.active&&S.active.wrapped){finishSession(false);return}
+  if(PHASE==='dump')commitDump();
+  if(PHASE==='review'){exitReview();return}
+  if(PHASE==='pagesdone'){pagesDoneBack();return}
+  S.active=null;save();closeCanvas();render();
+}
+function pauseSession(){
+  const a=S.active;if(!a)return;
+  saveCheckpoint(true);
+  a.paused=Math.max(0,a.endsAt-Date.now());clearInterval(TICK);save();closeCanvas();render();toast('session paused');
+}
+function resumeSession(){
+  const a=S.active;if(!a||a.paused==null)return;
+  a.endsAt=Date.now()+a.paused;delete a.paused;save();PHASE='write';openCanvas();startTick();
 }
 function startWrite(sparkId,minutes){
   const spark=sparkId?S.sparks.find(s=>s.id===sparkId):null;
@@ -1242,14 +1379,14 @@ function extendSession(min){
   save();renderPhase();startTick();
 }
 function endEarly(){finishSession(false,true)}
-function saveCheckpoint(){
+function saveCheckpoint(silent){
   const a=S.active;if(!a)return;
   const actualMs=Date.now()-a.startedAt;
   const existing=S.sessions.find(s=>s.id===a.entryId);
   if(existing){existing.notes=a.notes||'';existing.actualMs=actualMs;existing.endedAt=Date.now()}
   else S.sessions.unshift({id:a.entryId,sparkId:a.sparkId,sparkText:a.sparkText,projectId:a.projectId||null,minutes:a.minutes,
     startedAt:a.startedAt,endedAt:Date.now(),actualMs,notes:a.notes||'',completed:false});
-  save();toast('saved');
+  save();if(!silent)toast('saved');
 }
 function finishSession(markExplored,early){
   const a=S.active;if(!a)return;
@@ -1287,6 +1424,8 @@ function render(){
       <nav class="nav"><button class="navb ${desk?'':'on'}" data-view="sparks">Sparks</button><button class="navb ${desk?'on':''}" data-view="desk">Desk</button></nav>
       <div class="stat">${active.length} waiting${last?` · last session ${ago(last.startedAt)}`:''}</div></div>
     ${!STORE_OK?`<div class="alarm"><b>This copy can't save.</b> Storage is blocked here. Download the file and open it from your own machine.</div>`:''}
+    ${S.active&&S.active.paused!=null?`<div class="pausebar"><span>Paused · <b>${esc(S.active.sparkText||'Freewriting')}</b> · ${Math.max(1,Math.round(S.active.paused/60000))} min left</span>
+      <button class="btn btn-hot" id="resumebtn">Resume</button><button class="btn" id="pfinishbtn">Finish</button></div>`:''}
     ${view==='project'?projectHtml(projById(S.ui.projectId)):desk?deskHtml():sparksHtml(active,explored)}
   </div>`;
   wire();
@@ -1388,7 +1527,7 @@ function deskHtml(){
     <div class="sechead" style="margin-top:36px"><h2>Projects</h2><span>${S.projects.length}</span></div>
     <div class="projgrid">${projCards}<button class="proj new" id="newproj">+ New project</button></div>`;
 }
-function openProject(id){closeSheet();S.ui.view='project';S.ui.projectId=id;save();render();window.scrollTo(0,0)}
+function openProject(id){closeSheet();goView('project',id)}
 function projectHtml(p){
   const ps=projStats(p.id);
   const dt=ts=>new Date(ts).toLocaleDateString(undefined,{day:'numeric',month:'short'});
@@ -1423,7 +1562,7 @@ function newEntry(projectId){
 }
 function wireProject(){
   const id=S.ui.projectId,p=projById(id);if(!p)return;
-  const td=document.getElementById('toDesk');if(td)td.onclick=()=>{S.ui.view='desk';save();render()};
+  const td=document.getElementById('toDesk');if(td)td.onclick=()=>goView('desk');
   const nm=document.getElementById('pname');
   if(nm){nm.addEventListener('blur',()=>{const v=nm.value.trim();if(v&&v!==p.name){p.name=v;save();render()}else nm.value=p.name});
     nm.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();nm.blur()}if(e.key==='Escape'){nm.value=p.name;nm.blur()}})}
@@ -1451,7 +1590,9 @@ function openNewProject(){
   });
 }
 function wire(){
-  app.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{S.ui.view=b.dataset.view;save();render()});
+  app.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>goView(b.dataset.view));
+  const rsb=document.getElementById('resumebtn');if(rsb)rsb.onclick=resumeSession;
+  const pfb=document.getElementById('pfinishbtn');if(pfb)pfb.onclick=()=>finishSession(false,true);
   if(S.ui.view==='project')wireProject();
   const dp=document.getElementById('deskpages');if(dp)dp.onclick=()=>beginFlow('full');
   const np=document.getElementById('newproj');if(np)np.onclick=openNewProject;
@@ -1502,26 +1643,43 @@ function wire(){
 
 document.addEventListener('keydown',e=>{
   if(document.getElementById('canvas')){
-    if(e.key==='Escape'){
-      if(PHASE==='write'&&S.active&&!S.active.wrapped){endEarly();return}
-      if(PHASE==='dump')commitDump();
-      if(PHASE==='review'){exitReview();return}
-      S.active=null;save();closeCanvas();render();
-    }
+    if(e.key==='Escape')leaveCanvas(false);
     return;
   }
   if(mlayer.innerHTML){if(e.key==='Escape')closeSheet();return}
 });
 
+/* ---- swipe back / browser back ----
+   Spark keeps one extra history entry; a back swipe pops it and Spark goes back one step itself.
+   The entry is re-added on the next click or key press (browsers skip entries added without one). */
+let NAV_TRAPPED=false;const VIEW_STACK=[];
+function armBackTrap(){if(NAV_TRAPPED)return;try{history.pushState({sparkTrap:1},'');NAV_TRAPPED=true}catch(e){}}
+['pointerdown','keydown'].forEach(t=>document.addEventListener(t,armBackTrap,true));
+window.addEventListener('popstate',()=>{NAV_TRAPPED=false;appBack()});
+function goView(view,projectId){
+  const same=S.ui.view===view&&(view!=='project'||S.ui.projectId===projectId);
+  if(!same){VIEW_STACK.push({view:S.ui.view,projectId:S.ui.projectId});if(VIEW_STACK.length>30)VIEW_STACK.shift()}
+  S.ui.view=view;if(projectId)S.ui.projectId=projectId;save();render();if(!same)window.scrollTo(0,0);
+}
+function appBack(){
+  if(document.getElementById('canvas')){leaveCanvas(true);return}
+  if(mlayer.innerHTML){closeSheet();return}
+  const prev=VIEW_STACK.pop();
+  if(prev){S.ui.view=prev.view;S.ui.projectId=prev.projectId;save();render();return}
+  if(S.ui.view!=='desk'){S.ui.view='desk';save();render();return}
+  history.back(); // already on the Desk: let the browser leave Spark
+}
+
 /* ---- boot ---- */
 if(S.dumpDraft&&S.dumpDraft.text&&S.dumpDraft.text.trim()){
-  S.dumps.unshift({id:nid(),text:S.dumpDraft.text,created:S.dumpDraft.startedAt||Date.now(),words:wc(S.dumpDraft.text),projectId:S.dumpDraft.projectId||null});
+  S.dumps.unshift(Object.assign({id:nid(),text:S.dumpDraft.text,created:S.dumpDraft.startedAt||Date.now(),words:wc(S.dumpDraft.text),projectId:S.dumpDraft.projectId||null},
+    S.dumpDraft.prompt?{prompt:S.dumpDraft.prompt}:{}));
   S.dumpDraft=null;save();
 }
 pickMotivator();
 S.ui.view='desk'; // the app always opens on the Desk
 render();
-if(S.active){
+if(S.active&&S.active.paused==null){
   if(Date.now()>=S.active.endsAt)S.active.wrapped=true;
   PHASE='write';openCanvas();
   if(!S.active.wrapped)startTick();
