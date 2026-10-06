@@ -65,6 +65,7 @@ input,textarea{font-family:inherit;color:inherit;background:none;border:none;out
 .spark:hover{box-shadow:var(--shadow-2);transform:translateY(-2px)}
 .spark .t{position:relative;z-index:1;font-family:var(--serif);font-size:19px;font-weight:300;line-height:1.4;cursor:text}
 .spark .t[contenteditable="true"]{box-shadow:0 2px 0 var(--ember)}
+.spark .stitle{position:relative;z-index:1;font-family:var(--serif);font-size:15px;font-weight:600;line-height:1.3;color:var(--ink);margin-bottom:6px;letter-spacing:-.005em}
 .spark .age{position:absolute;z-index:1;left:22px;bottom:16px;font-family:var(--mono);font-size:11.5px;color:var(--ink-3);letter-spacing:.08em;text-transform:uppercase}
 .spark .floatbar{position:absolute;right:10px;bottom:10px;z-index:2;display:flex;gap:2px;background:var(--surface);border:1.5px solid var(--ash);
   border-radius:12px;padding:4px;box-shadow:var(--shadow-2);opacity:0;transform:translateY(4px);transition:.15s;pointer-events:none}
@@ -978,7 +979,7 @@ function reviewSetTitle(item,v){
 function reviewTitlePlaceholder(item){
   if(REVIEW_KIND==='session')return item.untimed?'Untitled entry':'Freewriting';
   const d=new Date(item.created).toLocaleDateString(undefined,{day:'numeric',month:'short'});
-  return (REVIEW_KIND==='dump'?'Dump · ':'Spark · ')+d;
+  return REVIEW_KIND==='dump'?'Dump · '+d:'Add a title (optional)';
 }
 function beginFlow(kind,projectId){
   ensureAudio();
@@ -1161,6 +1162,7 @@ function renderPhase(){
   else if(PHASE==='write')c.innerHTML=writeHtml();
   else if(PHASE==='review')c.innerHTML=reviewHtml();
   else if(PHASE==='pagesdone')c.innerHTML=pagesDoneHtml();
+  else if(PHASE==='pausedq')c.innerHTML=pausedQHtml();
   wireCanvas(c);
 }
 function wireCanvas(c){
@@ -1170,6 +1172,10 @@ function wireCanvas(c){
   const tpb=c.querySelector('#tprompt');if(tpb)wirePromptBar(tpb);
   const pdc=c.querySelector('#pdcontinue');if(pdc)pdc.onclick=continueAfterPages;
   const pdb=c.querySelector('#pdback');if(pdb)pdb.onclick=pagesDoneBack;
+  if(PHASE==='pausedq'){
+    c.querySelector('#pqres').onclick=()=>{closeCanvas();resumeSession()};
+    c.querySelector('#pqnew').onclick=()=>{finalizePaused();continueAfterPages()};
+  }
   const sb=c.querySelector('#csound');if(sb)sb.onclick=()=>togglePopover('sound');
   const kb=c.querySelector('#ckeys');if(kb)kb.onclick=()=>togglePopover('keys');
   const tb=c.querySelector('#ctheme');if(tb)tb.onclick=cycleTheme;
@@ -1324,6 +1330,7 @@ function commitDump(){
 }
 function dumpReady(){commitDump();PHASE='pagesdone';renderPhase()}
 function continueAfterPages(){
+  if(S.active&&S.active.paused!=null){PHASE='pausedq';renderPhase();return}
   if(pendingKind==='quick'){
     const active=S.sparks.filter(s=>!s.explored&&(!FLOW_PROJECT||s.projectId===FLOW_PROJECT));
     startWrite(active.length?active[0].id:null,10);
@@ -1336,7 +1343,7 @@ function leaveCanvas(fromSwipe){
   if(PHASE==='write'&&S.active&&S.active.wrapped){finishSession(false);return}
   if(PHASE==='dump')commitDump();
   if(PHASE==='review'){exitReview();return}
-  if(PHASE==='pagesdone'){pagesDoneBack();return}
+  if(PHASE==='pagesdone'||PHASE==='pausedq'){pagesDoneBack();return}
   if(S.active&&S.active.paused==null)S.active=null;
   save();closeCanvas();render();
 }
@@ -1344,6 +1351,36 @@ function pauseSession(){
   const a=S.active;if(!a)return;
   saveCheckpoint(true);
   a.paused=Math.max(0,a.endsAt-Date.now());clearInterval(TICK);save();closeCanvas();render();toast('session paused');
+}
+/* a paused session would be replaced by a new one: ask first */
+function finalizePaused(){
+  // its words were saved to History when it was paused; just let it go
+  const a=S.active;if(!a||a.paused==null)return;
+  const rec=S.sessions.find(x=>x.id===a.entryId);if(rec)rec.completed=false;
+  S.active=null;save();
+}
+function askPausedThen(next){
+  const a=S.active;if(!a||a.paused==null){next();return}
+  sheet(`<h3>You have a paused session</h3>
+    <p><b>${esc(a.sparkText||'Freewriting')}</b> · ${Math.max(1,Math.round(a.paused/60000))} min left. Resume it, or start a new one? Its words are already saved in History either way.</p>
+    <div class="sheet-acts"><button class="btn" id="no">Cancel</button><button class="btn" id="pqnew">Start new</button><button class="btn btn-hot" id="pqres">Resume paused</button></div>`,
+  el=>{
+    el.querySelector('#no').onclick=closeSheet;
+    el.querySelector('#pqres').onclick=()=>{closeSheet();resumeSession()};
+    el.querySelector('#pqnew').onclick=()=>{closeSheet();finalizePaused();render();next()};
+  });
+}
+function pausedQHtml(){
+  const a=S.active;
+  return `<div class="cbar fadeui"><div class="cmotiv"></div><button class="cexit" id="cexit">Esc</button></div>
+    <div class="cbody wrapbody">
+      <div class="swrap-h">You have a paused session.</div>
+      <div class="swrap-stat">${esc(a.sparkText||'Freewriting')} · ${Math.max(1,Math.round(a.paused/60000))} min left · words saved in History</div>
+      <div class="swrap-acts">
+        <button class="btn" id="pqnew">Start a new one</button>
+        <button class="btn btn-hot" id="pqres">Resume paused</button>
+      </div>
+    </div>`;
 }
 function resumeSession(){
   const a=S.active;if(!a||a.paused==null)return;
@@ -1408,6 +1445,7 @@ function finishSession(markExplored,early){
 const app=document.getElementById('app');
 function sparkCard(s){
   return `<div class="spark ${s.fresh?'landing':''} ${s.explored?'explored':''}" data-id="${s.id}">
+    ${s.title&&s.title.trim()?`<div class="stitle">${esc(s.title)}</div>`:''}
     <div class="t" data-edit="${s.id}" title="Double-click to edit">${esc(s.text)}</div>
     <div class="age">${ago(s.created)}${projById(s.projectId)?` · <span class="ptag">${esc(projById(s.projectId).name)}</span>`:''}</div>
     <div class="floatbar">
@@ -1569,7 +1607,7 @@ function wireProject(){
   const nm=document.getElementById('pname');
   if(nm){nm.addEventListener('blur',()=>{const v=nm.value.trim();if(v&&v!==p.name){p.name=v;save();render()}else nm.value=p.name});
     nm.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();nm.blur()}if(e.key==='Escape'){nm.value=p.name;nm.blur()}})}
-  const ps=document.getElementById('pstart');if(ps)ps.onclick=()=>beginFlow('full',id);
+  const ps=document.getElementById('pstart');if(ps)ps.onclick=()=>askPausedThen(()=>beginFlow('full',id));
   const pe=document.getElementById('pentry');if(pe)pe.onclick=()=>newEntry(id);
   app.querySelectorAll('[data-pe-s]').forEach(b=>b.onclick=()=>openReview('session',b.dataset.peS,render));
   app.querySelectorAll('[data-pe-d]').forEach(b=>b.onclick=()=>openReview('dump',b.dataset.peD,render));
@@ -1617,8 +1655,8 @@ function wire(){
           setTimeout(()=>{S.sparks.forEach(x=>delete x.fresh);save()},650)},240);
         toast(made.length>1?made.length+' sparks kept':'kept');
       }});}
-  const stb=document.getElementById('startbtn');if(stb)stb.onclick=()=>beginFlow('full');
-  const qkb=document.getElementById('quickbtn');if(qkb)qkb.onclick=()=>beginFlow('quick');
+  const stb=document.getElementById('startbtn');if(stb)stb.onclick=()=>askPausedThen(()=>beginFlow('full'));
+  const qkb=document.getElementById('quickbtn');if(qkb)qkb.onclick=()=>askPausedThen(()=>beginFlow('quick'));
   const mh=document.getElementById('motivhome');if(mh)mh.onclick=openMotivators;
   const at=document.getElementById('archtoggle');if(at)at.onclick=()=>{S.ui.showExplored=!S.ui.showExplored;save();render()};
   const hb=document.getElementById('historybtn');if(hb)hb.onclick=openHistory;

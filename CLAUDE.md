@@ -35,6 +35,8 @@ There is **no framework, no build step, no package.json**. Vercel serves `index.
 - Flow: morning pages → Ready → "pages done" screen (Back to Desk / Continue to a creative session). Never jump straight
   into the duration picker after Ready.
 - `active.paused` (ms left) marks a session paused by swipe-back; Desk/Sparks show a Resume/Finish bar.
+  Starting a new session while one is paused asks first (`askPausedThen`, canvas phase `pausedq`).
+- Sparks may carry an optional `title` (set in the spark editor), shown as a heading on the spark card.
 - Swipe/browser back is handled in-app (`appBack`, `goView`, one trap history entry). All exits go through `leaveCanvas()`
   so written text is always saved.
 
