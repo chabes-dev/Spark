@@ -29,7 +29,8 @@ There is **no framework, no build step, no package.json**. Vercel serves `index.
   `sparks` | `desk` | `project` (+ `ui.projectId`).
 - Existing migrations (keep them): string `collections` + `dump.collection` → `projects` + `projectId`;
   old keyboard typing presets → `classic` typewriter.
-- The Desk streak counts days with at least one dump (morning pages), in local time.
+- The Desk streak counts days with at least one dump (morning pages), in local time. The heatmap shows as many weeks as fit
+  the card (`heatWeeks`, max 26), so it never scrolls; it re-fits on resize/rotation.
 - The app always opens on the Desk (boot sets `ui.view='desk'`). `settings.typingVol` (0–1, default 0.5) scales typing sounds.
   `settings.wsize` (0–5, default 2) picks the writing font size from `WSIZES`.
 - Writing screens use typewriter scrolling (`.cbody.tw` + `recenter()`): the caret line is kept at the vertical middle.
