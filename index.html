@@ -353,11 +353,10 @@ input,textarea{font-family:inherit;color:inherit;background:none;border:none;out
   .sheet{padding:24px 20px;max-height:90vh;border-radius:20px}
   .cpop{max-width:calc(100vw - 28px)}
 }
-/* phones: page slides in after a swipe between Sparks and Desk */
-@keyframes slideinR{from{transform:translateX(38%);opacity:0}to{transform:none;opacity:1}}
-@keyframes slideinL{from{transform:translateX(-38%);opacity:0}to{transform:none;opacity:1}}
-.wrap.slidein-r{animation:slideinR .32s cubic-bezier(.2,.8,.3,1)}
-.wrap.slidein-l{animation:slideinL .32s cubic-bezier(.2,.8,.3,1)}
+/* phones: during a swipe the neighbouring page rides in beside the current one */
+.swipeghost{position:fixed;top:0;left:0;width:100%;height:100%;overflow:hidden;z-index:5;pointer-events:none;
+  background-color:var(--paper);padding:0 40px;will-change:transform}
+@media(max-width:640px){.swipeghost{padding:0 18px}}
 @media(hover:none){
   html,body{overflow-x:hidden}
   .spark{padding-bottom:14px}
@@ -1540,11 +1539,15 @@ function sparkCard(s){
     </div></div>`;
 }
 function render(){
+  if(S.ui.view==='project'&&!projById(S.ui.projectId))S.ui.view='desk';
+  app.innerHTML=pageHtml(S.ui.view);
+  wire();
+}
+function pageHtml(view){
   const active=S.sparks.filter(s=>!s.explored),explored=S.sparks.filter(s=>s.explored);
   const last=S.sessions[0];
-  if(S.ui.view==='project'&&!projById(S.ui.projectId))S.ui.view='desk';
-  const view=S.ui.view,desk=view==='desk'||view==='project';
-  app.innerHTML=`<div class="wrap">
+  const desk=view==='desk'||view==='project';
+  return `<div class="wrap">
     <div class="top"><div class="title">Spark</div>
       <nav class="nav"><button class="navb ${desk?'':'on'}" data-view="sparks">Sparks</button><button class="navb ${desk?'on':''}" data-view="desk">Desk</button></nav>
       <div class="stat">${active.length} waiting${last?` · last session ${ago(last.startedAt)}`:''}</div></div>
@@ -1553,7 +1556,6 @@ function render(){
       <button class="btn btn-hot" id="resumebtn">Resume</button><button class="btn" id="pfinishbtn">Finish</button></div>`:''}
     ${view==='project'?projectHtml(projById(S.ui.projectId)):desk?deskHtml():sparksHtml(active,explored)}
   </div>`;
-  wire();
 }
 function sparksHtml(active,explored){
   return `
@@ -1796,14 +1798,29 @@ function appBack(){
   history.back(); // already on the Desk: let the browser leave Spark
 }
 
-/* ---- phones: swipe left/right between Sparks and Desk (project pages swipe right back to the Desk) ---- */
+/* ---- phones: swipe left/right between Sparks and Desk (project pages swipe right back to the Desk) ----
+   The current page and its neighbour move side by side under the finger, like home-screen pages. */
 (function(){
   if(!('ontouchstart' in window))return;
-  let sx=0,sy=0,st=0,lock='no',dragging=false;
+  let sx=0,sy=0,st=0,lock='no',dragging=false,ghost=null,ghostFor=null;
   const W=()=>innerWidth,wrapEl=()=>app.querySelector('.wrap');
-  // finger moving left (dx<0) reveals the page to the right
+  // finger moving left (dx<0) brings in the page on the right
   const dest=dx=>{const v=S.ui.view;if(dx<0)return v==='sparks'?'desk':null;return v==='desk'?'sparks':v==='project'?'desk':null};
-  const reset=w=>{if(!w)return;w.style.transition='transform .26s cubic-bezier(.2,.8,.3,1),opacity .26s';w.style.transform='';w.style.opacity=''};
+  const ease='cubic-bezier(.2,.8,.3,1)';
+  const dropGhost=()=>{if(ghost)ghost.remove();ghost=null;ghostFor=null};
+  const ensureGhost=(to,dir)=>{
+    if(ghostFor===to+dir)return;
+    dropGhost();
+    ghost=document.createElement('div');ghost.className='swipeghost';ghost.innerHTML=pageHtml(to);
+    const bs=getComputedStyle(document.body);ghost.style.backgroundImage=bs.backgroundImage;ghost.style.backgroundSize=bs.backgroundSize;
+    document.body.appendChild(ghost);ghost.querySelectorAll('.heat').forEach(h=>h.scrollLeft=h.scrollWidth);
+    ghostFor=to+dir;
+  };
+  const place=(w,d,dir,anim)=>{
+    const tr=anim?`transform ${anim} ${ease}`:'none';
+    w.style.transition=tr;w.style.transform=d?`translateX(${d}px)`:'';
+    if(ghost){ghost.style.transition=tr;ghost.style.transform=`translateX(${d-dir*W()}px)`}
+  };
   document.addEventListener('touchstart',e=>{
     lock='no';
     if(e.touches.length!==1||document.getElementById('canvas')||mlayer.innerHTML)return;
@@ -1818,20 +1835,22 @@ function appBack(){
     const t=e.touches[0],dx=t.clientX-sx,dy=t.clientY-sy;
     if(lock===null){if(Math.abs(dx)<10&&Math.abs(dy)<10)return;lock=Math.abs(dx)>Math.abs(dy)*1.4?'x':'no';if(lock==='no')return}
     const w=wrapEl();if(!w)return;dragging=true;
-    const d=dest(dx)?dx:dx*.22; // nowhere to go: stretch a little
-    w.style.transition='none';w.style.transform=`translateX(${d}px)`;w.style.opacity=String(1-Math.min(.45,Math.abs(d)/W()*.6));
+    const to=dest(dx),dir=dx<0?-1:1;
+    if(to){ensureGhost(to,dir);place(w,dx,dir)}
+    else{dropGhost();place(w,dx*.22,dir)} // nowhere to go: stretch a little
   },{passive:true});
   document.addEventListener('touchend',e=>{
     if(lock!=='x'||!dragging){lock='no';return}
     lock='no';dragging=false;
     const t=e.changedTouches[0],dx=t.clientX-sx,speed=Math.abs(dx)/Math.max(1,performance.now()-st);
-    const to=dest(dx),w=wrapEl();if(!w)return;
-    if(!to||!(Math.abs(dx)>W()*.25||(speed>.35&&Math.abs(dx)>40))){reset(w);return}
-    const dir=dx<0?-1:1;
-    w.style.transition='transform .17s ease-in,opacity .17s ease-in';w.style.transform=`translateX(${dir*W()*.6}px)`;w.style.opacity='0';
-    setTimeout(()=>{goView(to);const n=wrapEl();if(n)n.classList.add(dir<0?'slidein-r':'slidein-l')},170);
+    const to=dest(dx),w=wrapEl(),dir=dx<0?-1:1;if(!w){dropGhost();return}
+    if(!to||!(Math.abs(dx)>W()*.25||(speed>.35&&Math.abs(dx)>40))){
+      place(w,0,dir,'.28s');setTimeout(()=>{dropGhost();w.style.transition='';w.style.transform=''},290);return}
+    // commit: both pages glide the rest of the way, then the real page takes the neighbour's place
+    place(w,dir*W(),dir,'.26s');
+    setTimeout(()=>{goView(to);dropGhost()},270);
   });
-  document.addEventListener('touchcancel',()=>{if(lock==='x')reset(wrapEl());lock='no';dragging=false});
+  document.addEventListener('touchcancel',()=>{const w=wrapEl();if(lock==='x'&&w){w.style.transition='';w.style.transform=''}dropGhost();lock='no';dragging=false});
 })();
 
 /* ---- boot ---- */
