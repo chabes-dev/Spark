@@ -2,6 +2,7 @@
 
 ## What this is
 Spark is a **single-file app**: everything (HTML, CSS, JS) lives in `index.html` at the repo root.
+The only other served file is `apple-touch-icon.png` (180×180, the iPhone home-screen icon).
 There is **no framework, no build step, no package.json**. Vercel serves `index.html` as a static file.
 
 ## Working rules
