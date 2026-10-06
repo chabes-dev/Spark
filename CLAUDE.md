@@ -15,6 +15,8 @@ There is **no framework, no build step, no package.json**. Vercel serves `index.
 - **Never create a new Vercel project** and never run `vercel` in a way that could create one. The project is `spark-v2`
   (ID `prj_htrvy05SfhaRoWfwMB7Lgib7hBwm`, team `chabes-devs-projects` / `team_9EpNt6jfuHaKQ6rhLde8MC8w`).
 - Production URL: https://spark-v2-chabes-devs-projects.vercel.app
+- Vercel Authentication is set to **previews only** (`ssoProtection.deploymentType: preview`). Production must stay
+  public: the iPhone home-screen app and its icon fetch have no Vercel login. The owner's data is local, nothing leaks.
 
 ## Data: handle with care
 - All user data is in the browser's `localStorage` under the key **`spark_v1`** (`const KEY` in `index.html`).
