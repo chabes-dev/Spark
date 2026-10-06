@@ -47,6 +47,8 @@ There is **no framework, no build step, no package.json**. Vercel serves `index.
 - Phones: writing-screen settings hide behind ••• (`CBAR_OPEN`, `.cbar.open`), exit reads "Done" on touch (`TOUCH`),
   the canvas follows `visualViewport` so the centred line stays above the keyboard (`fitCanvas`), spark-card actions are
   always visible on `(hover:none)`, and morning pages block deletes via `beforeinput` too.
+- Phones: horizontal swipe switches pages (Sparks ⇄ Desk; project → Desk). Ignored at the screen edges (browser
+  back), on the heatmap, in fields, sheets and writing screens.
 - Swipe/browser back is handled in-app (`appBack`, `goView`, one trap history entry). All exits go through `leaveCanvas()`
   so written text is always saved.
 
