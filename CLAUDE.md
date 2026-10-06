@@ -37,6 +37,9 @@ There is **no framework, no build step, no package.json**. Vercel serves `index.
 - `active.paused` (ms left) marks a session paused by swipe-back; Desk/Sparks show a Resume/Finish bar.
   Starting a new session while one is paused asks first (`askPausedThen`, canvas phase `pausedq`).
 - Sparks may carry an optional `title` (set in the spark editor), shown as a heading on the spark card.
+- Phones: writing-screen settings hide behind ••• (`CBAR_OPEN`, `.cbar.open`), exit reads "Done" on touch (`TOUCH`),
+  the canvas follows `visualViewport` so the centred line stays above the keyboard (`fitCanvas`), spark-card actions are
+  always visible on `(hover:none)`, and morning pages block deletes via `beforeinput` too.
 - Swipe/browser back is handled in-app (`appBack`, `goView`, one trap history entry). All exits go through `leaveCanvas()`
   so written text is always saved.
 

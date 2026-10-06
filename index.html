@@ -3,6 +3,12 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="theme-color" content="#F5F3EE" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="Spark" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<link rel="apple-touch-icon" href="data:image/png;base64,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" />
 <title>Spark</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='15' fill='%23F5F3EE'/%3E%3Ccircle cx='32' cy='32' r='16' fill='none' stroke='%234F6B62' stroke-width='5' stroke-linecap='round' stroke-dasharray='87 13'/%3E%3C/svg%3E" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -149,7 +155,7 @@ input,textarea{font-family:inherit;color:inherit;background:none;border:none;out
 .dumpclock{position:fixed;left:32px;bottom:26px;font-family:var(--mono);font-size:12px;color:var(--ink-2);
   opacity:.7;letter-spacing:.06em;pointer-events:none;z-index:2}
 .dumprow{padding:14px 0;border-bottom:1px solid var(--ash-2)}
-.dumpmeta{display:flex;align-items:center;gap:12px;font-family:var(--mono);font-size:12px;color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px}
+.dumpmeta{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;font-family:var(--mono);font-size:12px;color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px}
 .dumptitle{color:var(--ink);font-weight:700}
 .dumpmeta button:first-of-type{margin-left:auto}
 .dumptext{font-family:var(--serif);font-size:16px;font-weight:300;line-height:1.6;white-space:pre-wrap;color:var(--ink-2)}
@@ -323,6 +329,33 @@ input,textarea{font-family:inherit;color:inherit;background:none;border:none;out
 .entry .em{font-family:var(--mono);font-size:12px;color:var(--ink-3);letter-spacing:.05em;white-space:nowrap}
 .psec{margin-top:40px}
 
+.cmore{display:none}
+@media(max-width:640px){
+  .cbar{gap:8px;padding:12px 14px}
+  .cbar>.cpill:not(.cmore):not(#cprompt){display:none}
+  .cbar.open>.cpill:not(.cmore):not(#cprompt){display:inline-block}
+  .cmore{display:inline-block;letter-spacing:.2em}
+  .cmotiv{display:none}
+  .cexit{margin-left:auto}
+  .cpill,.cexit,.canvaswrap.typing .cpill,.canvaswrap.typing .cexit{font-size:12px;padding:9px 13px}
+  .cfoot{padding:12px 20px 18px}
+  .tprompt{padding:2px 20px 10px}.tpq{font-size:17px}
+  .dumpclock{left:20px;bottom:14px}
+  .sring{width:120px;height:120px;margin-bottom:18px}.sring .stime{font-size:22px}
+  .swrap-h{font-size:30px}
+  .veil{padding:10px;align-items:flex-end}
+  .sheet{padding:24px 20px;max-height:90vh;border-radius:20px}
+  .cpop{max-width:calc(100vw - 28px)}
+}
+@media(hover:none){
+  .spark{padding-bottom:14px}
+  .spark .age{position:static;margin-top:10px}
+  .spark .floatbar{position:static;opacity:1;transform:none;pointer-events:auto;box-shadow:none;border:none;background:none;
+    padding:0;margin:8px 0 0 -9px;flex-wrap:wrap}
+  .cpopnew,.ctimerinput,.tpacts input{font-size:16px}
+  /* no mouse to wake the chrome: keep bar and footer faint but tappable while writing */
+  #canvas.idle .cbar,#canvas.idle .cfoot{opacity:.38;pointer-events:auto}
+}
 @media(max-width:640px){body{padding:0 18px 90px}.pbtns{grid-template-columns:1fr}.top{flex-wrap:wrap}.stat{width:100%;text-align:left;margin-left:0}.card{padding:20px 18px}.bigstats{gap:22px}.sparkgrid{grid-template-columns:1fr}.durchips{gap:8px}.cbar{padding:16px 18px}.cbody{padding:16px 20px}}
 @media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 </style>
@@ -790,6 +823,7 @@ function wireAppendOnly(ta){
     if(blocked.includes(e.key)){e.preventDefault();e.stopImmediatePropagation();return}
     if((e.ctrlKey||e.metaKey)&&['a','z','y','x'].includes(e.key.toLowerCase())){e.preventDefault();e.stopImmediatePropagation();return}
   });
+  ta.addEventListener('beforeinput',e=>{const t=e.inputType||'';if(t.startsWith('delete')||t==='historyUndo'||t==='historyRedo')e.preventDefault()});
   ta.addEventListener('cut',e=>e.preventDefault());
   ta.addEventListener('paste',e=>e.preventDefault());
   ta.addEventListener('click',lockEnd);
@@ -1023,28 +1057,39 @@ function editTimerPill(btn){
   inp.addEventListener('blur',commit);
   inp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();inp.blur()}if(e.key==='Escape'){e.preventDefault();e.stopPropagation();inp.value=cur;inp.blur()}});
 }
+function fitCanvas(){
+  const c=document.getElementById('canvas'),vv=window.visualViewport;if(!c||!vv)return;
+  c.style.top=vv.offsetTop+'px';c.style.height=vv.height+'px';c.style.bottom='auto';
+  const ta=c.querySelector('.cbody.tw textarea.cwrite');if(ta&&document.activeElement===ta)recenter(ta,false);
+}
+if(window.visualViewport){visualViewport.addEventListener('resize',fitCanvas);visualViewport.addEventListener('scroll',fitCanvas)}
 function openCanvas(){
   if(TW[S.settings.typing]&&TW[S.settings.typing].sample){const ctx=ensureAudio();if(ctx)loadSamples(ctx)}
   let c=document.getElementById('canvas');
   if(!c){c=document.createElement('div');c.id='canvas';document.body.appendChild(c);document.body.style.overflow='hidden';armIdle(c)}
   startScape(S.settings.soundscape);
-  renderPhase();
+  renderPhase();fitCanvas();
 }
 function closeCanvas(){
+  CBAR_OPEN=false;
   const c=document.getElementById('canvas');if(c)c.remove();
   document.body.style.overflow='';stopScape();clearInterval(TICK);clearInterval(DUMPTICK);
 }
+const TOUCH=matchMedia('(hover:none)').matches;
+const EXIT_LABEL=TOUCH?'Done':'Esc';
+let CBAR_OPEN=false; // phone: the settings pills are tucked behind •••
 function cbarInner(){
-  if(PHASE==='pagesdone')return `<div class="cmotiv"></div><button class="cexit" id="cexit">Esc</button>`;
+  if(PHASE==='pagesdone')return `<div class="cmotiv"></div><button class="cexit" id="cexit">${EXIT_LABEL}</button>`;
   const timerPill=PHASE==='dump'?`<button class="cpill" id="cprompt">✦ Prompt</button><button class="cpill" id="ctimer">Timer · ${S.settings.dumpMin||2} min</button>`:'';
-  return `<button class="cpill" id="csound">Sound · ${SCAPE_LABEL[S.settings.soundscape]}</button>
+  return `<button class="cpill cmore" id="cmore" aria-label="More settings">•••</button>
+    <button class="cpill" id="csound">Sound · ${SCAPE_LABEL[S.settings.soundscape]}</button>
     <button class="cpill" id="ckeys">Keys · ${TYPE_LABEL[S.settings.typing]}</button>
     <button class="cpill" id="ctheme">Theme · ${THEME_LABEL[S.settings.theme]}</button>
     <button class="cpill" id="csize">Aa · ${WSIZE_LABEL[S.settings.wsize]}</button>
     ${timerPill}
     <button class="cpill" id="cproj">Project · ${esc((projById(currentProjectId())||{name:'None'}).name)}</button>
     <div class="cmotiv">${currentMotivator?esc(currentMotivator.text):''}</div>
-    <button class="cexit" id="cexit">${PHASE==='write'&&S.active&&!S.active.wrapped?'Esc · end early':'Esc'}</button>`;
+    <button class="cexit" id="cexit">${PHASE==='write'&&S.active&&!S.active.wrapped?EXIT_LABEL+' · end early':EXIT_LABEL}</button>`;
 }
 function pagesDoneHtml(){
   const d=LAST_DUMP,st=streaks(pagesByDay());
@@ -1163,11 +1208,16 @@ function renderPhase(){
   else if(PHASE==='review')c.innerHTML=reviewHtml();
   else if(PHASE==='pagesdone')c.innerHTML=pagesDoneHtml();
   else if(PHASE==='pausedq')c.innerHTML=pausedQHtml();
+  const bar=c.querySelector('.cbar');if(bar)bar.classList.toggle('open',CBAR_OPEN);
   wireCanvas(c);
 }
 function wireCanvas(c){
   const ex=c.querySelector('#cexit');
   if(ex)ex.onclick=()=>leaveCanvas(false);
+  const mb=c.querySelector('#cmore');
+  if(mb)mb.onclick=()=>{CBAR_OPEN=!CBAR_OPEN;closePopover();mb.parentNode.classList.toggle('open',CBAR_OPEN)};
+  const wta=c.querySelector('textarea.cwrite');
+  if(wta)wta.addEventListener('pointerdown',()=>{if(CBAR_OPEN){CBAR_OPEN=false;closePopover();const b=c.querySelector('.cbar');if(b)b.classList.remove('open')}});
   const pr=c.querySelector('#cprompt');if(pr)pr.onclick=()=>{nextPrompt();showPromptBar()};
   const tpb=c.querySelector('#tprompt');if(tpb)wirePromptBar(tpb);
   const pdc=c.querySelector('#pdcontinue');if(pdc)pdc.onclick=continueAfterPages;
@@ -1372,7 +1422,7 @@ function askPausedThen(next){
 }
 function pausedQHtml(){
   const a=S.active;
-  return `<div class="cbar fadeui"><div class="cmotiv"></div><button class="cexit" id="cexit">Esc</button></div>
+  return `<div class="cbar fadeui"><div class="cmotiv"></div><button class="cexit" id="cexit">${EXIT_LABEL}</button></div>
     <div class="cbody wrapbody">
       <div class="swrap-h">You have a paused session.</div>
       <div class="swrap-stat">${esc(a.sparkText||'Freewriting')} · ${Math.max(1,Math.round(a.paused/60000))} min left · words saved in History</div>
