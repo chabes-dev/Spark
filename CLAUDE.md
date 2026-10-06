@@ -49,6 +49,8 @@ There is **no framework, no build step, no package.json**. Vercel serves `index.
   always visible on `(hover:none)`, and morning pages block deletes via `beforeinput` too.
 - Phones: horizontal swipe switches pages (Sparks ⇄ Desk; project → Desk). Ignored at the screen edges (browser
   back), on the heatmap, in fields, sheets and writing screens.
+  Only `.pagebody` slides; the header stays put and the tab highlight (`#navind`, `placeNavInd`) follows the finger.
+  The incoming page is drawn from `bodyHtml(view)`; `.pagebody` is `flow-root` so both line up exactly.
 - Swipe/browser back is handled in-app (`appBack`, `goView`, one trap history entry). All exits go through `leaveCanvas()`
   so written text is always saved.
 

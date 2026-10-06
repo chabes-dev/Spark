@@ -268,11 +268,13 @@ input,textarea{font-family:inherit;color:inherit;background:none;border:none;out
 .swrap-acts{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
 
 /* ---- nav + desk ---- */
-.nav{display:flex;gap:4px;align-self:center}
-.navb{font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);
+.nav{position:relative;display:flex;gap:4px;align-self:center}
+.navind{position:absolute;top:0;bottom:0;left:0;width:0;border:1.5px solid var(--ash);background:var(--surface);border-radius:999px;
+  pointer-events:none;z-index:0}
+.navb{position:relative;z-index:1;font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);
   padding:7px 14px;border-radius:999px;border:1.5px solid transparent;transition:.15s}
 .navb:hover{color:var(--ink)}
-.navb.on{border-color:var(--ash);background:var(--surface);color:var(--ink)}
+.navb.on{color:var(--ink)}
 .card{background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);padding:24px 26px;margin-top:22px}
 .card .sechead{margin-bottom:4px}
 .bigstats{display:flex;gap:34px;flex-wrap:wrap;margin:14px 0 22px}
@@ -354,8 +356,9 @@ input,textarea{font-family:inherit;color:inherit;background:none;border:none;out
   .cpop{max-width:calc(100vw - 28px)}
 }
 /* phones: during a swipe the neighbouring page rides in beside the current one */
+.pagebody{display:flow-root} /* keep child margins inside, so the swipe copy and the real page line up */
 .swipeghost{position:fixed;top:0;left:0;width:100%;height:100%;overflow:hidden;z-index:5;pointer-events:none;
-  background-color:var(--paper);padding:0 40px;will-change:transform}
+  padding:0 40px;will-change:transform}
 @media(max-width:640px){.swipeghost{padding:0 18px}}
 @media(hover:none){
   html,body{overflow-x:hidden}
@@ -1549,13 +1552,27 @@ function pageHtml(view){
   const desk=view==='desk'||view==='project';
   return `<div class="wrap">
     <div class="top"><div class="title">Spark</div>
-      <nav class="nav"><button class="navb ${desk?'':'on'}" data-view="sparks">Sparks</button><button class="navb ${desk?'on':''}" data-view="desk">Desk</button></nav>
+      <nav class="nav" id="nav"><span class="navind" id="navind"></span><button class="navb ${desk?'':'on'}" data-view="sparks">Sparks</button><button class="navb ${desk?'on':''}" data-view="desk">Desk</button></nav>
       <div class="stat">${active.length} waiting${last?` · last session ${ago(last.startedAt)}`:''}</div></div>
     ${!STORE_OK?`<div class="alarm"><b>This copy can't save.</b> Storage is blocked here. Download the file and open it from your own machine.</div>`:''}
     ${S.active&&S.active.paused!=null?`<div class="pausebar"><span>Paused · <b>${esc(S.active.sparkText||'Freewriting')}</b> · ${Math.max(1,Math.round(S.active.paused/60000))} min left</span>
       <button class="btn btn-hot" id="resumebtn">Resume</button><button class="btn" id="pfinishbtn">Finish</button></div>`:''}
-    ${view==='project'?projectHtml(projById(S.ui.projectId)):desk?deskHtml():sparksHtml(active,explored)}
+    <div class="pagebody">${bodyHtml(view)}</div>
   </div>`;
+}
+function bodyHtml(view){
+  const active=S.sparks.filter(s=>!s.explored),explored=S.sparks.filter(s=>s.explored);
+  return view==='project'?projectHtml(projById(S.ui.projectId)):view==='desk'?deskHtml():sparksHtml(active,explored);
+}
+/* the tab highlight sits under the active tab; during a swipe it slides toward the other one (p = 0..1) */
+function placeNavInd(fromView,toView,p,anim){
+  const nav=document.getElementById('nav'),ind=document.getElementById('navind');if(!nav||!ind)return;
+  const btn=v=>nav.querySelector('[data-view="'+(v==='project'?'desk':v)+'"]');
+  const a=btn(fromView),b=btn(toView||fromView);if(!a||!b)return;
+  p=Math.max(0,Math.min(1,p||0));
+  ind.style.transition=anim?`left ${anim} cubic-bezier(.2,.8,.3,1),width ${anim} cubic-bezier(.2,.8,.3,1)`:'none';
+  ind.style.left=(a.offsetLeft+(b.offsetLeft-a.offsetLeft)*p)+'px';
+  ind.style.width=(a.offsetWidth+(b.offsetWidth-a.offsetWidth)*p)+'px';
 }
 function sparksHtml(active,explored){
   return `
@@ -1718,6 +1735,7 @@ function openNewProject(){
   });
 }
 function wire(){
+  placeNavInd(S.ui.view);
   app.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>goView(b.dataset.view));
   const rsb=document.getElementById('resumebtn');if(rsb)rsb.onclick=resumeSession;
   const pfb=document.getElementById('pfinishbtn');if(pfb)pfb.onclick=()=>finishSession(false,true);
@@ -1784,10 +1802,12 @@ let NAV_TRAPPED=false;const VIEW_STACK=[];
 function armBackTrap(){if(NAV_TRAPPED)return;try{history.pushState({sparkTrap:1},'');NAV_TRAPPED=true}catch(e){}}
 ['pointerdown','keydown'].forEach(t=>document.addEventListener(t,armBackTrap,true));
 window.addEventListener('popstate',()=>{NAV_TRAPPED=false;appBack()});
-function goView(view,projectId){
+function goView(view,projectId,keepScroll){
   const same=S.ui.view===view&&(view!=='project'||S.ui.projectId===projectId);
   if(!same){VIEW_STACK.push({view:S.ui.view,projectId:S.ui.projectId});if(VIEW_STACK.length>30)VIEW_STACK.shift()}
-  S.ui.view=view;if(projectId)S.ui.projectId=projectId;save();render();if(!same)window.scrollTo(0,0);
+  const y=window.scrollY;
+  S.ui.view=view;if(projectId)S.ui.projectId=projectId;save();render();
+  if(keepScroll)window.scrollTo(0,y);else if(!same)window.scrollTo(0,0);
 }
 function appBack(){
   if(document.getElementById('canvas')){leaveCanvas(true);return}
@@ -1803,7 +1823,7 @@ function appBack(){
 (function(){
   if(!('ontouchstart' in window))return;
   let sx=0,sy=0,st=0,lock='no',dragging=false,ghost=null,ghostFor=null;
-  const W=()=>innerWidth,wrapEl=()=>app.querySelector('.wrap');
+  const W=()=>innerWidth,wrapEl=()=>app.querySelector('.pagebody');
   // finger moving left (dx<0) brings in the page on the right
   const dest=dx=>{const v=S.ui.view;if(dx<0)return v==='sparks'?'desk':null;return v==='desk'?'sparks':v==='project'?'desk':null};
   const ease='cubic-bezier(.2,.8,.3,1)';
@@ -1811,8 +1831,9 @@ function appBack(){
   const ensureGhost=(to,dir)=>{
     if(ghostFor===to+dir)return;
     dropGhost();
-    ghost=document.createElement('div');ghost.className='swipeghost';ghost.innerHTML=pageHtml(to);
-    const bs=getComputedStyle(document.body);ghost.style.backgroundImage=bs.backgroundImage;ghost.style.backgroundSize=bs.backgroundSize;
+    ghost=document.createElement('div');ghost.className='swipeghost';
+    ghost.innerHTML=`<div class="wrap"><div class="pagebody">${bodyHtml(to)}</div></div>`;
+    const top=wrapEl().getBoundingClientRect().top;ghost.style.top=top+'px';ghost.style.height=(innerHeight-Math.min(top,0)-Math.max(top,0))+'px';
     document.body.appendChild(ghost);ghost.querySelectorAll('.heat').forEach(h=>h.scrollLeft=h.scrollWidth);
     ghostFor=to+dir;
   };
@@ -1820,6 +1841,7 @@ function appBack(){
     const tr=anim?`transform ${anim} ${ease}`:'none';
     w.style.transition=tr;w.style.transform=d?`translateX(${d}px)`:'';
     if(ghost){ghost.style.transition=tr;ghost.style.transform=`translateX(${d-dir*W()}px)`}
+    const to=dest(dir<0?-1:1);if(to)placeNavInd(S.ui.view,to,Math.abs(d)/W(),anim);else placeNavInd(S.ui.view,null,0,anim);
   };
   document.addEventListener('touchstart',e=>{
     lock='no';
@@ -1848,7 +1870,7 @@ function appBack(){
       place(w,0,dir,'.28s');setTimeout(()=>{dropGhost();w.style.transition='';w.style.transform=''},290);return}
     // commit: both pages glide the rest of the way, then the real page takes the neighbour's place
     place(w,dir*W(),dir,'.26s');
-    setTimeout(()=>{goView(to);dropGhost()},270);
+    setTimeout(()=>{goView(to,undefined,true);dropGhost()},270);
   });
   document.addEventListener('touchcancel',()=>{const w=wrapEl();if(lock==='x'&&w){w.style.transition='';w.style.transform=''}dropGhost();lock='no';dragging=false});
 })();
