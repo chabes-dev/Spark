@@ -76,6 +76,9 @@ input,textarea{font-family:inherit;color:inherit;background:none;border:none;out
 .spark .floatbar{position:absolute;right:10px;bottom:10px;z-index:2;display:flex;gap:2px;background:var(--surface);border:1.5px solid var(--ash);
   border-radius:12px;padding:4px;box-shadow:var(--shadow-2);opacity:0;transform:translateY(4px);transition:.15s;pointer-events:none}
 .spark:hover .floatbar{opacity:1;transform:none;pointer-events:auto}
+.spark .floatbar{left:10px;flex-wrap:wrap;justify-content:flex-end}
+.spark .floatbar{gap:0}
+.spark .floatbar .act{padding:5px 6px;font-size:10.5px;letter-spacing:.02em}
 .act{position:relative;overflow:hidden;font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-3);
   padding:6px 9px;border-radius:9px;transition:.13s;white-space:nowrap}
 .act:hover{color:var(--ink);background:var(--ash-2)}
@@ -323,6 +326,9 @@ input,textarea{font-family:inherit;color:inherit;background:none;border:none;out
 .pstat{font-family:var(--mono);font-size:12.5px;color:var(--ink-3);letter-spacing:.07em;text-transform:uppercase;margin-top:6px}
 .pbtns{display:grid;grid-template-columns:2fr 1fr;gap:12px;margin:30px 0 36px}
 .pbtns .startbtn,.pbtns .quickbtn{margin:0;height:100%}
+.startnote{font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--ink-3);text-align:center;margin:-2px 0 36px}
+.pbtns+.startnote{margin-top:-24px}
+.pickspark{font-family:var(--serif);font-size:clamp(22px,3vw,30px);font-weight:400;line-height:1.3;margin-bottom:6px}
 .entry{display:flex;align-items:baseline;gap:14px;width:100%;text-align:left;padding:13px 0;border-bottom:1px solid var(--ash-2)}
 .entry:hover .et{color:var(--ember)}
 .entry .et{flex:1;min-width:0;font-family:var(--serif);font-size:17px;font-weight:300;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:color .15s}
@@ -973,6 +979,7 @@ function wirePromptBar(bar){
 /* ---- session state machine ---- */
 let PHASE=null,pendingKind=null,DUR=null,TICK=null,DUMPTICK=null,REVIEW_ID=null,REVIEW_KIND=null,REVIEW_BACK=null,REVIEW_OPENED=0;
 let FLOW_PROJECT=null; // project chosen for the current dump -> session flow
+let PICK_SPARK=null;   // set when a session was started from a spark card
 let dumpStart=0,dumpText='',dumpTypingStart=null;
 
 function openReview(kind,id,back){
@@ -1151,7 +1158,15 @@ function dumpHtml(){
     <div class="dumpclock" id="dumpclock">${dumpClockText()}</div>`;
 }
 function pickHtml(){
-  const opts=[30,45,60],active=S.sparks.filter(s=>!s.explored&&(!FLOW_PROJECT||s.projectId===FLOW_PROJECT));
+  const opts=[10,30,45,60],active=S.sparks.filter(s=>!s.explored&&(!FLOW_PROJECT||s.projectId===FLOW_PROJECT));
+  const ps=PICK_SPARK&&S.sparks.find(x=>x.id===PICK_SPARK);
+  if(ps)return `<div class="cbar fadeui">${cbarInner()}</div>
+    <div class="cbody pickbody">
+      <div class="seg-label">Writing on</div>
+      <div class="pickspark">${esc(ps.title&&ps.title.trim()?ps.title+' — '+ps.text:ps.text)}</div>
+      <div class="seg-label">How long have you got?</div>
+      <div class="durchips">${opts.map(v=>`<button class="durchip" data-dur="${v}">${v} min</button>`).join('')}</div>
+    </div>`;
   return `<div class="cbar fadeui">${cbarInner()}</div>
     <div class="cbody pickbody">
       <div class="seg-label">How long have you got?</div>
@@ -1248,7 +1263,7 @@ function wireCanvas(c){
     const rb=c.querySelector('#cready');
     rb.onclick=()=>{if(!rb.disabled)dumpReady()};
   }else if(PHASE==='pick'){
-    c.querySelectorAll('[data-dur]').forEach(b=>b.onclick=()=>{DUR=+b.dataset.dur;renderPhase()});
+    c.querySelectorAll('[data-dur]').forEach(b=>b.onclick=()=>{DUR=+b.dataset.dur;if(PICK_SPARK){startWrite(PICK_SPARK,DUR);return}renderPhase()});
     c.querySelectorAll('[data-begin]').forEach(b=>b.onclick=()=>{if(!DUR)return;const id=b.dataset.begin;startWrite(id==='__free'?null:id,DUR)});
   }else if(PHASE==='write'){
     const a=S.active;
@@ -1381,10 +1396,22 @@ function commitDump(){
 function dumpReady(){commitDump();PHASE='pagesdone';renderPhase()}
 function continueAfterPages(){
   if(S.active&&S.active.paused!=null){PHASE='pausedq';renderPhase();return}
-  if(pendingKind==='quick'){
-    const active=S.sparks.filter(s=>!s.explored&&(!FLOW_PROJECT||s.projectId===FLOW_PROJECT));
-    startWrite(active.length?active[0].id:null,10);
-  }else{DUR=null;PHASE='pick';renderPhase()}
+  DUR=null;PICK_SPARK=null;PHASE='pick';renderPhase();
+}
+/* "Start writing": morning pages first, unless today's are already written */
+function pagesDoneToday(){return pagesByDay()[dayKey(Date.now())]!==undefined}
+function startNote(){return pagesDoneToday()?"Today's pages are done ✓ — straight to writing":'Morning pages first, then a creative session'}
+function openPicker(projectId,sparkId){
+  ensureAudio();pendingKind='full';pickMotivator();FLOW_PROJECT=projectId||null;DUMP_PROMPT=null;
+  DUR=null;PICK_SPARK=sparkId||null;PHASE='pick';openCanvas();
+}
+function startWriting(projectId){
+  askPausedThen(()=>{if(pagesDoneToday())openPicker(projectId);else beginFlow('full',projectId)});
+}
+/* "Write" on a spark card: straight to choosing a time for that spark */
+function writeSpark(id){
+  const sp=S.sparks.find(x=>x.id===id);if(!sp)return;
+  askPausedThen(()=>openPicker(sp.projectId,id));
 }
 function pagesDoneBack(){closeCanvas();if(S.ui.view!=='project')S.ui.view='desk';save();render()}
 /* one exit path for Esc, the Esc button and swipe-back; nothing written is ever dropped */
@@ -1499,6 +1526,7 @@ function sparkCard(s){
     <div class="t" data-edit="${s.id}" title="Double-click to edit">${esc(s.text)}</div>
     <div class="age">${ago(s.created)}${projById(s.projectId)?` · <span class="ptag">${esc(projById(s.projectId).name)}</span>`:''}</div>
     <div class="floatbar">
+      <button class="act" data-swrite="${s.id}">Write</button>
       <button class="act" data-sedit="${s.id}">Edit</button>
       <button class="act" data-sproj="${s.id}">Project</button>
       <button class="act" data-explore="${s.id}">${s.explored?'Bring back':'Explored'}</button>
@@ -1527,8 +1555,8 @@ function sparksHtml(active,explored){
       <textarea id="cap" rows="1" placeholder="What's pulling at you?"></textarea>
       <div class="capture-key">⏎ keep · ⇧⏎ new line</div>
     </div>
-    <button class="startbtn" id="startbtn">Start a session</button>
-    <button class="quickbtn" id="quickbtn">Quick start · 10 min</button>
+    <button class="startbtn" id="startbtn">Start writing</button>
+    <div class="startnote">${startNote()}</div>
     <div class="sechead"><h2>Sparks</h2><span>${active.length}</span></div>
     ${active.length?`<div class="sparkgrid">${active.map(sparkCard).join('')}</div>`
       :`<div class="empty">Nothing waiting. Whatever's on your mind — drop it above.</div>`}
@@ -1633,9 +1661,10 @@ function projectHtml(p){
       <div class="capture-key">⏎ keep · ⇧⏎ new line</div>
     </div>
     <div class="pbtns">
-      <button class="startbtn" id="pstart">Start a session</button>
+      <button class="startbtn" id="pstart">Start writing</button>
       <button class="quickbtn" id="pentry">+ New entry</button>
     </div>
+    <div class="startnote">${startNote()}</div>
     <div class="sechead"><h2>Sparks</h2><span>${ps.sp.length}</span></div>
     ${ps.sp.length?`<div class="sparkgrid">${ps.sp.map(sparkCard).join('')}</div>`:`<div class="empty">No sparks here yet — drop one above.</div>`}
     <div class="psec"><div class="sechead"><h2>Writing</h2><span>${writing.length}</span></div>
@@ -1657,7 +1686,7 @@ function wireProject(){
   const nm=document.getElementById('pname');
   if(nm){nm.addEventListener('blur',()=>{const v=nm.value.trim();if(v&&v!==p.name){p.name=v;save();render()}else nm.value=p.name});
     nm.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();nm.blur()}if(e.key==='Escape'){nm.value=p.name;nm.blur()}})}
-  const ps=document.getElementById('pstart');if(ps)ps.onclick=()=>askPausedThen(()=>beginFlow('full',id));
+  const ps=document.getElementById('pstart');if(ps)ps.onclick=()=>startWriting(id);
   const pe=document.getElementById('pentry');if(pe)pe.onclick=()=>newEntry(id);
   app.querySelectorAll('[data-pe-s]').forEach(b=>b.onclick=()=>openReview('session',b.dataset.peS,render));
   app.querySelectorAll('[data-pe-d]').forEach(b=>b.onclick=()=>openReview('dump',b.dataset.peD,render));
@@ -1705,8 +1734,8 @@ function wire(){
           setTimeout(()=>{S.sparks.forEach(x=>delete x.fresh);save()},650)},240);
         toast(made.length>1?made.length+' sparks kept':'kept');
       }});}
-  const stb=document.getElementById('startbtn');if(stb)stb.onclick=()=>askPausedThen(()=>beginFlow('full'));
-  const qkb=document.getElementById('quickbtn');if(qkb)qkb.onclick=()=>askPausedThen(()=>beginFlow('quick'));
+  const stb=document.getElementById('startbtn');if(stb)stb.onclick=()=>startWriting(null);
+  app.querySelectorAll('[data-swrite]').forEach(b=>b.onclick=e=>{e.stopPropagation();writeSpark(b.dataset.swrite)});
   const mh=document.getElementById('motivhome');if(mh)mh.onclick=openMotivators;
   const at=document.getElementById('archtoggle');if(at)at.onclick=()=>{S.ui.showExplored=!S.ui.showExplored;save();render()};
   const hb=document.getElementById('historybtn');if(hb)hb.onclick=openHistory;

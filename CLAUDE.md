@@ -37,6 +37,10 @@ There is **no framework, no build step, no package.json**. Vercel serves `index.
   only when the owner clicks ✦ Prompt. A dump written with one shown stores it as `dump.prompt`.
 - Flow: morning pages → Ready → "pages done" screen (Back to Desk / Continue to a creative session). Never jump straight
   into the duration picker after Ready.
+- Entry points: one **Start writing** button (Sparks page and project pages; `startWriting`) — morning pages first,
+  or straight to the time/spark picker if today's pages exist (`pagesDoneToday`). No separate "quick start": 10 min is a
+  chip on the picker. **Write** on a spark card skips pages and only asks for the time (`writeSpark`, `PICK_SPARK`).
+  Desk's "Write today's pages" is pages only.
 - `active.paused` (ms left) marks a session paused by swipe-back; Desk/Sparks show a Resume/Finish bar.
   Starting a new session while one is paused asks first (`askPausedThen`, canvas phase `pausedq`).
 - Sparks may carry an optional `title` (set in the spark editor), shown as a heading on the spark card.
