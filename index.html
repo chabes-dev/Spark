@@ -196,6 +196,7 @@ input,textarea{font-family:inherit;color:inherit;background:none;border:none;out
   color:var(--ink-3);padding:13px 18px;border:1.5px solid var(--ash);border-radius:999px;background:var(--surface);
   transition:font-size .45s cubic-bezier(.3,.7,.3,1),padding .45s cubic-bezier(.3,.7,.3,1),color .15s,border-color .15s}
 .cpill:hover{border-color:var(--caccent);color:var(--caccent)}
+.cpill#clock.on{border-color:var(--caccent);color:var(--caccent)}
 .ctimerinput{font-family:var(--mono);font-size:14px;font-weight:600;letter-spacing:.06em;color:var(--caccent);
   padding:13px 18px;border:1.5px solid var(--caccent);border-radius:999px;background:var(--surface);width:90px;text-align:center}
 .canvaswrap.typing .ctimerinput{font-size:12.5px;padding:9px 12px;width:64px}
@@ -340,8 +341,8 @@ input,textarea{font-family:inherit;color:inherit;background:none;border:none;out
 .cmore{display:none}
 @media(max-width:640px){
   .cbar{gap:8px;padding:12px 14px}
-  .cbar>.cpill:not(.cmore):not(#cprompt){display:none}
-  .cbar.open>.cpill:not(.cmore):not(#cprompt){display:inline-block}
+  .cbar>.cpill:not(.cmore):not(#cprompt):not(#clock){display:none}
+  .cbar.open>.cpill:not(.cmore):not(#cprompt):not(#clock){display:inline-block}
   .cmore{display:inline-block;letter-spacing:.2em}
   .cmotiv{display:none}
   .cexit{margin-left:auto}
@@ -405,7 +406,7 @@ function wc(t){return t&&t.trim()?t.trim().split(/\s+/).length:0}
 let S=load()||{sparks:[],sessions:[],dumps:[],motivators:[],active:null,dumpDraft:null,settings:{},ui:{showExplored:false}};
 S.sparks=S.sparks||[];S.sessions=S.sessions||[];S.dumps=S.dumps||[];S.motivators=S.motivators||[];
 S.ui=Object.assign({showExplored:false,view:'sparks'},S.ui||{});
-S.settings=Object.assign({soundscape:'off',typing:'classic',typingVol:.5,wsize:2,theme:'default',dumpMin:2},S.settings||{});
+S.settings=Object.assign({soundscape:'off',typing:'classic',typingVol:.5,wsize:2,theme:'default',dumpMin:2,lockPages:true,lockWrite:false},S.settings||{});
 
 /* ---- migration: string collections (dumps only) -> projects (sparks, sessions, dumps) ---- */
 if(!Array.isArray(S.projects)){
@@ -830,21 +831,41 @@ function wireTypingSound(ta){
     if(e.key.length===1||e.key==='Backspace'||e.key==='Delete'||e.key==='Enter')keySound(keyKind(e));
   });
 }
-function wireAppendOnly(ta){
-  const lockEnd=()=>{const n=ta.value.length;if(ta.selectionStart!==n||ta.selectionEnd!==n)ta.setSelectionRange(n,n)};
+// Lock switch: a locked page only grows at the end (no deleting, no moving the caret back, no autocorrect).
+// The textarea's data-locked attribute is the switch, so it can be flipped mid-writing.
+const isLocked=ta=>!!ta&&ta.dataset.locked==='1';
+function caretToEnd(ta){const n=ta.value.length;if(ta.selectionStart!==n||ta.selectionEnd!==n)ta.setSelectionRange(n,n)}
+function setLocked(ta,on){
+  if(!ta)return;ta.dataset.locked=on?'1':'0';
+  // phones: autocorrect and suggestions would rewrite words already written
+  ta.spellcheck=!on;ta.setAttribute('autocorrect',on?'off':'on');ta.setAttribute('autocomplete','off');
+  if(on)caretToEnd(ta);
+}
+function wireAppendOnly(ta,on){
+  setLocked(ta,on);
   ta.addEventListener('keydown',e=>{
+    if(!isLocked(ta))return;
     const blocked=['Backspace','Delete','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End','PageUp','PageDown'];
     if(blocked.includes(e.key)){e.preventDefault();e.stopImmediatePropagation();return}
     if((e.ctrlKey||e.metaKey)&&['a','z','y','x'].includes(e.key.toLowerCase())){e.preventDefault();e.stopImmediatePropagation();return}
   });
-  ta.addEventListener('beforeinput',e=>{const t=e.inputType||'';if(t.startsWith('delete')||t==='historyUndo'||t==='historyRedo')e.preventDefault()});
-  ta.addEventListener('cut',e=>e.preventDefault());
-  ta.addEventListener('paste',e=>e.preventDefault());
-  ta.addEventListener('click',lockEnd);
-  ta.addEventListener('mouseup',lockEnd);
-  ta.addEventListener('focus',lockEnd);
-  ta.addEventListener('select',lockEnd);
-  ta.addEventListener('input',lockEnd);
+  ta.addEventListener('beforeinput',e=>{
+    if(!isLocked(ta))return;
+    const t=e.inputType||'';
+    if(t.startsWith('delete')||t.startsWith('history')||t==='insertReplacementText'||t==='insertFromPaste'||t==='insertFromDrop'){e.preventDefault();return}
+    caretToEnd(ta); // the iPhone lets you drag the caret back: new words still land at the end
+  });
+  ['cut','paste','drop'].forEach(ev=>ta.addEventListener(ev,e=>{if(isLocked(ta))e.preventDefault()}));
+  ['click','mouseup','focus','select','input'].forEach(ev=>ta.addEventListener(ev,()=>{if(isLocked(ta))caretToEnd(ta)}));
+}
+document.addEventListener('selectionchange',()=>{const t=document.activeElement;if(t&&t.tagName==='TEXTAREA'&&isLocked(t))caretToEnd(t)});
+function lockKey(){return PHASE==='dump'?'lockPages':'lockWrite'}
+function lockLabel(){return S.settings[lockKey()]?'🔒 Locked':'✎ Free'}
+function toggleLock(btn){
+  const k=lockKey();S.settings[k]=!S.settings[k];save();
+  btn.textContent=lockLabel();btn.classList.toggle('on',S.settings[k]);
+  const ta=document.querySelector('#canvas textarea.cwrite');if(ta){setLocked(ta,S.settings[k]);ta.focus()}
+  toast(S.settings[k]?'locked · only forward':'free · edit away');
 }
 function chime(){
   const ctx=ensureAudio();if(!ctx)return;
@@ -1093,6 +1114,12 @@ function closeCanvas(){
 const TOUCH=matchMedia('(hover:none)').matches;
 const EXIT_LABEL=TOUCH?'Done':'Esc';
 let CBAR_OPEN=false; // phone: the settings pills are tucked behind •••
+function hasLock(){
+  if(PHASE==='dump')return true;
+  if(PHASE==='write')return !!(S.active&&!S.active.wrapped);
+  if(PHASE==='review'){const it=reviewLookup();return !!(it&&it.untimed)}
+  return false;
+}
 function cbarInner(){
   if(PHASE==='pagesdone')return `<div class="cmotiv"></div><button class="cexit" id="cexit">${EXIT_LABEL}</button>`;
   const timerPill=PHASE==='dump'?`<button class="cpill" id="cprompt">✦ Prompt</button><button class="cpill" id="ctimer">Timer · ${S.settings.dumpMin||2} min</button>`:'';
@@ -1101,7 +1128,7 @@ function cbarInner(){
     <button class="cpill" id="ckeys">Keys · ${TYPE_LABEL[S.settings.typing]}</button>
     <button class="cpill" id="ctheme">Theme · ${THEME_LABEL[S.settings.theme]}</button>
     <button class="cpill" id="csize">Aa · ${WSIZE_LABEL[S.settings.wsize]}</button>
-    ${timerPill}
+    ${timerPill}${hasLock()?`<button class="cpill${S.settings[lockKey()]?' on':''}" id="clock" title="Locked: you can only add words at the end">${lockLabel()}</button>`:''}
     <button class="cpill" id="cproj">Project · ${esc((projById(currentProjectId())||{name:'None'}).name)}</button>
     <div class="cmotiv">${currentMotivator?esc(currentMotivator.text):''}</div>
     <button class="cexit" id="cexit">${PHASE==='write'&&S.active&&!S.active.wrapped?EXIT_LABEL+' · end early':EXIT_LABEL}</button>`;
@@ -1241,6 +1268,7 @@ function wireCanvas(c){
   if(mb)mb.onclick=()=>{CBAR_OPEN=!CBAR_OPEN;closePopover();mb.parentNode.classList.toggle('open',CBAR_OPEN)};
   const wta=c.querySelector('textarea.cwrite');
   if(wta)wta.addEventListener('pointerdown',()=>{if(CBAR_OPEN){CBAR_OPEN=false;closePopover();const b=c.querySelector('.cbar');if(b)b.classList.remove('open')}});
+  const lk=c.querySelector('#clock');if(lk)lk.onclick=()=>toggleLock(lk);
   const pr=c.querySelector('#cprompt');if(pr)pr.onclick=()=>{nextPrompt();showPromptBar()};
   const tpb=c.querySelector('#tprompt');if(tpb)wirePromptBar(tpb);
   const pdc=c.querySelector('#pdcontinue');if(pdc)pdc.onclick=continueAfterPages;
@@ -1264,7 +1292,7 @@ function wireCanvas(c){
       if(!dumpTypingStart&&dumpText.trim()){dumpTypingStart=Date.now();armDumpTimer()}
       S.dumpDraft={text:dumpText,startedAt:dumpStart,projectId:FLOW_PROJECT,prompt:DUMP_PROMPT};save();
     };
-    wireAppendOnly(ta);
+    wireAppendOnly(ta,S.settings.lockPages);
     wireTypingSound(ta);
     const ctb=c.querySelector('#ctimer');if(ctb)ctb.onclick=()=>editTimerPill(ctb);
     armDumpTimer();
@@ -1280,6 +1308,7 @@ function wireCanvas(c){
       c.classList.toggle('typing',wc(a.notes)>0);
       ta.oninput=()=>{a.notes=ta.value;save();autosize(ta);const w=c.querySelector('#cwc2');if(w)w.textContent=wc(a.notes)+' words';
         c.classList.toggle('typing',wc(a.notes)>0)};
+      wireAppendOnly(ta,S.settings.lockWrite);
       wireTypingSound(ta);
       updateRing(a.endsAt-Date.now());
       const sv=c.querySelector('#savebtn');if(sv)sv.onclick=()=>saveCheckpoint();
@@ -1299,6 +1328,7 @@ function wireCanvas(c){
       c.classList.toggle('typing',wc(reviewGetText(item))>0);
       ta.oninput=()=>{reviewSetText(item,ta.value);save();autosize(ta);const w=c.querySelector('#cwc3');if(w)w.textContent=wc(ta.value)+' words';
         c.classList.toggle('typing',wc(ta.value)>0)};
+      if(item.untimed)wireAppendOnly(ta,S.settings.lockWrite);
       wireTypingSound(ta);
       const sv=c.querySelector('#savebtn');if(sv)sv.onclick=()=>{save();toast('saved')};
       if(!reviewGetText(item))ta.focus();

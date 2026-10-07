@@ -44,10 +44,13 @@ There is **no framework, no build step, no package.json**. Vercel serves `index.
   Desk's "Write today's pages" is pages only.
 - `active.paused` (ms left) marks a session paused by swipe-back; Desk/Sparks show a Resume/Finish bar.
   Starting a new session while one is paused asks first (`askPausedThen`, canvas phase `pausedq`).
+- Lock switch (`#clock`, `toggleLock`) on morning pages, timed sessions and free entries: locked = append-only
+  (no deletes, caret pinned to the end, autocorrect off; `wireAppendOnly`, flag is the textarea's `data-locked`).
+  Remembered separately: `settings.lockPages` (default true) and `settings.lockWrite` (default false).
 - Sparks may carry an optional `title` (set in the spark editor), shown as a heading on the spark card.
 - Phones: writing-screen settings hide behind ••• (`CBAR_OPEN`, `.cbar.open`), exit reads "Done" on touch (`TOUCH`),
   the canvas follows `visualViewport` so the centred line stays above the keyboard (`fitCanvas`), spark-card actions are
-  always visible on `(hover:none)`, and morning pages block deletes via `beforeinput` too.
+  always visible on `(hover:none)`, and locked pages block deletes via `beforeinput` and `selectionchange` too.
 - Phones: horizontal swipe switches pages (Sparks ⇄ Desk; project → Desk). Ignored at the screen edges (browser
   back), on the heatmap, in fields, sheets and writing screens.
   Only `.pagebody` slides; the header stays put and the tab highlight (`#navind`, `placeNavInd`) follows the finger.
