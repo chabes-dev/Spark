@@ -301,6 +301,9 @@ input,textarea{font-family:inherit;color:inherit;background:none;border:none;out
 .sname:hover{border-color:var(--ash)}
 .sname:focus{border-color:var(--caccent)}
 .sname:empty::before{content:attr(data-ph);color:var(--ink-3);font-style:italic;opacity:.7}
+/* an empty title placeholder fades away once writing starts; the title is asked for at the end */
+.sname.autofade{transition:opacity .9s ease,border-color .2s}
+.canvaswrap.typing .sname.autofade:empty:not(:focus){opacity:0;pointer-events:none}
 .swrap-h{font-family:var(--serif);font-size:40px;font-weight:400;margin-bottom:10px;letter-spacing:-.02em}
 .swrap-stat{font-family:var(--mono);font-size:14px;color:var(--ink-2);letter-spacing:.06em;text-transform:uppercase;margin-bottom:30px}
 .swrap-acts{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
@@ -1353,7 +1356,7 @@ function writeHtml(){
   return `<div class="cbar fadeui">${cbarInner()}</div>
     <div class="cbody writebody tw">
       <div class="sring fadeui" id="sring" style="--pct:100"><i class="core"></i><span class="stime" id="stime">${String(a.minutes).padStart(2,'0')}:00</span></div>
-      <div class="sname" id="sname" contenteditable="true" data-ph="Freewriting">${esc(a.sparkText||'')}</div>
+      <div class="sname autofade" id="sname" contenteditable="true" data-ph="Freewriting">${esc(a.sparkText||'')}</div>
       <textarea class="cwrite" id="wtext" placeholder="Go.">${esc(a.notes||'')}</textarea>
     </div>
     <div class="cfoot fadeui"><span class="cwc" id="cwc2">${wc(a.notes)} words</span><button class="btn" id="savebtn">Save</button></div>`;
@@ -1364,7 +1367,7 @@ function reviewHtml(){
   const text=reviewGetText(item);
   return `<div class="cbar fadeui">${cbarInner()}</div>
     <div class="cbody writebody tw">
-      <div class="sname" id="sname" contenteditable="true" data-ph="${esc(reviewTitlePlaceholder(item))}">${esc(reviewGetTitle(item))}</div>
+      <div class="sname${item.untimed?' autofade':''}" id="sname" contenteditable="true" data-ph="${esc(reviewTitlePlaceholder(item))}">${esc(reviewGetTitle(item))}</div>
       <textarea class="cwrite" id="rtext" placeholder="Nothing written.">${esc(text)}</textarea>
     </div>
     <div class="cfoot fadeui"><span class="cwc" id="cwc3">${wc(text)} words</span><button class="btn" id="savebtn">Save</button></div>`;

@@ -51,7 +51,8 @@ There is **no framework, no build step, no package.json**. Vercel serves `index.
   gradient pinned to the visible area. Reading old entries back stays crisp.
 - After writing, the app asks for a title (canvas phase `title`, `askTitle`/`finishTitle`): Esc from pages, ending a
   session, leaving a new free entry. Pages-done screen has its own field (`#pdtitle`). Dumps store `title`; sessions use
-  `sparkText` as their title. Empty writing is never asked.
+  `sparkText` as their title. Empty writing is never asked. An empty title placeholder (`.sname.autofade`) fades out
+  once writing starts (`.typing`); a typed title stays.
 - Themes (canvas only, always light): `THEMES` + `THEME_LABEL` + `THEME_SWATCH`, picked from a popover. A theme can set
   `--ink*` and `--cfont` (Typewriter uses Courier Prime).
 - Scenes (`hills`, `dawn`, `snow`) are art themes drawn in code: `sceneHtml`/`applyScene` put a `.scene` layer
