@@ -13,7 +13,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='15' fill='%23F5F3EE'/%3E%3Ccircle cx='32' cy='32' r='16' fill='none' stroke='%234F6B62' stroke-width='5' stroke-linecap='round' stroke-dasharray='87 13'/%3E%3C/svg%3E" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
   --serif:'Fraunces', Georgia, serif;
@@ -189,6 +189,14 @@ input,textarea{font-family:inherit;color:inherit;background:none;border:none;out
   background-size:150px 150px;height:100%;display:flex;flex-direction:column;transition:background-color .5s}
 .canvaswrap[data-theme="dusk"]{--cpaper:#F3F4F1;--caccent:var(--dusk)}
 .canvaswrap[data-theme="glow"]{--cpaper:#FCF3EC;--caccent:#D8390F}
+.canvaswrap[data-theme="paper"]{--cpaper:#F6EEDC;--caccent:#8A5A2B;--ink:#3B2F22;--ink-2:#6E5A44;--ink-3:#A08B70}
+.canvaswrap[data-theme="typewriter"]{--cpaper:#F4EFE3;--caccent:#B23A2A;--ink:#262523;--ink-2:#5E5A52;--ink-3:#97918A;--cfont:'Courier Prime','Courier New',monospace}
+.canvaswrap[data-theme="sage"]{--cpaper:#EDF2EA;--caccent:#4F7A5A;--ink:#22342A;--ink-2:#4F6355;--ink-3:#8A9A8D}
+.canvaswrap[data-theme="mist"]{--cpaper:#EDF1F6;--caccent:#3E6A9A;--ink:#1F2D44;--ink-2:#4C5A70;--ink-3:#8793A6}
+.canvaswrap[data-theme="blush"]{--cpaper:#F9EDEE;--caccent:#B0476A;--ink:#46202F;--ink-2:#74505D;--ink-3:#A88A95}
+.canvaswrap[data-theme="linen"]{--cpaper:#F3ECE2;--caccent:#9B6B43;--ink:#38291D;--ink-2:#6A5848;--ink-3:#A39280}
+.canvaswrap{color:var(--ink)}
+.themedot{display:inline-block;width:16px;height:16px;border-radius:50%;margin-right:9px;vertical-align:-3px;border:1.5px solid}
 .fadeui{transition:opacity .6s ease}
 #canvas.idle .fadeui{opacity:0;pointer-events:none}
 .cbar{display:flex;align-items:center;gap:10px;padding:22px 32px;flex-wrap:wrap}
@@ -222,7 +230,7 @@ input,textarea{font-family:inherit;color:inherit;background:none;border:none;out
 .dumpbody,.writebody{width:100%;max-width:760px;margin:0 auto}
 .pickbody{max-width:760px;width:100%;text-align:left;align-items:stretch;margin:0 auto}
 .wrapbody{align-items:center;justify-content:center;text-align:center}
-.cwrite{width:100%;min-height:220px;border:none;background:transparent;font-family:var(--serif);
+.cwrite{width:100%;min-height:220px;border:none;background:transparent;font-family:var(--cfont,var(--serif));
   font-size:clamp(28px,3.2vw,40px);font-weight:300;line-height:1.5;color:var(--ink);resize:none;overflow:hidden;
   transition:font-size .45s cubic-bezier(.3,.7,.3,1)}
 .cwrite::placeholder{color:var(--ink-3);font-style:italic;opacity:.6}
@@ -235,6 +243,13 @@ input,textarea{font-family:inherit;color:inherit;background:none;border:none;out
 .cbody.tw::before{content:'';flex:none;height:var(--twtop,16px)}
 .cbody.tw::after{content:'';flex:none;height:50vh}
 .cbody.tw .cwrite{min-height:0}
+/* fresh writing fades out toward the top; --f0/--f1 are the visible top edge in the textarea's own coordinates (updateFade) */
+.cbody.tw .cwrite.fading{-webkit-mask-image:linear-gradient(to bottom,transparent var(--f0,-9999px),#000 var(--f1,-9999px));
+  mask-image:linear-gradient(to bottom,transparent var(--f0,-9999px),#000 var(--f1,-9999px))}
+.titlein{display:block;width:min(520px,100%);margin:0 auto 26px;font-family:var(--cfont,var(--serif));font-size:26px;text-align:center;
+  padding:10px 4px;border-bottom:1.5px solid var(--ash);color:var(--ink)}
+.titlein:focus{border-bottom-color:var(--caccent)}
+.titlein::placeholder{color:var(--ink-3)}
 .sizeaa{display:inline-block;width:44px;font-family:var(--serif);color:var(--ink)}
 .cfoot{display:flex;align-items:center;justify-content:space-between;padding:20px 40px 34px;max-width:760px;margin:0 auto;width:100%}
 .cwc{font-family:var(--mono);font-size:12.5px;color:var(--ink-3);letter-spacing:.07em;text-transform:uppercase}
@@ -292,6 +307,7 @@ input,textarea{font-family:inherit;color:inherit;background:none;border:none;out
 .hc.today{outline:1.5px solid var(--ink-3);outline-offset:1px}
 .heatlegend{display:flex;align-items:center;justify-content:flex-end;gap:4px;margin-top:10px;font-family:var(--mono);font-size:11px;color:var(--ink-3)}
 .heatlegend .hc{width:11px;height:11px}
+.todayacts{display:flex;gap:10px;flex-wrap:wrap}
 .todayline{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:18px;padding-top:16px;
   border-top:1.5px solid var(--ash-2);font-size:16px;color:var(--ink-2)}
 .projgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;margin-top:16px}
@@ -573,9 +589,9 @@ function openDumps(filter){
       ${d.prompt?`<div class="dumpprompt">✦ ${esc(d.prompt)}</div>`:''}
       <div class="dumptext">${esc(d.text)}</div>
     </div>`;
-  }).join(''):`<p style="margin-top:16px">${filter==='all'?'Nothing dumped yet.':'Nothing here yet.'}</p>`;
-  sheet(`<h3>Dumps</h3>
-    <p>What you cleared your head of before each session. Open one to read it back or keep going.</p>
+  }).join(''):`<p style="margin-top:16px">${filter==='all'?'No morning pages yet.':'Nothing here yet.'}</p>`;
+  sheet(`<h3>Morning pages</h3>
+    <p>Everything you've cleared your head of, newest first. Open one to read it back or keep going.</p>
     ${projs.length?tabs:''}
     ${list.length||S.dumps.length?`<div class="sheet-acts" style="margin-top:0;margin-bottom:18px;justify-content:flex-start"><button class="btn" id="dexport">↓ Export all as .txt</button></div>`:''}
     <div class="dumplist">${rows}</div>
@@ -589,7 +605,7 @@ function openDumps(filter){
     });
     el.querySelectorAll('[data-ddel]').forEach(b=>b.onclick=()=>{
       const d=S.dumps.find(x=>x.id===b.dataset.ddel);if(!d)return;
-      sheetConfirm('Delete this dump?','This removes it permanently — it won\'t be recoverable.','Delete',()=>{
+      sheetConfirm('Delete these pages?','This removes it permanently — it won\'t be recoverable.','Delete',()=>{
         S.dumps=S.dumps.filter(x=>x.id!==d.id);save();openDumps(filter);
       });
     });
@@ -894,9 +910,29 @@ function armIdle(root){
 }
 
 /* ---- theme + popovers ---- */
-const THEMES=['default','dusk','glow'];
-const THEME_LABEL={default:'Daylight',dusk:'Dusk',glow:'Glow'};
-function cycleTheme(){const i=THEMES.indexOf(S.settings.theme);S.settings.theme=THEMES[(i+1)%THEMES.length];save();renderPhase()}
+const THEMES=['default','dusk','glow','paper','typewriter','sage','mist','blush','linen'];
+const THEME_LABEL={default:'Daylight',dusk:'Dusk',glow:'Glow',paper:'Paper',typewriter:'Typewriter',sage:'Sage',mist:'Mist',blush:'Blush',linen:'Linen'};
+// swatch: [page, ink] for the picker
+const THEME_SWATCH={default:['#F5F3EE','#292722'],dusk:['#F3F4F1','#292722'],glow:['#FCF3EC','#D8390F'],paper:['#F6EEDC','#3B2F22'],
+  typewriter:['#F4EFE3','#262523'],sage:['#EDF2EA','#22342A'],mist:['#EDF1F6','#1F2D44'],blush:['#F9EDEE','#46202F'],linen:['#F3ECE2','#38291D']};
+function toggleThemePopover(){
+  const already=document.getElementById('cpop');closePopover();if(already)return;
+  const btn=document.getElementById('ctheme');if(!btn)return;
+  const pop=document.createElement('div');pop.className='cpop';pop.id='cpop';
+  pop.innerHTML=THEMES.map(t=>`<button class="cpopitem ${S.settings.theme===t?'on':''}" data-theme-set="${t}"><span class="themedot" style="background:${THEME_SWATCH[t][0]};border-color:${THEME_SWATCH[t][1]}"></span>${THEME_LABEL[t]}</button>`).join('');
+  btn.parentNode.style.position='relative';btn.insertAdjacentElement('afterend',pop);
+  pop.style.left=btn.offsetLeft+'px';
+  pop.addEventListener('click',e=>e.stopPropagation());
+  pop.querySelectorAll('[data-theme-set]').forEach(b=>b.onclick=()=>{
+    // stay open so themes can be compared against the page behind
+    S.settings.theme=b.dataset.themeSet;save();
+    const c=document.getElementById('canvas');if(c)c.setAttribute('data-theme',S.settings.theme);
+    pop.querySelectorAll('[data-theme-set]').forEach(x=>x.classList.toggle('on',x===b));
+    btn.textContent='Theme · '+THEME_LABEL[S.settings.theme];
+    const ta=document.querySelector('#canvas .cbody.tw textarea.cwrite');if(ta){autosize(ta);recenter(ta,true)}
+  });
+  setTimeout(()=>document.addEventListener('click',closePopover,{once:true}),0);
+}
 function closePopover(){const p=document.getElementById('cpop');if(p)p.remove()}
 function togglePopover(kind){
   const already=document.getElementById('cpop');closePopover();if(already)return;
@@ -1016,6 +1052,12 @@ function openReview(kind,id,back){
   PHASE='review';openCanvas();
 }
 function exitReview(){
+  const item=reviewLookup();
+  // a new free entry gets the title question too, unless it already has one
+  if(PHASE==='review'&&item&&item.untimed&&(item.notes||'').trim()&&!item.sparkText){askTitle('session',item.id,exitReviewDone);return}
+  exitReviewDone();
+}
+function exitReviewDone(){
   closeCanvas();
   const item=reviewLookup();
   if(item&&item.untimed){
@@ -1049,7 +1091,7 @@ function reviewSetTitle(item,v){
 function reviewTitlePlaceholder(item){
   if(REVIEW_KIND==='session')return item.untimed?'Untitled entry':'Freewriting';
   const d=new Date(item.created).toLocaleDateString(undefined,{day:'numeric',month:'short'});
-  return REVIEW_KIND==='dump'?'Dump · '+d:'Add a title (optional)';
+  return REVIEW_KIND==='dump'?'Pages · '+d:'Add a title (optional)';
 }
 function beginFlow(kind,projectId){
   ensureAudio();
@@ -1121,7 +1163,7 @@ function hasLock(){
   return false;
 }
 function cbarInner(){
-  if(PHASE==='pagesdone')return `<div class="cmotiv"></div><button class="cexit" id="cexit">${EXIT_LABEL}</button>`;
+  if(PHASE==='pagesdone'||PHASE==='title')return `<div class="cmotiv"></div><button class="cexit" id="cexit">${EXIT_LABEL}</button>`;
   const timerPill=PHASE==='dump'?`<button class="cpill" id="cprompt">✦ Prompt</button><button class="cpill" id="ctimer">Timer · ${S.settings.dumpMin||2} min</button>`:'';
   return `<button class="cpill cmore" id="cmore" aria-label="More settings">•••</button>
     <button class="cpill" id="csound">Sound · ${SCAPE_LABEL[S.settings.soundscape]}</button>
@@ -1140,6 +1182,7 @@ function pagesDoneHtml(){
     <div class="cbody wrapbody">
       <div class="swrap-h">Today's pages are done.</div>
       <div class="swrap-stat">${d?d.words+' words':''}${mins?' · '+mins+' min':''}${st.cur?' · 🔥 '+st.cur+'-day streak':''}</div>
+      ${d?`<input class="titlein" id="pdtitle" placeholder="Name these pages" value="${esc(d.title||'')}" autocomplete="off" enterkeyhint="done" />`:''}
       <div class="swrap-acts">
         <button class="btn" id="pdcontinue">Continue to a creative session</button>
         <button class="btn btn-hot" id="pdback">${S.ui.view==='project'?'Back to project':'Back to Desk'}</button>
@@ -1258,6 +1301,7 @@ function renderPhase(){
   else if(PHASE==='review')c.innerHTML=reviewHtml();
   else if(PHASE==='pagesdone')c.innerHTML=pagesDoneHtml();
   else if(PHASE==='pausedq')c.innerHTML=pausedQHtml();
+  else if(PHASE==='title')c.innerHTML=titleHtml();
   const bar=c.querySelector('.cbar');if(bar)bar.classList.toggle('open',CBAR_OPEN);
   wireCanvas(c);
 }
@@ -1273,13 +1317,27 @@ function wireCanvas(c){
   const tpb=c.querySelector('#tprompt');if(tpb)wirePromptBar(tpb);
   const pdc=c.querySelector('#pdcontinue');if(pdc)pdc.onclick=continueAfterPages;
   const pdb=c.querySelector('#pdback');if(pdb)pdb.onclick=pagesDoneBack;
+  if(PHASE==='title'){
+    const inp=c.querySelector('#titlein');
+    inp.focus();inp.setSelectionRange(inp.value.length,inp.value.length);
+    inp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();finishTitle()}});
+    c.querySelector('#tsave').onclick=finishTitle;
+    c.querySelector('#tskip').onclick=()=>{inp.value='';finishTitle()};
+  }
+  const pdt=c.querySelector('#pdtitle');
+  if(pdt&&LAST_DUMP){
+    const keep=()=>{const v=pdt.value.trim();if(v)LAST_DUMP.title=v;else delete LAST_DUMP.title;save()};
+    pdt.addEventListener('input',keep);
+    pdt.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();keep();pdt.blur()}});
+    pdt.focus();
+  }
   if(PHASE==='pausedq'){
     c.querySelector('#pqres').onclick=()=>{closeCanvas();resumeSession()};
     c.querySelector('#pqnew').onclick=()=>{finalizePaused();continueAfterPages()};
   }
   const sb=c.querySelector('#csound');if(sb)sb.onclick=()=>togglePopover('sound');
   const kb=c.querySelector('#ckeys');if(kb)kb.onclick=()=>togglePopover('keys');
-  const tb=c.querySelector('#ctheme');if(tb)tb.onclick=cycleTheme;
+  const tb=c.querySelector('#ctheme');if(tb)tb.onclick=toggleThemePopover;
   const zb=c.querySelector('#csize');if(zb)zb.onclick=toggleSizePopover;
   const pb=c.querySelector('#cproj');if(pb)pb.onclick=toggleProjPopover;
 
@@ -1406,9 +1464,19 @@ function recenter(ta,immediate){
   };
   body.__twRaf=requestAnimationFrame(step);
 }
+function updateFade(ta,body){
+  const off=ta.getBoundingClientRect().top-body.getBoundingClientRect().top,h=body.clientHeight;
+  ta.style.setProperty('--f0',(-off+h*.03)+'px');ta.style.setProperty('--f1',(-off+h*.36)+'px');
+}
 function wireTypewriterScroll(c){
   const ta=c.querySelector('.cbody.tw textarea.cwrite');if(!ta)return;
   const body=ta.closest('.cbody.tw');
+  if(hasLock()){ // new writing only (pages, sessions, free entries); reading old entries back stays crisp
+    ta.classList.add('fading');
+    const f=()=>updateFade(ta,body);
+    body.addEventListener('scroll',f,{passive:true});ta.addEventListener('input',f);new ResizeObserver(f).observe(body);
+    requestAnimationFrame(f);
+  }
   const go=()=>recenter(ta,false);
   ta.addEventListener('input',go);
   ta.addEventListener('click',go);
@@ -1422,6 +1490,38 @@ function wireTypewriterScroll(c){
 window.addEventListener('resize',()=>{if(document.getElementById('heat')&&!document.getElementById('canvas')&&heatWeeks()!==HEAT_W)render();const ta=document.querySelector('#canvas .cbody.tw textarea.cwrite');if(ta)recenter(ta,true)});
 
 let LAST_DUMP=null;
+/* title screen after writing: TITLE_FOR={kind:'dump'|'session',id,then} */
+let TITLE_FOR=null;
+function titleItem(){const f=TITLE_FOR;if(!f)return null;return f.kind==='dump'?S.dumps.find(x=>x.id===f.id):S.sessions.find(x=>x.id===f.id)}
+function askTitle(kind,id,then){
+  TITLE_FOR={kind,id,then};PHASE='title';
+  if(document.getElementById('canvas'))renderPhase();else openCanvas();
+}
+function setTitle(v){
+  const it=titleItem();if(!it)return;v=(v||'').trim();
+  if(TITLE_FOR.kind==='dump'){if(v)it.title=v;else delete it.title}
+  else if(v)it.sparkText=v;
+  save();
+}
+function finishTitle(){
+  const inp=document.getElementById('titlein');if(inp)setTitle(inp.value); // whatever was typed is kept
+  const f=TITLE_FOR;TITLE_FOR=null;if(f&&f.then)f.then();
+}
+function titleHtml(){
+  const it=titleItem(),f=TITLE_FOR||{};
+  const words=it?(f.kind==='dump'?it.words:wc(it.notes)):0;
+  const cur=it?(f.kind==='dump'?it.title||'':it.sparkText||''):'';
+  return `<div class="cbar fadeui">${cbarInner()}</div>
+    <div class="cbody wrapbody">
+      <div class="swrap-h">${f.kind==='dump'?'Name these pages':'Name this entry'}</div>
+      <div class="swrap-stat">${words} words</div>
+      <input class="titlein" id="titlein" placeholder="Untitled" value="${esc(cur)}" autocomplete="off" enterkeyhint="done" />
+      <div class="swrap-acts">
+        <button class="btn" id="tskip">Skip</button>
+        <button class="btn btn-hot" id="tsave">Save title</button>
+      </div>
+    </div>`;
+}
 function commitDump(){
   clearInterval(DUMPTICK);LAST_DUMP=null;
   if(dumpText&&dumpText.trim()){
@@ -1456,7 +1556,11 @@ function pagesDoneBack(){closeCanvas();if(S.ui.view!=='project')S.ui.view='desk'
 function leaveCanvas(fromSwipe){
   if(PHASE==='write'&&S.active&&!S.active.wrapped){if(fromSwipe)pauseSession();else endEarly();return}
   if(PHASE==='write'&&S.active&&S.active.wrapped){finishSession(false);return}
-  if(PHASE==='dump')commitDump();
+  if(PHASE==='title'){finishTitle();return}
+  if(PHASE==='dump'){
+    commitDump();
+    if(LAST_DUMP){askTitle('dump',LAST_DUMP.id,()=>{closeCanvas();render()});return}
+  }
   if(PHASE==='review'){exitReview();return}
   if(PHASE==='pagesdone'||PHASE==='pausedq'){pagesDoneBack();return}
   if(S.active&&S.active.paused==null)S.active=null;
@@ -1552,8 +1656,9 @@ function finishSession(markExplored,early){
   else S.sessions.unshift({id:a.entryId,sparkId:a.sparkId,sparkText:a.sparkText,projectId:a.projectId||null,minutes:a.minutes,
     startedAt:a.startedAt,endedAt,actualMs,notes:a.notes||'',completed:!early});
   if(markExplored&&a.sparkId){const s=S.sparks.find(x=>x.id===a.sparkId);if(s){s.explored=true;s.exploredAt=Date.now()}}
-  S.active=null;save();closeCanvas();render();
-  toast(early?'session ended':'nice work');
+  S.active=null;save();
+  const done=()=>{closeCanvas();render();toast(early?'session ended':'nice work')};
+  if((a.notes||'').trim())askTitle('session',a.entryId,done);else done();
 }
 
 /* ---- home ---- */
@@ -1620,7 +1725,7 @@ function sparksHtml(active,explored){
     ${motivStrip()}
     <div class="foot">
       <button class="btn" id="historybtn">History${S.sessions.length?' · '+S.sessions.length:''}</button>
-      <button class="btn" id="dumpsbtn">Dumps${S.dumps.length?' · '+S.dumps.length:''}</button>
+      <button class="btn" id="dumpsbtn">Morning pages${S.dumps.length?' · '+S.dumps.length:''}</button>
     </div>`;
 }
 
@@ -1697,7 +1802,8 @@ function deskHtml(){
       ${heatmapHtml(days)}
       <div class="todayline">
         <span>${todayW!==undefined?`Today's pages ✓ · ${todayW} words`:'No pages yet today.'}</span>
-        ${todayW!==undefined?'':`<button class="btn btn-hot" id="deskpages">Write today's pages</button>`}
+        <span class="todayacts">${S.dumps.length?`<button class="btn" id="deskallpages">See all pages · ${S.dumps.length}</button>`:''}
+        ${todayW!==undefined?'':`<button class="btn btn-hot" id="deskpages">Write today's pages</button>`}</span>
       </div>
     </div>
     <div class="card">
@@ -1805,6 +1911,7 @@ function wire(){
   const at=document.getElementById('archtoggle');if(at)at.onclick=()=>{S.ui.showExplored=!S.ui.showExplored;save();render()};
   const hb=document.getElementById('historybtn');if(hb)hb.onclick=openHistory;
   const db=document.getElementById('dumpsbtn');if(db)db.onclick=openDumps;
+  const dap=document.getElementById('deskallpages');if(dap)dap.onclick=()=>openDumps();
   app.querySelectorAll('[data-sedit]').forEach(b=>b.onclick=e=>{e.stopPropagation();openReview('spark',b.dataset.sedit)});
   app.querySelectorAll('[data-explore]').forEach(b=>b.onclick=e=>{e.stopPropagation();toggleExplored(b.dataset.explore)});
   app.querySelectorAll('[data-del]').forEach(b=>b.onclick=e=>{e.stopPropagation();

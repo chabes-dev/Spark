@@ -47,6 +47,15 @@ There is **no framework, no build step, no package.json**. Vercel serves `index.
 - Lock switch (`#clock`, `toggleLock`) on morning pages, timed sessions and free entries: locked = append-only
   (no deletes, caret pinned to the end, autocorrect off; `wireAppendOnly`, flag is the textarea's `data-locked`).
   Remembered separately: `settings.lockPages` (default true) and `settings.lockWrite` (default false).
+- New writing (wherever the lock switch shows) fades toward the top: `.cwrite.fading` mask, `updateFade` keeps the
+  gradient pinned to the visible area. Reading old entries back stays crisp.
+- After writing, the app asks for a title (canvas phase `title`, `askTitle`/`finishTitle`): Esc from pages, ending a
+  session, leaving a new free entry. Pages-done screen has its own field (`#pdtitle`). Dumps store `title`; sessions use
+  `sparkText` as their title. Empty writing is never asked.
+- Themes (canvas only, always light): `THEMES` + `THEME_LABEL` + `THEME_SWATCH`, picked from a popover. A theme can set
+  `--ink*` and `--cfont` (Typewriter uses Courier Prime).
+- Morning pages are listed in the "Morning pages" sheet (`openDumps`), reachable from the Sparks page footer and the
+  Desk card ("See all pages").
 - Sparks may carry an optional `title` (set in the spark editor), shown as a heading on the spark card.
 - Phones: writing-screen settings hide behind ••• (`CBAR_OPEN`, `.cbar.open`), exit reads "Done" on touch (`TOUCH`),
   the canvas follows `visualViewport` so the centred line stays above the keyboard (`fitCanvas`), spark-card actions are
