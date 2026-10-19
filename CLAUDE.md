@@ -54,6 +54,10 @@ There is **no framework, no build step, no package.json**. Vercel serves `index.
   `sparkText` as their title. Empty writing is never asked.
 - Themes (canvas only, always light): `THEMES` + `THEME_LABEL` + `THEME_SWATCH`, picked from a popover. A theme can set
   `--ink*` and `--cfont` (Typewriter uses Courier Prime).
+- Scenes (`hills`, `dawn`, `snow`) are art themes drawn in code: `sceneHtml`/`applyScene` put a `.scene` layer
+  (z-index:-1) in the canvas, with a soft `.veil` behind the text column. Snow is a small canvas loop (`snowfall`).
+  `settings.motion` (default on) plus the OS Reduce Motion setting (`motionOn()`) freeze Dawn and Snowfall.
+  `clean` is pure white, no paper texture.
 - Morning pages are listed in the "Morning pages" sheet (`openDumps`), reachable from the Sparks page footer and the
   Desk card ("See all pages").
 - Sparks may carry an optional `title` (set in the spark editor), shown as a heading on the spark card.

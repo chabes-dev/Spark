@@ -196,6 +196,28 @@ input,textarea{font-family:inherit;color:inherit;background:none;border:none;out
 .canvaswrap[data-theme="blush"]{--cpaper:#F9EDEE;--caccent:#B0476A;--ink:#46202F;--ink-2:#74505D;--ink-3:#A88A95}
 .canvaswrap[data-theme="linen"]{--cpaper:#F3ECE2;--caccent:#9B6B43;--ink:#38291D;--ink-2:#6A5848;--ink-3:#A39280}
 .canvaswrap{color:var(--ink)}
+.canvaswrap[data-theme="clean"]{--cpaper:#FFFFFF;--caccent:#2A7D74;--ink:#1E1E1E;--ink-2:#55585C;--ink-3:#9A9DA1;background-image:none}
+/* scenes: an art layer behind everything on the writing screen (z-index:-1 inside the canvas' own stacking context) */
+.canvaswrap[data-theme="hills"]{--cpaper:#EEF1F2;--caccent:#4D6B7A;--ink:#1F2B33;--ink-2:#46555F;--ink-3:#7F8C95;background-image:none}
+.canvaswrap[data-theme="dawn"]{--cpaper:#F8E6DC;--caccent:#B5536B;--ink:#38202F;--ink-2:#674A58;--ink-3:#9C8290;background-image:none}
+.canvaswrap[data-theme="snow"]{--cpaper:#EEF2F5;--caccent:#4F6E8C;--ink:#1E2A36;--ink-2:#4A5866;--ink-3:#8593A0;background-image:none}
+.scene{position:absolute;inset:0;z-index:-1;pointer-events:none;overflow:hidden}
+.scene svg,.scene canvas{position:absolute;left:0;bottom:0;width:100%}
+.scene canvas{top:0;height:100%}
+.scene .veil{position:absolute;top:0;bottom:0;left:50%;width:min(900px,100%);transform:translateX(-50%);
+  background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.18) 12%,rgba(255,255,255,.4) 32%,rgba(255,255,255,.4) 68%,rgba(255,255,255,.18) 88%,rgba(255,255,255,0))}
+.sc-hills{background:linear-gradient(180deg,#DCE4EA 0%,#EEF0EE 45%,#F4EFE6 100%)}
+.sc-hills svg{height:58%}
+.sc-hills .mist{position:absolute;left:0;right:0;bottom:0;height:45%;background:linear-gradient(0deg,rgba(244,239,230,.85),rgba(244,239,230,0))}
+.sc-dawn{background:linear-gradient(160deg,#F7D3C4,#F8E7D9,#E8DDF0,#F9E2CF,#F1CFD4,#F8E7D9);background-size:320% 320%;animation:dawnsky 80s ease-in-out infinite alternate}
+.sc-dawn .sun{position:absolute;left:50%;top:62%;width:120vmax;height:120vmax;transform:translate(-50%,-50%);border-radius:50%;
+  background:radial-gradient(circle,rgba(255,236,206,.9) 0%,rgba(255,226,196,.35) 22%,rgba(255,226,196,0) 48%);animation:sunbreathe 16s ease-in-out infinite alternate}
+@keyframes dawnsky{0%{background-position:0% 30%}100%{background-position:100% 70%}}
+@keyframes sunbreathe{0%{opacity:.65;transform:translate(-50%,-50%) scale(.92)}100%{opacity:1;transform:translate(-50%,-50%) scale(1.06)}}
+.sc-snow{background:linear-gradient(180deg,#C9D5DF 0%,#DCE4EB 55%,#EEF2F5 100%)}
+.sc-snow svg{height:34%}
+.scene.still,.scene.still *{animation:none!important}
+.cpopmotion{border-top:1.5px solid var(--ash-2);margin-top:4px;padding-top:4px}
 .themedot{display:inline-block;width:16px;height:16px;border-radius:50%;margin-right:9px;vertical-align:-3px;border:1.5px solid}
 .fadeui{transition:opacity .6s ease}
 #canvas.idle .fadeui{opacity:0;pointer-events:none}
@@ -217,7 +239,7 @@ input,textarea{font-family:inherit;color:inherit;background:none;border:none;out
 .canvaswrap.typing .cpill{font-size:12.5px;padding:9px 14px}
 .canvaswrap.typing .cexit{font-size:12.5px;padding:9px 16px}
 .canvaswrap.typing .cmotiv{font-size:16px}
-.cpop{position:absolute;top:100%;left:0;margin-top:6px;background:var(--surface);border:1.5px solid var(--ash);
+.cpop{position:absolute;top:100%;left:0;margin-top:6px;max-height:70vh;overflow-y:auto;background:var(--surface);border:1.5px solid var(--ash);
   border-radius:12px;box-shadow:var(--shadow-2);padding:6px;z-index:50;display:flex;flex-direction:column;min-width:150px}
 .cpopitem{text-align:left;font-family:var(--mono);font-size:13px;padding:9px 12px;border-radius:8px;color:var(--ink-2)}
 .cpopitem:hover{background:var(--ash-2);color:var(--ink)}
@@ -910,23 +932,79 @@ function armIdle(root){
 }
 
 /* ---- theme + popovers ---- */
-const THEMES=['default','dusk','glow','paper','typewriter','sage','mist','blush','linen'];
-const THEME_LABEL={default:'Daylight',dusk:'Dusk',glow:'Glow',paper:'Paper',typewriter:'Typewriter',sage:'Sage',mist:'Mist',blush:'Blush',linen:'Linen'};
+const THEMES=['default','clean','dusk','glow','paper','typewriter','sage','mist','blush','linen','hills','dawn','snow'];
+const THEME_LABEL={default:'Daylight',clean:'Clean',hills:'Misty Hills',dawn:'Dawn',snow:'Snowfall',dusk:'Dusk',glow:'Glow',paper:'Paper',typewriter:'Typewriter',sage:'Sage',mist:'Mist',blush:'Blush',linen:'Linen'};
 // swatch: [page, ink] for the picker
 const THEME_SWATCH={default:['#F5F3EE','#292722'],dusk:['#F3F4F1','#292722'],glow:['#FCF3EC','#D8390F'],paper:['#F6EEDC','#3B2F22'],
-  typewriter:['#F4EFE3','#262523'],sage:['#EDF2EA','#22342A'],mist:['#EDF1F6','#1F2D44'],blush:['#F9EDEE','#46202F'],linen:['#F3ECE2','#38291D']};
+  typewriter:['#F4EFE3','#262523'],clean:['#FFFFFF','#1E1E1E'],
+  hills:['linear-gradient(180deg,#DCE4EA,#9FB0BC)','#1F2B33'],dawn:['linear-gradient(160deg,#F7D3C4,#E8DDF0)','#38202F'],snow:['radial-gradient(circle,#fff 25%,#DDE5EC 30%)','#1E2A36'],sage:['#EDF2EA','#22342A'],mist:['#EDF1F6','#1F2D44'],blush:['#F9EDEE','#46202F'],linen:['#F3ECE2','#38291D']};
+/* ---- scenes: art backgrounds for the writing screen ---- */
+const REDUCED_MOTION=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const motionOn=()=>S.settings.motion!==false&&!REDUCED_MOTION;
+function hillsSvg(){
+  return `<svg viewBox="0 0 1440 600" preserveAspectRatio="none" aria-hidden="true">
+    <path d="M0 260 C180 190 320 230 470 200 S760 120 920 170 S1230 140 1440 190 V600 H0Z" fill="#B9C6CF" opacity=".55"/>
+    <path d="M0 340 C150 300 300 330 460 290 S760 250 930 300 S1250 260 1440 300 V600 H0Z" fill="#9EB0BC" opacity=".6"/>
+    <path d="M0 430 C200 380 380 420 560 390 S880 350 1060 400 S1320 380 1440 400 V600 H0Z" fill="#83979F" opacity=".55"/>
+    <path d="M0 510 C220 470 420 500 640 480 S1000 450 1200 490 S1380 490 1440 485 V600 H0Z" fill="#6E8289" opacity=".45"/></svg>`;
+}
+function sceneHtml(t){
+  const still=motionOn()?'':' still';
+  if(t==='hills')return `<div class="scene sc-hills">${hillsSvg()}<div class="mist"></div><div class="veil"></div></div>`;
+  if(t==='dawn')return `<div class="scene sc-dawn${still}"><div class="sun"></div><div class="veil"></div></div>`;
+  if(t==='snow')return `<div class="scene sc-snow${still}"><svg viewBox="0 0 1440 400" preserveAspectRatio="none" aria-hidden="true">
+    <path d="M0 220 C200 170 380 210 600 180 S1000 150 1200 190 S1380 180 1440 185 V400 H0Z" fill="#C9D4DD" opacity=".7"/>
+    <path d="M0 300 C240 270 480 300 720 280 S1150 260 1440 290 V400 H0Z" fill="#B3C1CC" opacity=".55"/></svg>
+    <canvas></canvas><div class="veil"></div></div>`;
+  return '';
+}
+function applyScene(c){
+  const old=c.querySelector(':scope>.scene');if(old)old.remove();
+  const h=sceneHtml(S.settings.theme);if(!h)return;
+  c.insertAdjacentHTML('afterbegin',h);
+  const cv=c.querySelector(':scope>.scene canvas');if(cv)snowfall(cv);
+}
+/* slow, sparse snow; stops by itself when the canvas goes away; still flakes when motion is off */
+function snowfall(cv){
+  const dpr=Math.min(2,devicePixelRatio||1),ctx=cv.getContext('2d');
+  let W=0,H=0;const size=()=>{W=cv.clientWidth;H=cv.clientHeight;cv.width=W*dpr;cv.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0)};size();
+  const n=Math.round(Math.min(90,W*H/14000));
+  const flakes=Array.from({length:n},()=>({x:Math.random()*W,y:Math.random()*H,r:.8+Math.random()*2.2,v:6+Math.random()*14,ph:Math.random()*6.28,sw:6+Math.random()*14}));
+  const draw=t=>{
+    ctx.clearRect(0,0,W,H);ctx.fillStyle='#fff';ctx.shadowColor='rgba(70,95,120,.45)';ctx.shadowBlur=3;
+    flakes.forEach(f=>{const x=f.x+Math.sin(t/4000+f.ph)*f.sw;ctx.globalAlpha=.6+f.r/8;ctx.beginPath();ctx.arc(x,f.y,f.r,0,6.283);ctx.fill()});
+    ctx.globalAlpha=1;
+  };
+  if(!motionOn()){draw(0);return}
+  let last=null;
+  const step=now=>{
+    if(!cv.isConnected)return;
+    if(cv.clientWidth!==W||cv.clientHeight!==H)size();
+    const dt=last===null?0:Math.min(.1,(now-last)/1000);last=now;
+    if(!document.hidden){flakes.forEach(f=>{f.y+=f.v*(.6+f.r/3)*dt;if(f.y>H+4){f.y=-4;f.x=Math.random()*W}});draw(now)}
+    requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
 function toggleThemePopover(){
   const already=document.getElementById('cpop');closePopover();if(already)return;
   const btn=document.getElementById('ctheme');if(!btn)return;
   const pop=document.createElement('div');pop.className='cpop';pop.id='cpop';
   pop.innerHTML=THEMES.map(t=>`<button class="cpopitem ${S.settings.theme===t?'on':''}" data-theme-set="${t}"><span class="themedot" style="background:${THEME_SWATCH[t][0]};border-color:${THEME_SWATCH[t][1]}"></span>${THEME_LABEL[t]}</button>`).join('');
+  pop.insertAdjacentHTML('beforeend',`<button class="cpopitem cpopmotion" id="cmotion">${REDUCED_MOTION?'Motion · Off (Reduce Motion is on)':'Motion · '+(motionOn()?'On':'Off')}<small>moving backgrounds: Dawn, Snowfall</small></button>`);
   btn.parentNode.style.position='relative';btn.insertAdjacentElement('afterend',pop);
   pop.style.left=btn.offsetLeft+'px';
   pop.addEventListener('click',e=>e.stopPropagation());
+  pop.querySelector('#cmotion').onclick=()=>{
+    if(REDUCED_MOTION)return;
+    S.settings.motion=!motionOn();save();
+    pop.querySelector('#cmotion').firstChild.textContent='Motion · '+(motionOn()?'On':'Off');
+    const c=document.getElementById('canvas');if(c)applyScene(c);
+  };
   pop.querySelectorAll('[data-theme-set]').forEach(b=>b.onclick=()=>{
     // stay open so themes can be compared against the page behind
     S.settings.theme=b.dataset.themeSet;save();
-    const c=document.getElementById('canvas');if(c)c.setAttribute('data-theme',S.settings.theme);
+    const c=document.getElementById('canvas');if(c){c.setAttribute('data-theme',S.settings.theme);applyScene(c)}
     pop.querySelectorAll('[data-theme-set]').forEach(x=>x.classList.toggle('on',x===b));
     btn.textContent='Theme · '+THEME_LABEL[S.settings.theme];
     const ta=document.querySelector('#canvas .cbody.tw textarea.cwrite');if(ta){autosize(ta);recenter(ta,true)}
@@ -1302,6 +1380,7 @@ function renderPhase(){
   else if(PHASE==='pagesdone')c.innerHTML=pagesDoneHtml();
   else if(PHASE==='pausedq')c.innerHTML=pausedQHtml();
   else if(PHASE==='title')c.innerHTML=titleHtml();
+  applyScene(c);
   const bar=c.querySelector('.cbar');if(bar)bar.classList.toggle('open',CBAR_OPEN);
   wireCanvas(c);
 }
