@@ -1,0 +1,9 @@
+{
+  "name": "spark",
+  "private": true,
+  "type": "module",
+  "description": "Spark: index.html is the whole app; api/ holds the small sync + email + AI server.",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.135.0"
+  }
+}

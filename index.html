@@ -65,7 +65,7 @@ input,textarea{font-family:inherit;color:inherit;background:none;border:none;out
 .sechead{display:flex;align-items:baseline;gap:12px;margin-bottom:16px}
 .sechead h2{font-family:var(--serif);font-size:22px;font-weight:400}
 .sechead span{font-family:var(--mono);font-size:13px;color:var(--ink-3);letter-spacing:.1em;text-transform:uppercase}
-.sparkgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+.sparkgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;align-items:start}
 .spark{position:relative;overflow:hidden;background:var(--surface);border-radius:var(--r);padding:20px 22px 46px;box-shadow:var(--shadow);
   min-height:88px;transition:box-shadow .32s cubic-bezier(.2,.7,.3,1),transform .32s cubic-bezier(.2,.7,.3,1)}
 .spark:hover{box-shadow:var(--shadow-2);transform:translateY(-2px)}
@@ -94,6 +94,63 @@ input,textarea{font-family:inherit;color:inherit;background:none;border:none;out
 .spark.explored .t{text-decoration:line-through;text-decoration-color:var(--ash)}
 .empty{padding:30px 0;color:var(--ink-3);font-family:var(--serif);font-size:19px;font-style:italic}
 
+.spark .t{display:-webkit-box;-webkit-line-clamp:8;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-line}
+.spark{cursor:pointer}
+.spark .skind{position:relative;z-index:1;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin-bottom:6px}
+.spark.kind-insight .skind{color:#8A6D3B}.spark.kind-name .skind{color:#6B5B8A}.spark.kind-brief .skind{color:#A0523D}.spark.kind-convo .skind{color:#3D6E8A}.spark.kind-link .skind{color:var(--ember)}
+.snames{position:relative;z-index:1;display:flex;flex-wrap:wrap;gap:6px}
+.snames span{font-family:var(--serif);font-size:17px;padding:3px 10px;border-radius:999px;background:var(--ash-2)}
+.slinks{position:relative;z-index:1;display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.slinks a,.sdlinks a{font-family:var(--mono);font-size:11.5px;color:var(--ember);text-decoration:none;border:1.5px solid var(--ember-2);border-radius:999px;padding:3px 9px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sfoot{position:relative;z-index:1;display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;font-family:var(--mono);font-size:11.5px;color:var(--ink-3)}
+.sfu{color:var(--ink-2)}
+mark{background:#F3E2A6;color:inherit;border-radius:3px;padding:0 1px}
+.sparktools{display:flex;gap:10px;align-items:center;margin-top:34px}
+.sq{flex:1;min-width:0;font-family:var(--sans);font-size:16px;padding:12px 16px;border:1.5px solid var(--ash);border-radius:999px;background:var(--surface)}
+.sq:focus{border-color:var(--ember)}
+.shelves{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 8px;transition:opacity .2s}
+.shelves.dim{opacity:.35}
+.shelf{font-family:var(--mono);font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);padding:8px 13px;border-radius:999px;border:1.5px solid var(--ash)}
+.shelf span{margin-left:7px;color:var(--ink-3)}
+.shelf.on{background:var(--ink);border-color:var(--ink);color:var(--paper)}.shelf.on span{color:var(--ash)}
+.tagrow{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.tagchip{font-family:var(--mono);font-size:12px;color:var(--ink-3);padding:4px 9px;border-radius:999px}
+.tagchip:hover{color:var(--ink)}.tagchip.on{background:var(--ember-soft);color:var(--ember)}
+#sparkres .sechead:first-child{margin-top:18px}
+.namewall{display:flex;flex-direction:column;gap:14px;margin-top:14px}
+.namegroup{background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);padding:18px 20px;cursor:pointer;display:flex;flex-wrap:wrap;gap:8px}
+.namegroup .nm{font-family:var(--serif);font-size:22px;padding:4px 14px;border-radius:999px;background:var(--ash-2)}
+.namegroup .ngm{flex-basis:100%;font-family:var(--mono);font-size:11.5px;color:var(--ink-3);letter-spacing:.06em;margin-top:4px}
+.entries .entry{flex-wrap:wrap;row-gap:4px}
+.entry .esn{flex-basis:100%;font-size:14px;color:var(--ink-2);line-height:1.45}
+.sheetin{display:block;width:100%;margin-top:12px;font-family:var(--sans);font-size:16px;padding:12px 14px;border:1.5px solid var(--ash);border-radius:12px;background:var(--surface);resize:vertical}
+.sheetin:focus{border-color:var(--ember)}
+.sdkind{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.kchip{font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);padding:5px 10px;border-radius:999px;border:1.5px solid var(--ash)}
+.kchip.on{border-color:var(--ink);color:var(--ink)}
+.sdtitle{display:block;width:100%;font-family:var(--serif);font-size:28px;letter-spacing:-.01em;padding:4px 0;border-bottom:1.5px solid transparent}
+.sdtitle:focus{border-bottom-color:var(--ember)}
+.sdmeta{font-family:var(--mono);font-size:12px;color:var(--ink-3);letter-spacing:.05em;margin:6px 0 14px}
+.sdtext{font-family:var(--serif);font-size:18px;line-height:1.5;white-space:pre-wrap;max-height:42vh;overflow:auto;overflow-wrap:anywhere}
+.sdlinks{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.sdthread{margin-top:8px}
+.sdfu{border-left:3px solid var(--ember-2);padding:4px 0 4px 14px;margin-top:12px}
+.sdfum{font-family:var(--mono);font-size:11.5px;color:var(--ink-3);display:flex;align-items:center;gap:6px}
+.sdfut{font-family:var(--serif);font-size:17px;line-height:1.45;white-space:pre-wrap;overflow-wrap:anywhere}
+.syncstat{display:grid;gap:8px;margin:14px 0}
+.syncstat div{display:flex;justify-content:space-between;gap:12px;font-size:15px;border-bottom:1px solid var(--ash-2);padding-bottom:8px}
+.syncstat span{color:var(--ink-3)}.syncstat .sel{user-select:all}.syncstat .err b{color:#A0523D}
+.briefwait{font-family:var(--mono);font-size:13px;color:var(--ink-3);margin-top:16px}
+.briefpick{display:block;width:100%;text-align:left;padding:12px 0;border-bottom:1px solid var(--ash-2)}
+.briefpick b{display:block;font-family:var(--serif);font-weight:400;font-size:18px}
+.briefpick .bpk{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.briefpick .bpw{display:block;font-size:14.5px;color:var(--ink-2);margin-top:2px}
+.briefpick:hover b{color:var(--ember)}
+.impsum{margin-top:16px;font-size:16px}.impline{font-family:var(--serif);color:var(--ink-2);font-size:15px;padding:3px 0}
+.resurf .rstitle{font-family:var(--serif);font-size:22px;margin-bottom:4px}
+.resurf .rstext{font-family:var(--serif);font-size:16px;color:var(--ink-2);line-height:1.5;white-space:pre-line}
+.resurf .rstext.big{font-size:21px;color:var(--ink)}
+@media(max-width:640px){.sparktools{flex-wrap:wrap}.sparktools .btn{width:100%}.sdtitle{font-size:24px}}
 .archtoggle{font-family:var(--mono);font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);
   margin:24px 0 20px;padding-top:20px;border-top:1.5px solid var(--ash-2)}
 .archtoggle:hover{color:var(--ember)}
@@ -102,7 +159,9 @@ input,textarea{font-family:inherit;color:inherit;background:none;border:none;out
   color:var(--ink-3);padding:14px 0;border-top:1.5px solid var(--ash-2);margin-top:6px}
 .motivhome:hover{color:var(--dusk)}
 
-.foot{display:flex;gap:14px;margin-top:30px;padding-top:24px;border-top:1.5px solid var(--ash-2)}
+.foot{display:flex;flex-wrap:wrap;gap:10px 14px;margin-top:30px;padding-top:24px;border-top:1.5px solid var(--ash-2)}
+.foot .btn{white-space:nowrap}
+@media(max-width:640px){.foot .btn{flex:1 1 calc(50% - 7px);padding-left:10px;padding-right:10px}}
 .btn{position:relative;overflow:hidden;font-family:var(--mono);font-size:14px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:12px 22px;
   border:1.5px solid var(--ash);border-radius:999px;color:var(--ink-2);background:var(--surface);transition:.2s}
 .btn:hover{border-color:var(--ink-3);color:var(--ink)}
@@ -432,7 +491,8 @@ bell:'SUQzAwAAAAAAVlRFTkMAAAA3AAAB//5TAHcAaQB0AGMAaAAgAFAAbAB1AHMAIACpACAATgBDAE
 const KEY='spark_v1';
 let STORE_OK=true;
 function load(){try{const r=localStorage.getItem(KEY);return r?JSON.parse(r):null}catch(e){STORE_OK=false;return null}}
-function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){STORE_OK=false}}
+function saveLocal(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){STORE_OK=false}}
+function save(){saveLocal();try{scheduleSync()}catch(e){}} // sync isn't set up yet while the app boots
 const nid=()=>Math.random().toString(36).slice(2,10);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 function autosize(el){
@@ -466,16 +526,394 @@ const projById=id=>id?S.projects.find(p=>p.id===id)||null:null;
 
 /* ---- sparks ---- */
 function addSpark(text,projectId){
-  const made=[];
-  text.split('\n').map(t=>t.trim()).filter(Boolean).forEach(t=>{
-    const x={id:nid(),text:t,created:Date.now(),explored:false,exploredAt:null,projectId:projectId||null};
-    S.sparks.unshift(x);made.push(x)});
-  save();return made;
+  // one capture is one spark, so a list of names or a pasted chat stays together
+  const t=String(text).replace(/\n{3,}/g,'\n\n').trim();if(!t)return [];
+  const x={id:nid(),text:t,created:Date.now(),explored:false,exploredAt:null,projectId:projectId||null,source:'app',links:linksOf(t),tags:[],thread:[]};
+  S.sparks.unshift(x);save();return [x];
 }
 function toggleExplored(id){
   const s=S.sparks.find(x=>x.id===id);if(!s)return;
   s.explored=!s.explored;s.exploredAt=s.explored?Date.now():null;save();render();
 }
+
+/* ---- spark kinds: guessed instantly in the app, refined by the AI when sync is connected ---- */
+const KINDS=['idea','insight','name','brief','convo','link'];
+const KIND_LABEL={idea:'Idea',insight:'Insight',name:'Names',brief:'Brief',convo:'Chat',link:'Link'};
+const SHELF_LABEL={all:'All',idea:'Ideas',insight:'Insights',name:'Names',brief:'Briefs',convo:'Chats',link:'Links',explored:'Explored'};
+const URL_RE=/https?:\/\/[^\s<>()"']+[^\s<>()"'.,;:!?]/g;
+const linksOf=t=>[...new Set(String(t||'').match(URL_RE)||[])];
+function guessKind(s){
+  const t=String(s.text||''),lines=t.split('\n').map(x=>x.trim()).filter(Boolean);
+  const stamp=lines.filter(l=>/^\[?\d{1,2}[:.]\d{2}/.test(l)||/^\[\d{1,2}\/\d{1,2}/.test(l)).length;
+  const speaker=lines.filter(l=>/^[A-ZÀ-Ý][\wÀ-ÿ .'-]{1,24}:\s\S/.test(l)).length;
+  if(stamp>=2||speaker>=3)return 'convo';
+  const bare=t.replace(URL_RE,'').trim();
+  if(linksOf(t).length&&bare.length<90)return 'link';
+  if(lines.length>=2&&lines.length<=20&&!linksOf(t).length&&lines.every(l=>l.length<=32&&l.split(/\s+/).length<=4))return 'name';
+  if(/\bbrief(ing)?\b/i.test((s.title||'')+' '+t.slice(0,200)))return 'brief';
+  return 'idea';
+}
+const kindOf=s=>KINDS.includes(s.kind)?s.kind:guessKind(s);
+const sparkTitle=s=>(s.title&&s.title.trim())||s.aiTitle||'';
+const sparkAllText=s=>[s.title,s.aiTitle,s.text,...(s.thread||[]).map(x=>x.text),...(s.tags||[]).map(x=>'#'+x)].filter(Boolean).join('\n');
+const fold=t=>String(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+function allTags(){const m={};S.sparks.forEach(s=>(s.tags||[]).forEach(t=>m[t]=(m[t]||0)+1));return Object.entries(m).sort((a,b)=>b[1]-a[1]).map(x=>x[0])}
+
+/* ---- search: every word must appear (accents and case ignored) ---- */
+function searchAll(q){
+  const words=fold(q).split(/\s+/).filter(Boolean);if(!words.length)return null;
+  const hit=t=>{const f=fold(t);return words.every(w=>f.includes(w))};
+  const snip=t=>{const f=fold(t),i=Math.max(0,f.indexOf(words[0])-50);return (i?'…':'')+String(t).slice(i,i+170).replace(/\s+/g,' ')+'…'};
+  return {
+    sparks:S.sparks.filter(s=>hit(sparkAllText(s))),
+    dumps:S.dumps.filter(d=>hit((d.title||'')+'\n'+d.text)).slice(0,30).map(d=>({d,snip:snip(d.text)})),
+    sessions:S.sessions.filter(x=>hit((x.sparkText||'')+'\n'+(x.notes||''))).slice(0,30).map(x=>({x,snip:snip(x.notes||'')})),
+    words
+  };
+}
+const ACCENT_CLASS={a:'[aàáâãä]',e:'[eèéêë]',i:'[iìíîï]',o:'[oòóôõö]',u:'[uùúûü]',c:'[cç]',n:'[nñ]'};
+function markHits(html,words){
+  if(!words||!words.length)return html;
+  // highlight on the escaped text, outside of tags
+  return html.replace(/(^|>)([^<]+)/g,(m,a,txt)=>{
+    let out=txt;words.forEach(w=>{if(w.length<2)return;
+      const pat=w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&').replace(/[aeiouc n]/g,c=>ACCENT_CLASS[c]||c);
+      out=out.replace(new RegExp('('+pat+')','gi'),'<mark>$1</mark>')});
+    return a+out});
+}
+
+/* ---- sync: phone and laptop share sparks, pages and entries through Spark's small server ----
+   Local data stays the master copy (works offline). Each sync pushes items whose content changed since the
+   last sync (found by comparing a fingerprint) and pulls items changed elsewhere; newest edit wins. */
+const SYNC_KEY='spark_sync';
+const SYNC_COLLS=['sparks','sessions','dumps','projects','prompts','motivators'];
+let SYNC=(()=>{try{return JSON.parse(localStorage.getItem(SYNC_KEY))||{}}catch(e){return {}}})();
+SYNC=Object.assign({code:'',since:0,sigs:{},last:0,ai:false,email:null,err:null},SYNC);
+const saveSync=()=>{try{localStorage.setItem(SYNC_KEY,JSON.stringify(SYNC))}catch(e){}};
+const syncOn=()=>!!SYNC.code;
+function fingerprint(o){
+  const {updated,fresh,...rest}=o;const s=JSON.stringify(rest);
+  let h=5381;for(let i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))|0;return h.toString(36)+':'+s.length;
+}
+let SYNCING=null,SYNC_TIMER=null;
+function scheduleSync(ms){if(!syncOn())return;clearTimeout(SYNC_TIMER);SYNC_TIMER=setTimeout(()=>syncNow(),ms||4000)}
+async function api(path,body){
+  const r=await fetch('/api/'+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({code:SYNC.code},body))});
+  let j={};try{j=await r.json()}catch(e){}
+  if(!r.ok)throw new Error(j.error||('HTTP '+r.status));
+  return j;
+}
+function syncNow(){
+  if(!syncOn())return Promise.resolve(false);
+  if(SYNCING)return SYNCING;
+  SYNCING=(async()=>{
+    let changed=false;
+    try{
+      const now=Date.now(),push=[],present=new Set();
+      SYNC_COLLS.forEach(coll=>(S[coll]||[]).forEach(it=>{
+        if(!it||!it.id)return;const k=coll+':'+it.id;present.add(k);
+        const f=fingerprint(it);if(SYNC.sigs[k]!==f){it.updated=now;push.push({coll,item:it});SYNC.sigs[k]=f}
+      }));
+      Object.keys(SYNC.sigs).forEach(k=>{if(!present.has(k)){const c=k.indexOf(':');push.push({coll:k.slice(0,c),item:{id:k.slice(c+1),deleted:true,updated:now}});delete SYNC.sigs[k]}});
+      let more=true,first=true,loops=0;
+      while((more||first)&&loops<40){
+        const j=await api('sync',{since:SYNC.since,push:first?push:[]});first=false;loops++;
+        SYNC.ai=!!j.ai;SYNC.email=j.email||SYNC.email;
+        (j.items||[]).forEach(({coll,item})=>{if(applyRemote(coll,item))changed=true});
+        SYNC.since=j.next||SYNC.since;more=!!j.more;
+      }
+      SYNC.last=Date.now();SYNC.err=null;
+    }catch(e){SYNC.err=String(e.message||e)}
+    saveSync();
+    if(changed){saveLocal();if(!document.getElementById('canvas'))render()}
+    SYNCING=null;
+    if(!SYNC.err&&SYNC.ai)classifyPending();
+    return changed;
+  })();
+  return SYNCING;
+}
+function applyRemote(coll,item){
+  if(!SYNC_COLLS.includes(coll)||!item||!item.id)return false;
+  const list=S[coll]||(S[coll]=[]),k=coll+':'+item.id,i=list.findIndex(x=>x.id===item.id),local=i>=0?list[i]:null;
+  if(item.deleted){
+    if(local&&(local.updated||0)>(item.updated||0))return false;
+    if(local)list.splice(i,1);delete SYNC.sigs[k];return !!local;
+  }
+  if(local&&(local.updated||0)>(item.updated||0))return false;
+  if(local&&fingerprint(local)===fingerprint(item)){SYNC.sigs[k]=fingerprint(item);local.updated=item.updated;return false}
+  if(local){Object.keys(local).forEach(x=>delete local[x]);Object.assign(local,item)} // in place: open sheets keep their reference
+  else{
+    list.push(item);
+    if(['sparks','sessions','dumps'].includes(coll)){const t=x=>x.created||x.startedAt||0;list.sort((a,b)=>t(b)-t(a))}
+  }
+  SYNC.sigs[k]=fingerprint(item);return true;
+}
+// re-sync when the app comes back to the front, and every minute while it's open
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')scheduleSync(300);else if(syncOn())syncNow()});
+setInterval(()=>{if(document.visibilityState==='visible')scheduleSync(100)},60000);
+
+/* AI sorting for sparks made in the app or imported (emails are sorted by the server as they arrive) */
+let CLASSIFYING=false;
+async function classifyPending(){
+  if(CLASSIFYING||!syncOn()||!SYNC.ai)return;
+  const todo=S.sparks.filter(s=>!s.classified&&!s.deleted&&String(s.text||'').trim()).slice(0,20);
+  if(!todo.length)return;
+  CLASSIFYING=true;
+  try{
+    const j=await api('classify',{items:todo.map(s=>({id:s.id,title:s.title||'',text:sparkAllText(s).slice(0,3000)})),vocab:allTags()});
+    (j.results||[]).forEach(r=>{
+      const s=S.sparks.find(x=>x.id===r.id);if(!s)return;
+      if(!s.kindByUser)s.kind=r.kind;
+      if(!(s.tags&&s.tags.length))s.tags=r.tags;
+      s.aiTitle=r.title;s.classified=true;
+    });
+    todo.forEach(s=>s.classified=true);
+    save();if(!document.getElementById('canvas')&&S.ui.view==='sparks'&&!document.activeElement.matches('input,textarea'))render();
+  }catch(e){}
+  CLASSIFYING=false;
+  if(S.sparks.some(s=>!s.classified&&String(s.text||'').trim()))setTimeout(classifyPending,1500);
+}
+
+function openSync(){
+  const ago2=t=>{if(!t)return 'never';const m=Math.round((Date.now()-t)/60000);return m<1?'just now':m<60?m+' min ago':Math.round(m/60)+' h ago'};
+  sheet(`<h3>Sync & Spark email</h3>
+    ${syncOn()?`<p>This device is connected. Sparks, morning pages and entries stay in step with your other devices, and emails to your Spark address land here.</p>
+      <div class="syncstat">
+        <div><span>Last sync</span><b>${ago2(SYNC.last)}</b></div>
+        <div><span>AI sorting & brief search</span><b>${SYNC.ai?'on':'off (no AI key yet)'}</b></div>
+        ${SYNC.email?`<div><span>Spark address</span><b class="sel">${esc(SYNC.email)}</b></div>`:''}
+        ${SYNC.err?`<div class="err"><span>Last problem</span><b>${esc(SYNC.err)}</b></div>`:''}
+      </div>
+      <div class="sheet-acts" style="justify-content:flex-start"><button class="btn btn-hot" id="syncnow">Sync now</button><button class="btn" id="syncoff">Disconnect this device</button></div>`
+    :`<p>Enter your sync code to connect this device. Everything you have here is kept and merged with your other devices.</p>
+      <input class="sheetin" id="synccode" placeholder="Sync code" autocomplete="off" autocapitalize="off" spellcheck="false" />
+      <div class="sheet-acts" style="justify-content:flex-start"><button class="btn btn-hot" id="syncgo">Connect</button></div>`}
+    <div class="sheet-acts"><button class="btn" id="ok">Close</button></div>`,
+  el=>{
+    el.querySelector('#ok').onclick=closeSheet;
+    const go=el.querySelector('#syncgo');
+    if(go){const inp=el.querySelector('#synccode');inp.focus();
+      const connect=async()=>{const v=inp.value.trim();if(!v)return;go.disabled=true;go.textContent='Connecting…';
+        SYNC.code=v;SYNC.since=0;SYNC.sigs={};SYNC.err=null;saveSync();
+        await syncNow();
+        if(SYNC.err){const e=SYNC.err;SYNC.code='';saveSync();toast(/code/.test(e)?'that code didn\'t work':'couldn\'t connect: '+e);openSync()}
+        else{toast('connected');openSync()}};
+      go.onclick=connect;inp.onkeydown=e=>{if(e.key==='Enter')connect()}}
+    const sn=el.querySelector('#syncnow');if(sn)sn.onclick=async()=>{sn.textContent='Syncing…';await syncNow();openSync()};
+    const so=el.querySelector('#syncoff');if(so)so.onclick=()=>sheetConfirm('Disconnect this device?','Your data stays on this device. It just stops syncing until you enter the code again.','Disconnect',()=>{SYNC={code:'',since:0,sigs:{},last:0,ai:false,email:null,err:null};saveSync();render()});
+  });
+}
+
+/* ---- spark detail: full text, follow-ups (threads), kind, tags, links ---- */
+function fmtDate(ts){return new Date(ts).toLocaleDateString(undefined,{day:'numeric',month:'short',year:new Date(ts).getFullYear()===new Date().getFullYear()?undefined:'numeric'})}
+const linkLabel=u=>{try{const x=new URL(u);return x.hostname.replace(/^www\./,'')+(x.pathname.length>1?x.pathname.slice(0,24):'')}catch(e){return u.slice(0,40)}};
+function openSpark(id){
+  const s=S.sparks.find(x=>x.id===id);if(!s)return;
+  const k=kindOf(s),links=[...new Set([...(s.links||[]),...linksOf(sparkAllText(s))])];
+  sheet(`<div class="sdkind">${KINDS.map(x=>`<button class="kchip ${x===k?'on':''}" data-kind="${x}">${KIND_LABEL[x]}</button>`).join('')}</div>
+    <input class="sdtitle" id="sdtitle" placeholder="${esc(s.aiTitle||'Add a title')}" value="${esc(s.title||'')}" />
+    <div class="sdmeta">${fmtDate(s.created)}${s.source==='email'?' · by email':s.source==='import'?' · imported':''}${projById(s.projectId)?' · '+esc(projById(s.projectId).name):''}</div>
+    <div class="sdtext">${esc(s.text)}</div>
+    ${links.length?`<div class="sdlinks">${links.map(u=>`<a href="${esc(u)}" target="_blank" rel="noopener">↗ ${esc(linkLabel(u))}</a>`).join('')}</div>`:''}
+    <div class="sdthread">${(s.thread||[]).map(t=>`<div class="sdfu"><div class="sdfum">${fmtDate(t.created)}${t.source==='email'?' · email reply':''}<button class="act del" data-fudel="${t.id}">×</button></div><div class="sdfut">${esc(t.text)}</div></div>`).join('')}</div>
+    <textarea class="sheetin" id="sdfollow" rows="2" placeholder="Add a follow-up thought…"></textarea>
+    <input class="sheetin" id="sdtags" placeholder="tags, comma separated" value="${esc((s.tags||[]).join(', '))}" />
+    <div class="sheet-acts" style="justify-content:space-between;flex-wrap:wrap">
+      <span style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn" id="sdwrite">Write about it</button><button class="btn" id="sdedit">Edit text</button>
+        <button class="btn" id="sdproj">Project</button><button class="btn" id="sdexp">${s.explored?'Bring back':'Explored'}</button>
+        <button class="btn btn-danger" id="sddel">Delete</button></span>
+      <button class="btn btn-hot" id="ok">Done</button>
+    </div>`,
+  el=>{
+    const keep=()=>{
+      const t=el.querySelector('#sdtitle').value.trim();s.title=t||null;
+      s.tags=el.querySelector('#sdtags').value.split(',').map(x=>x.trim().toLowerCase().replace(/^#/,'')).filter(Boolean).slice(0,8);
+      const f=el.querySelector('#sdfollow').value.trim();
+      if(f){s.thread=[...(s.thread||[]),{id:nid(),text:f,created:Date.now(),source:'app'}];el.querySelector('#sdfollow').value=''}
+      save();
+    };
+    el.querySelectorAll('[data-kind]').forEach(b=>b.onclick=()=>{s.kind=b.dataset.kind;s.kindByUser=true;save();
+      el.querySelectorAll('[data-kind]').forEach(x=>x.classList.toggle('on',x===b))});
+    el.querySelectorAll('[data-fudel]').forEach(b=>b.onclick=()=>{s.thread=(s.thread||[]).filter(x=>x.id!==b.dataset.fudel);save();closeSheet();openSpark(id)});
+    el.querySelector('#sdfollow').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();keep();closeSheet();render();openSpark(id)}});
+    el.querySelector('#ok').onclick=()=>{keep();closeSheet();render()};
+    el.querySelector('#sdwrite').onclick=()=>{keep();closeSheet();writeSpark(id)};
+    el.querySelector('#sdedit').onclick=()=>{keep();closeSheet();openReview('spark',id)};
+    el.querySelector('#sdproj').onclick=()=>{keep();pickProject(s.projectId,v=>{s.projectId=v},()=>{closeSheet();render();openSpark(id)})};
+    el.querySelector('#sdexp').onclick=()=>{keep();closeSheet();toggleExplored(id)};
+    el.querySelector('#sddel').onclick=()=>sheetConfirm('Delete this spark?',sparkTitle(s)||s.text.slice(0,140),'Delete',()=>{S.sparks=S.sparks.filter(x=>x.id!==id);save();render()});
+    // closing by tapping outside keeps edits too
+    mlayer.querySelector('.veil').onclick=e=>{if(e.target.classList.contains('veil')){keep();closeSheet();render()}};
+  });
+}
+
+/* ---- brief mode: paste a brief, get the sparks that could feed it ---- */
+const STOP=new Set(fold('a an the and or of to in on for with by is are be it this that from as at we our you your their they them not but so do does what how why who about into more most very can will would should could just like para que com uma um uns umas de da do das dos em no na nos nas por pra pro os as e ou se nao não mais muito como seu sua isso essa esse este esta é ser ter tem').split(' '));
+function localRelated(brief){
+  const words=[...new Set(fold(brief).split(/[^a-z0-9à-ÿ]+/).filter(w=>w.length>3&&!STOP.has(w)))];
+  return S.sparks.map(s=>{const f=fold(sparkAllText(s));const m=words.filter(w=>f.includes(w));return {s,m}})
+    .filter(x=>x.m.length).sort((a,b)=>b.m.length-a.m.length).slice(0,12)
+    .map(x=>({id:x.s.id,why:'mentions '+x.m.slice(0,5).join(', ')}));
+}
+function openBrief(prev){
+  const ai=syncOn()&&SYNC.ai;
+  sheet(`<h3>Find sparks for a brief</h3>
+    <p>${ai?'Paste the brief. Spark reads your whole library and picks what could feed it, with a line on how.':'Paste the brief. Spark finds sparks that share its words. (Connect sync and the AI key for smarter, lateral matches.)'}</p>
+    <textarea class="sheetin" id="brieftext" rows="5" placeholder="e.g. Launch a trail running shoe for hikers who hate blisters…">${esc(prev||'')}</textarea>
+    <div class="sheet-acts" style="justify-content:flex-start"><button class="btn btn-hot" id="briefgo">Find sparks</button>
+      <button class="btn" id="briefsave">Keep the brief as a spark</button></div>
+    <div id="briefres"></div>
+    <div class="sheet-acts"><button class="btn" id="ok">Close</button></div>`,
+  el=>{
+    const ta=el.querySelector('#brieftext'),out=el.querySelector('#briefres');ta.focus();
+    el.querySelector('#ok').onclick=closeSheet;
+    el.querySelector('#briefsave').onclick=()=>{const v=ta.value.trim();if(!v)return;
+      const x={id:nid(),text:v,created:Date.now(),explored:false,exploredAt:null,projectId:null,kind:'brief',kindByUser:true,tags:[],thread:[]};
+      S.sparks.unshift(x);save();toast('brief kept');render()};
+    el.querySelector('#briefgo').onclick=async()=>{
+      const v=ta.value.trim();if(!v)return;
+      out.innerHTML=`<div class="briefwait">${ai?'Reading your sparks…':'Looking…'}</div>`;
+      let picks;
+      if(ai){try{picks=(await api('related',{brief:v,sparks:S.sparks.map(s=>({id:s.id,kind:kindOf(s),title:sparkTitle(s),text:sparkAllText(s).slice(0,1500),tags:s.tags||[]}))})).picks}catch(e){picks=null}}
+      if(!picks)picks=localRelated(v);
+      out.innerHTML=picks.length?picks.map(p=>{const s=S.sparks.find(x=>x.id===p.id);if(!s)return '';
+        return `<button class="briefpick" data-open="${s.id}"><span class="bpk">${KIND_LABEL[kindOf(s)]}</span><b>${esc(sparkTitle(s)||s.text.slice(0,80))}</b><span class="bpw">${esc(p.why)}</span></button>`}).join('')
+        :'<div class="briefwait">Nothing in your sparks fits this one yet.</div>';
+      out.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>{const brief=v;openSpark(b.dataset.open);
+        const ok=mlayer.querySelector('#ok');if(ok){const back=document.createElement('button');back.className='btn';back.textContent='← Back to brief';back.onclick=()=>openBrief(brief);ok.before(back)}});
+    };
+  });
+}
+
+/* ---- import old emails: .mbox / .eml files (Apple Mail, Gmail Takeout) or a .json list ---- */
+function decodeWords(s){ // =?utf-8?Q?...?= / =?utf-8?B?...?=
+  return String(s||'').replace(/\?=\s+=\?/g,'?==?').replace(/=\?([^?]+)\?([QB])\?([^?]*)\?=/gi,(m,cs,enc,txt)=>{
+    try{const bytes=enc.toUpperCase()==='B'?Uint8Array.from(atob(txt),c=>c.charCodeAt(0))
+      :Uint8Array.from(txt.replace(/_/g,' ').replace(/=([0-9A-F]{2})/gi,(x,h)=>String.fromCharCode(parseInt(h,16))),c=>c.charCodeAt(0));
+      return new TextDecoder(cs).decode(bytes)}catch(e){return txt}});
+}
+function decodeBody(body,enc,cs){
+  enc=(enc||'').toLowerCase();let bytes;
+  try{
+    if(enc==='base64')bytes=Uint8Array.from(atob(body.replace(/\s+/g,'')),c=>c.charCodeAt(0));
+    else if(enc==='quoted-printable')bytes=Uint8Array.from(body.replace(/=\r?\n/g,'').replace(/=([0-9A-F]{2})/gi,(x,h)=>String.fromCharCode(parseInt(h,16))),c=>c.charCodeAt(0));
+    else return body;
+    return new TextDecoder(cs||'utf-8').decode(bytes);
+  }catch(e){return body}
+}
+function parseHeaders(raw){
+  const h={};raw.replace(/\r?\n[ \t]+/g,' ').split(/\r?\n/).forEach(l=>{const i=l.indexOf(':');if(i>0){const k=l.slice(0,i).trim().toLowerCase();if(!(k in h))h[k]=l.slice(i+1).trim()}});return h;
+}
+function textOfPart(raw){
+  const sp=raw.search(/\r?\n\r?\n/);const h=parseHeaders(sp<0?raw:raw.slice(0,sp)),body=sp<0?'':raw.slice(sp).replace(/^\r?\n\r?\n/,'');
+  const ct=h['content-type']||'text/plain',cs=(ct.match(/charset="?([^";\s]+)/i)||[])[1];
+  const bnd=(ct.match(/boundary="?([^";]+)"?/i)||[])[1];
+  if(/^multipart\//i.test(ct)&&bnd){
+    const parts=body.split('--'+bnd).slice(1).filter(p=>!/^--/.test(p));
+    const got=parts.map(textOfPart);
+    return got.find(x=>x.type==='plain'&&x.text.trim())||got.find(x=>x.type==='html'&&x.text.trim())||{type:'plain',text:''};
+  }
+  const txt=decodeBody(body,h['content-transfer-encoding'],cs);
+  if(/text\/html/i.test(ct))return {type:'html',text:txt.replace(/<(br|\/p|\/div|\/li)[^>]*>/gi,'\n').replace(/<style[\s\S]*?<\/style>/gi,'').replace(/<[^>]+>/g,'').replace(/&nbsp;/g,' ').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/\n{3,}/g,'\n\n')};
+  if(/^text\//i.test(ct)||!h['content-type'])return {type:'plain',text:txt};
+  return {type:'other',text:''};
+}
+function parseEmail(raw){
+  const sp=raw.search(/\r?\n\r?\n/);if(sp<0)return null;
+  const h=parseHeaders(raw.slice(0,sp)),ids=v=>String(v||'').match(/<[^<>\s]+>/g)||[];
+  const body=textOfPart(raw).text.replace(/\r\n/g,'\n').trim();
+  return {messageId:ids(h['message-id'])[0]||'',inReplyTo:ids(h['in-reply-to']),references:ids(h.references),
+    subject:decodeWords(h.subject||'').trim(),date:Date.parse(h.date)||Date.now(),body};
+}
+function stripQuotedText(text){
+  const lines=String(text).split('\n');let cut=lines.length;
+  for(let i=0;i<lines.length;i++){const l=lines[i].trim(),next=lines.slice(i+1,i+5).join('\n');
+    if(/^(On|Em|El|Le) .{4,200}(wrote|escreveu|escribió|a écrit):?$/i.test(l)||/^-{2,}\s*(Original Message|Mensagem original)/i.test(l)||/^_{10,}$/.test(l)||
+      (/^(From|De):\s/i.test(l)&&/^(Date|Sent|Enviada|Data|Enviado):/im.test(next))){cut=i;break}}
+  return lines.slice(0,cut).filter(l=>!/^>/.test(l.trim())).join('\n').trim();
+}
+const cleanSubj=s=>String(s||'').replace(/^\s*((re|res|fw|fwd|enc|tr|aw|wg)\s*:\s*)+/i,'').trim();
+function emailsFromFile(name,text){
+  if(/\.json$/i.test(name)){const a=JSON.parse(text);return (Array.isArray(a)?a:a.emails||[]).map(e=>({messageId:e.messageId||'',inReplyTo:e.inReplyTo?[].concat(e.inReplyTo):[],references:e.references?[].concat(e.references):[],
+    subject:e.subject||'',date:Date.parse(e.date)||+e.date||Date.now(),body:String(e.text||e.body||'').trim()}))}
+  const msgs=/^From .*\r?\n/m.test(text.slice(0,2000))?text.split(/^From .*\r?\n/m).filter(x=>x.trim()):[text];
+  return msgs.map(m=>{try{return parseEmail(m.replace(/^>From /gm,'From '))}catch(e){return null}}).filter(Boolean);
+}
+// turns emails into sparks; replies (by headers, or same subject) become follow-ups on their thread's spark
+function planImport(emails){
+  const known=new Set(S.sparks.flatMap(s=>s.emailIds||[]));
+  const list=emails.filter(e=>(e.body||e.subject)&&!(e.messageId&&known.has(e.messageId))).sort((a,b)=>a.date-b.date);
+  const byMsg={},bySubj={},sparks=[];let follow=0;
+  list.forEach(e=>{
+    const refs=[...e.inReplyTo,...[...e.references].reverse()];
+    let parent=refs.map(r=>byMsg[r]).find(Boolean)||null;
+    const subj=fold(cleanSubj(e.subject));
+    if(!parent&&/^\s*(re|res)\s*:/i.test(e.subject)&&subj&&bySubj[subj])parent=bySubj[subj];
+    if(!parent){const existing=S.sparks.find(s=>(s.emailIds||[]).some(id=>refs.includes(id)));if(existing)parent={existing}}
+    if(parent){
+      const text=stripQuotedText(e.body)||e.body;
+      const target=parent.existing||parent;
+      target.thread=[...(target.thread||[]),{id:nid(),text,created:e.date,source:'email'}];
+      target.emailIds=[...(target.emailIds||[]),e.messageId].filter(Boolean);
+      if(parent.existing)parent.existing.__touched=true;
+      if(e.messageId)byMsg[e.messageId]=parent;follow++;return;
+    }
+    const s={id:nid(),text:e.body||e.subject,title:cleanSubj(e.subject)||null,created:e.date,explored:false,exploredAt:null,projectId:null,
+      source:'import',links:linksOf(e.body),emailIds:e.messageId?[e.messageId]:[],thread:[],tags:[]};
+    sparks.push(s);if(e.messageId)byMsg[e.messageId]=s;if(subj&&!bySubj[subj])bySubj[subj]=s;
+  });
+  return {sparks,follow,skipped:emails.length-list.length};
+}
+function openImport(){
+  sheet(`<h3>Bring in old emails</h3>
+    <p>Pick the emails you sent yourself, saved as files: in Apple Mail select them and choose <b>File → Save As…</b> (Raw Message Source), or export a mailbox (<b>.mbox</b>). Gmail Takeout's .mbox works too. Replies are folded into their spark as follow-ups, and anything already imported is skipped.</p>
+    <input type="file" id="impfile" accept=".mbox,.mbx,.eml,.txt,.json,message/rfc822" multiple />
+    <div id="impres"></div>
+    <div class="sheet-acts"><button class="btn" id="ok">Close</button></div>`,
+  el=>{
+    el.querySelector('#ok').onclick=closeSheet;
+    el.querySelector('#impfile').onchange=async e=>{
+      const out=el.querySelector('#impres');out.innerHTML='<div class="briefwait">Reading…</div>';
+      let emails=[];for(const f of e.target.files){try{emails=emails.concat(emailsFromFile(f.name,await f.text()))}catch(err){}}
+      const plan=planImport(emails);
+      out.innerHTML=`<div class="impsum"><b>${emails.length}</b> emails → <b>${plan.sparks.length}</b> new sparks${plan.follow?` and <b>${plan.follow}</b> follow-up${plan.follow>1?'s':''}`:''}${plan.skipped?` · ${plan.skipped} already here or empty`:''}</div>
+        ${plan.sparks.slice(0,6).map(s=>`<div class="impline">${esc(s.title||s.text.slice(0,70))}</div>`).join('')}${plan.sparks.length>6?`<div class="impline">…</div>`:''}
+        ${plan.sparks.length||plan.follow?`<div class="sheet-acts" style="justify-content:flex-start"><button class="btn btn-hot" id="impgo">Import</button></div>`:''}`;
+      const go=out.querySelector('#impgo');
+      if(go)go.onclick=()=>{
+        S.sparks.forEach(s=>delete s.__touched);
+        S.sparks=S.sparks.concat(plan.sparks).sort((a,b)=>b.created-a.created);
+        save();closeSheet();render();toast(plan.sparks.length+' sparks imported'+(syncOn()&&SYNC.ai?' · sorting them…':''));
+        if(syncOn())syncNow();
+      };
+    };
+  });
+}
+
+/* ---- daily resurfacing: one older spark comes back each day ---- */
+let RESURFACE_SKIP=0;
+function resurfaced(){
+  const old=S.sparks.filter(s=>!s.explored&&Date.now()-s.created>3*86400000);
+  const pool=old.length?old:S.sparks.filter(s=>!s.explored);if(!pool.length)return null;
+  const d=new Date(),seed=d.getFullYear()*400+d.getMonth()*32+d.getDate()+RESURFACE_SKIP*7919;
+  const sorted=pool.slice().sort((a,b)=>String(a.id).localeCompare(String(b.id)));
+  return sorted[seed%sorted.length];
+}
+function resurfaceHtml(){
+  const s=resurfaced();if(!s)return '';
+  const body=sparkTitle(s)?`<div class="rstitle">${esc(sparkTitle(s))}</div><div class="rstext">${esc(s.text.slice(0,260))}${s.text.length>260?'…':''}</div>`
+    :`<div class="rstext big">${esc(s.text.slice(0,260))}${s.text.length>260?'…':''}</div>`;
+  return `<div class="card resurf">
+    <div class="sechead"><h2>From your sparks</h2><span>${KIND_LABEL[kindOf(s)]} · ${fmtDate(s.created)}</span></div>
+    ${body}
+    <div class="todayacts" style="margin-top:14px">
+      <button class="btn" data-open="${s.id}">Open</button>
+      ${pagesDoneToday()?'':`<button class="btn btn-hot" id="rsprompt" data-sid="${s.id}">Start today's pages with it</button>`}
+      <button class="btn" id="rsnext">Another</button>
+    </div></div>`;
+}
+
 
 /* ---- dialogs ---- */
 const mlayer=document.getElementById('mlayer');
@@ -1745,10 +2183,18 @@ function finishSession(markExplored,early){
 
 /* ---- home ---- */
 const app=document.getElementById('app');
-function sparkCard(s){
-  return `<div class="spark ${s.fresh?'landing':''} ${s.explored?'explored':''}" data-id="${s.id}">
-    ${s.title&&s.title.trim()?`<div class="stitle">${esc(s.title)}</div>`:''}
-    <div class="t" data-edit="${s.id}" title="Double-click to edit">${esc(s.text)}</div>
+function sparkCard(s,words){
+  const k=kindOf(s),title=sparkTitle(s),fu=(s.thread||[]).length,links=(s.links&&s.links.length?s.links:linksOf(s.text)).slice(0,2);
+  const hl=h=>Array.isArray(words)?markHits(h,words):h;
+  const body=k==='name'
+    ?`<div class="snames">${s.text.split('\n').map(x=>x.trim()).filter(Boolean).slice(0,14).map(x=>`<span>${hl(esc(x))}</span>`).join('')}</div>`
+    :`<div class="t">${hl(esc(links.length?s.text.replace(URL_RE,'').replace(/\n{2,}/g,'\n').trim():s.text))}</div>`;
+  return `<div class="spark kind-${k} ${s.fresh?'landing':''} ${s.explored?'explored':''}" data-id="${s.id}" data-open="${s.id}">
+    <div class="skind">${KIND_LABEL[k]}${s.source==='email'||s.source==='import'?' · ✉':''}</div>
+    ${title?`<div class="stitle">${hl(esc(title))}</div>`:''}
+    ${body}
+    ${links.length?`<div class="slinks">${links.map(u=>`<a href="${esc(u)}" target="_blank" rel="noopener">↗ ${esc(linkLabel(u))}</a>`).join('')}</div>`:''}
+    ${fu||(s.tags&&s.tags.length)?`<div class="sfoot">${fu?`<span class="sfu">↳ ${fu} follow-up${fu>1?'s':''}</span>`:''}${(s.tags||[]).slice(0,4).map(t=>`<span class="stag">#${esc(t)}</span>`).join('')}</div>`:''}
     <div class="age">${ago(s.created)}${projById(s.projectId)?` · <span class="ptag">${esc(projById(s.projectId).name)}</span>`:''}</div>
     <div class="floatbar">
       <button class="act" data-swrite="${s.id}">Write</button>
@@ -1792,6 +2238,10 @@ function placeNavInd(fromView,toView,p,anim){
   ind.style.width=(a.offsetWidth+(b.offsetWidth-a.offsetWidth)*p)+'px';
 }
 function sparksHtml(active,explored){
+  const shelf=S.ui.shelf||'all',live=S.sparks.filter(x=>!x.explored);
+  const count=k=>k==='all'?live.length:k==='explored'?explored.length:live.filter(x=>kindOf(x)===k).length;
+  const shelves=['all',...KINDS,'explored'].filter(k=>k==='all'||count(k)||shelf===k);
+  const tags=allTags().slice(0,14);
   return `
     <div class="capture" id="capbox">
       <textarea id="cap" rows="1" placeholder="What's pulling at you?"></textarea>
@@ -1799,16 +2249,39 @@ function sparksHtml(active,explored){
     </div>
     <button class="startbtn" id="startbtn">Start writing</button>
     <div class="startnote">${startNote()}</div>
-    <div class="sechead"><h2>Sparks</h2><span>${active.length}</span></div>
-    ${active.length?`<div class="sparkgrid">${active.map(sparkCard).join('')}</div>`
-      :`<div class="empty">Nothing waiting. Whatever's on your mind — drop it above.</div>`}
-    ${explored.length?`<div class="archtoggle" id="archtoggle">${S.ui.showExplored?'Hide explored':'Show explored'} (${explored.length})</div>`:''}
-    ${S.ui.showExplored&&explored.length?`<div class="sparkgrid">${explored.map(sparkCard).join('')}</div>`:''}
+    <div class="sparktools">
+      <input class="sq" id="sq" type="search" placeholder="Search sparks, pages and writing…" value="${esc(S.ui.sparkQ||'')}" autocomplete="off" />
+      <button class="btn" id="briefbtn">✦ Find for a brief</button>
+    </div>
+    <div class="shelves" id="shelves">${shelves.map(k=>`<button class="shelf ${shelf===k?'on':''}" data-shelf="${k}">${SHELF_LABEL[k]}<span>${count(k)}</span></button>`).join('')}</div>
+    ${tags.length?`<div class="tagrow">${tags.map(t=>`<button class="tagchip ${S.ui.sparkTag===t?'on':''}" data-tag="${esc(t)}">#${esc(t)}</button>`).join('')}</div>`:''}
+    <div id="sparkres">${sparkResultsHtml()}</div>
     ${motivStrip()}
     <div class="foot">
       <button class="btn" id="historybtn">History${S.sessions.length?' · '+S.sessions.length:''}</button>
       <button class="btn" id="dumpsbtn">Morning pages${S.dumps.length?' · '+S.dumps.length:''}</button>
+      <button class="btn" id="importbtn">Import emails</button>
+      <button class="btn" id="syncbtn">${syncOn()?(SYNC.err?'⚠ Sync':'⟳ Synced'):'Sync & email'}</button>
     </div>`;
+}
+function sparkResultsHtml(){
+  const q=S.ui.sparkQ||'';
+  if(q.trim()){
+    const r=searchAll(q),row=(attr,id,t,m,sn)=>`<button class="entry" ${attr}="${id}"><span class="et">${t}</span><span class="em">${m}</span><span class="esn">${markHits(esc(sn),r.words)}</span></button>`;
+    return `<div class="sechead"><h2>Sparks</h2><span>${r.sparks.length}</span></div>
+      ${r.sparks.length?`<div class="sparkgrid">${r.sparks.map(x=>sparkCard(x,r.words)).join('')}</div>`:`<div class="empty">No sparks with “${esc(q)}”.</div>`}
+      ${r.dumps.length?`<div class="sechead"><h2>Morning pages</h2><span>${r.dumps.length}</span></div><div class="entries">${r.dumps.map(({d,snip})=>row('data-sdump',d.id,esc(d.title||'Pages · '+fmtDate(d.created)),d.words+' words',snip)).join('')}</div>`:''}
+      ${r.sessions.length?`<div class="sechead"><h2>Writing</h2><span>${r.sessions.length}</span></div><div class="entries">${r.sessions.map(({x,snip})=>row('data-ssess',x.id,esc(x.sparkText||'Freewriting'),fmtDate(x.startedAt)+' · '+wc(x.notes)+' words',snip)).join('')}</div>`:''}`;
+  }
+  const shelf=S.ui.shelf||'all',tag=S.ui.sparkTag;
+  let list=shelf==='explored'?S.sparks.filter(x=>x.explored):S.sparks.filter(x=>!x.explored&&(shelf==='all'||kindOf(x)===shelf));
+  if(tag)list=list.filter(x=>(x.tags||[]).includes(tag));
+  if(!S.sparks.length)return `<div class="empty">Nothing waiting. Whatever's on your mind — drop it above, or email it to your Spark address.</div>`;
+  if(!list.length)return `<div class="empty">Nothing on this shelf${tag?' with #'+esc(tag):''} yet.</div>`;
+  if(shelf==='name')return `<div class="namewall">${list.map(x=>`<div class="namegroup" data-open="${x.id}">
+      ${x.text.split('\n').map(l=>l.trim()).filter(Boolean).map(l=>`<span class="nm">${esc(l)}</span>`).join('')}
+      <div class="ngm">${esc(sparkTitle(x)||'')}${sparkTitle(x)?' · ':''}${fmtDate(x.created)}</div></div>`).join('')}</div>`;
+  return `<div class="sparkgrid">${list.map(x=>sparkCard(x)).join('')}</div>`;
 }
 
 /* ---- desk: morning pages streak, creative time, projects ---- */
@@ -1888,6 +2361,7 @@ function deskHtml(){
         ${todayW!==undefined?'':`<button class="btn btn-hot" id="deskpages">Write today's pages</button>`}</span>
       </div>
     </div>
+    ${resurfaceHtml()}
     <div class="card">
       <div class="sechead"><h2>Creative time</h2><span>this week</span></div>
       <div class="bigstats" style="margin-bottom:4px">
@@ -1971,10 +2445,6 @@ function wire(){
   const dp=document.getElementById('deskpages');if(dp)dp.onclick=()=>beginFlow('full');
   const np=document.getElementById('newproj');if(np)np.onclick=openNewProject;
   app.querySelectorAll('[data-proj]').forEach(b=>b.onclick=()=>openProject(b.dataset.proj));
-  app.querySelectorAll('[data-sproj]').forEach(b=>b.onclick=e=>{e.stopPropagation();
-    const s=S.sparks.find(x=>x.id===b.dataset.sproj);if(!s)return;
-    pickProject(s.projectId,v=>{s.projectId=v},()=>{closeSheet();render()});
-  });
   const cap=document.getElementById('cap');
   if(cap){autosize(cap);cap.addEventListener('input',()=>autosize(cap));
     cap.addEventListener('keydown',e=>{
@@ -1985,34 +2455,48 @@ function wire(){
         cap.value='';autosize(cap);
         setTimeout(()=>{render();const c=document.getElementById('cap');if(c)c.focus();
           setTimeout(()=>{S.sparks.forEach(x=>delete x.fresh);save()},650)},240);
-        toast(made.length>1?made.length+' sparks kept':'kept');
+        toast('kept');
       }});}
   const stb=document.getElementById('startbtn');if(stb)stb.onclick=()=>startWriting(null);
-  app.querySelectorAll('[data-swrite]').forEach(b=>b.onclick=e=>{e.stopPropagation();writeSpark(b.dataset.swrite)});
   const mh=document.getElementById('motivhome');if(mh)mh.onclick=openMotivators;
-  const at=document.getElementById('archtoggle');if(at)at.onclick=()=>{S.ui.showExplored=!S.ui.showExplored;save();render()};
+  const ib=document.getElementById('importbtn');if(ib)ib.onclick=openImport;
+  const syb=document.getElementById('syncbtn');if(syb)syb.onclick=openSync;
+  const bb=document.getElementById('briefbtn');if(bb)bb.onclick=()=>openBrief();
+  app.querySelectorAll('[data-shelf]').forEach(b=>b.onclick=()=>{S.ui.shelf=b.dataset.shelf;S.ui.sparkQ='';saveLocal();render()});
+  app.querySelectorAll('[data-tag]').forEach(b=>b.onclick=()=>{S.ui.sparkTag=S.ui.sparkTag===b.dataset.tag?null:b.dataset.tag;saveLocal();render()});
+  const sq=document.getElementById('sq');
+  if(sq)sq.addEventListener('input',()=>{S.ui.sparkQ=sq.value;saveLocal();
+    const box=document.getElementById('sparkres');if(box){box.innerHTML=sparkResultsHtml();wireSparkCards(box)}
+    const sh=document.getElementById('shelves');if(sh)sh.classList.toggle('dim',!!sq.value.trim())});
+  const rn=document.getElementById('rsnext');if(rn)rn.onclick=()=>{RESURFACE_SKIP++;render()};
+  const rp=document.getElementById('rsprompt');if(rp)rp.onclick=()=>{
+    const sp=S.sparks.find(x=>x.id===rp.dataset.sid);if(!sp)return;
+    beginFlow('full');DUMP_PROMPT=(sparkTitle(sp)?sparkTitle(sp)+' — ':'')+sp.text.slice(0,220);showPromptBar()};
+  wireSparkCards(app);
   const hb=document.getElementById('historybtn');if(hb)hb.onclick=openHistory;
   const db=document.getElementById('dumpsbtn');if(db)db.onclick=openDumps;
   const dap=document.getElementById('deskallpages');if(dap)dap.onclick=()=>openDumps();
-  app.querySelectorAll('[data-sedit]').forEach(b=>b.onclick=e=>{e.stopPropagation();openReview('spark',b.dataset.sedit)});
-  app.querySelectorAll('[data-explore]').forEach(b=>b.onclick=e=>{e.stopPropagation();toggleExplored(b.dataset.explore)});
-  app.querySelectorAll('[data-del]').forEach(b=>b.onclick=e=>{e.stopPropagation();
+}
+/* spark cards: open on tap; the small buttons and links do their own thing */
+function wireSparkCards(root){
+  root.querySelectorAll('[data-open]').forEach(el=>el.onclick=e=>{if(e.target.closest('button:not([data-open]),a'))return;openSpark(el.dataset.open)});
+  root.querySelectorAll('.spark a').forEach(a=>a.addEventListener('click',e=>e.stopPropagation()));
+  root.querySelectorAll('[data-swrite]').forEach(b=>b.onclick=e=>{e.stopPropagation();writeSpark(b.dataset.swrite)});
+  root.querySelectorAll('[data-sedit]').forEach(b=>b.onclick=e=>{e.stopPropagation();openReview('spark',b.dataset.sedit)});
+  root.querySelectorAll('[data-explore]').forEach(b=>b.onclick=e=>{e.stopPropagation();toggleExplored(b.dataset.explore)});
+  root.querySelectorAll('[data-sproj]').forEach(b=>b.onclick=e=>{e.stopPropagation();
+    const s=S.sparks.find(x=>x.id===b.dataset.sproj);if(!s)return;
+    pickProject(s.projectId,v=>{s.projectId=v},()=>{closeSheet();render()});
+  });
+  root.querySelectorAll('[data-del]').forEach(b=>b.onclick=e=>{e.stopPropagation();
     const s=S.sparks.find(x=>x.id===b.dataset.del);if(!s)return;
-    sheetConfirm('Delete this spark?',s.text,'Delete',()=>{
+    sheetConfirm('Delete this spark?',sparkTitle(s)||s.text.slice(0,140),'Delete',()=>{
       const el=document.querySelector('.spark[data-id="'+s.id+'"]');
       const commit=()=>{S.sparks=S.sparks.filter(x=>x.id!==s.id);save();render()};
       if(el)dissolveAndRemove(el,commit);else commit();
     })});
-  app.querySelectorAll('[data-edit]').forEach(el=>{
-    el.ondblclick=()=>{
-      el.contentEditable='true';el.focus();
-      const r=document.createRange();r.selectNodeContents(el);r.collapse(false);
-      const sel=getSelection();sel.removeAllRanges();sel.addRange(r);
-      el.onblur=()=>{const s=S.sparks.find(x=>x.id===el.dataset.edit);
-        if(s){const v=el.textContent.trim();if(v)s.text=v;save()}
-        el.contentEditable='false';render()};
-      el.onkeydown=k=>{if(k.key==='Enter'){k.preventDefault();el.blur()}}};
-  });
+  root.querySelectorAll('[data-sdump]').forEach(b=>b.onclick=()=>openReview('dump',b.dataset.sdump,render));
+  root.querySelectorAll('[data-ssess]').forEach(b=>b.onclick=()=>openReview('session',b.dataset.ssess,render));
 }
 
 document.addEventListener('keydown',e=>{
@@ -2112,6 +2596,7 @@ if(S.dumpDraft&&S.dumpDraft.text&&S.dumpDraft.text.trim()){
 pickMotivator();
 S.ui.view='desk'; // the app always opens on the Desk
 render();
+if(syncOn())setTimeout(()=>syncNow(),600);
 if(S.active&&S.active.paused==null){
   if(Date.now()>=S.active.endsAt)S.active.wrapped=true;
   PHASE='write';openCanvas();

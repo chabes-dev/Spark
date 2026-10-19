@@ -1,13 +1,16 @@
 # CLAUDE.md
 
 ## What this is
-Spark is a **single-file app**: everything (HTML, CSS, JS) lives in `index.html` at the repo root.
-The only other served file is `apple-touch-icon.png` (180×180, the iPhone home-screen icon).
-There is **no framework, no build step, no package.json**. Vercel serves `index.html` as a static file.
+Spark is a **single-file app**: everything the browser runs (HTML, CSS, JS) lives in `index.html` at the repo root, plus
+`apple-touch-icon.png` (180×180, the iPhone home-screen icon). No framework, no bundler, no build step.
+
+Since 2026-10 there is also a **small server** in `api/` (Vercel Node functions, owner-approved) for sync, the Spark
+email address and AI sorting. `package.json` exists only for its one dependency (`@anthropic-ai/sdk`); Vercel installs it.
+The app still works fully offline/without the server: local data is the master copy.
 
 ## Working rules
 - **Always discuss proposed changes with the owner before editing code.** Explain what you'd change and why, and wait for a go-ahead.
-- Keep it single-file. Don't add a build step, bundler, or dependencies unless the owner explicitly asks.
+- Keep the app single-file. Don't add a build step, bundler, or more dependencies unless the owner explicitly asks.
 
 ## Deploying
 - Deploy = commit + push to `main`. The GitHub repo is connected to the Vercel project, and every push to `main` goes to production.
@@ -71,6 +74,34 @@ There is **no framework, no build step, no package.json**. Vercel serves `index.
   The incoming page is drawn from `bodyHtml(view)`; `.pagebody` is `flow-root` so both line up exactly.
 - Swipe/browser back is handled in-app (`appBack`, `goView`, one trap history entry). All exits go through `leaveCanvas()`
   so written text is always saved.
+
+## Server (`api/`)
+- Storage: Upstash Redis via the Vercel Marketplace (env `UPSTASH_REDIS_REST_URL`/`_TOKEN` or `KV_REST_API_URL`/`_TOKEN`),
+  called over REST with `fetch` (`api/_lib.js`). Keys: hash `items` (`<coll>:<id>` → JSON), zset `upd` (server write time,
+  used for pulls), hash `msg` (email Message-ID → spark id, for threading), set `tags`.
+- Env: `SPARK_SYNC_CODE` (the code a device enters to sync), `INBOUND_KEY` (secret in the email webhook URL),
+  `SPARK_EMAIL` (address shown in the app), `ANTHROPIC_API_KEY` (AI sorting + brief search; optional).
+- `POST /api/sync` push changed items / pull changes since a server timestamp; newest `updated` wins; deletions are
+  `{id,deleted:true}` tombstones. Synced collections: sparks, sessions, dumps, projects, prompts, motivators
+  (not settings/ui/active/dumpDraft).
+- `POST /api/inbound?key=INBOUND_KEY` CloudMailin "JSON (normalized)" webhook: new email → spark (title from subject,
+  AI kind/tags); a reply (In-Reply-To/References) → follow-up in `spark.thread`, quoted history stripped.
+- `POST /api/classify`, `POST /api/related` (brief mode) call Claude (`claude-opus-5-5`, structured JSON output,
+  server-side refusal fallback). The spark library is a cached system block.
+- Local tests: `node .test/api.test.mjs`; `node .test/server.mjs` serves the app + api on :8800 with a fake Redis.
+
+## Sparks (creative library)
+- A capture is **one** spark (multi-line text stays together). Optional fields, all migration-free: `title`, `aiTitle`,
+  `kind` (`idea|insight|name|brief|convo|link`; `kindByUser` when set by hand; otherwise `guessKind` heuristics),
+  `tags[]`, `links[]`, `thread[]` (`{id,text,created,source}` follow-ups), `source` (`app|email|import`),
+  `emailIds[]`, `classified`, `updated`.
+- Sparks page: search across sparks/pages/writing (accent-insensitive), shelves by kind (Names = name wall), tag chips,
+  "Find for a brief" (AI via `/api/related`, keyword fallback offline), Import emails (.mbox/.eml/.json, parsed in the
+  browser, replies folded into threads, duplicates skipped by Message-ID), Sync & email sheet.
+- Tapping a card opens the spark sheet (`openSpark`): kind, title, full text, links, follow-ups, tags, actions.
+- Desk shows one older spark a day (`resurfaced`), which can seed today's morning pages prompt.
+- Sync client: `spark_sync` localStorage key (separate from `spark_v1`) holds code, `since`, per-item fingerprints.
+  `save()` schedules a debounced sync; also on focus and every minute. `saveLocal()` saves without syncing.
 
 ## History
 - The old, Git-less project `spark` (`prj_AOg9SkC0ySUGtLadqnBrXS5LdCsc`, spark-chabes-devs-projects.vercel.app) was
