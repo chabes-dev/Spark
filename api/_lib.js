@@ -33,6 +33,16 @@ export async function pipeline(cmds) {
    zset  upd    "<coll>:<id>" scored by server time of the last write, so pulls work whatever the device clocks say
    hash  msg    "<email Message-ID>" -> spark id (threads replies onto the right spark) */
 export const COLLS = ["sparks", "sessions", "dumps", "projects", "prompts", "motivators"];
+export const MAX_AHEAD = 10000; // a pushed `updated` may be at most this far ahead of server time
+const MAX_ITEM = 256 * 1024;
+const ID_RE = /^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/;
+// a pushed {coll,item} is usable: known collection, safe id, numeric `updated`, sane size
+export function validPush(x) {
+  if (!x || !COLLS.includes(x.coll) || !x.item || typeof x.item !== "object") return false;
+  if (typeof x.item.id !== "string" || !ID_RE.test(x.item.id)) return false;
+  if (typeof x.item.updated !== "number" || !Number.isFinite(x.item.updated)) return false;
+  return JSON.stringify(x.item).length <= MAX_ITEM;
+}
 const key = (coll, id) => `${coll}:${id}`;
 
 export async function getItem(coll, id) {
@@ -48,6 +58,8 @@ export async function putItems(list, { force = false } = {}) {
   const cmds = [];
   let n = 0;
   list.forEach((x, i) => {
+    // nobody (a wrong clock, a bug, or anyone with the code) can freeze an item with a far-future timestamp
+    if (x.item.updated > now + MAX_AHEAD) x.item = { ...x.item, updated: now + MAX_AHEAD };
     const old = cur[i] ? JSON.parse(cur[i]) : null;
     if (!force && old && (old.updated || 0) > (x.item.updated || 0)) return;
     cmds.push(["HSET", "items", keys[i], JSON.stringify(x.item)]);

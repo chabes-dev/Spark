@@ -43,3 +43,14 @@ module.exports.C2_wiped_device_does_not_delete_everything = async ({ newDevice, 
   ok("C2 a single delete still syncs", k1 && k1.item.deleted === true);
   await a.context().close();
 };
+module.exports.H1_device_with_wrong_clock_uses_server_time = async ({ newDevice, ok, pull }) => {
+  const pg = await newDevice();
+  await pg.evaluate(() => { const real = Date.now; Date.now = () => real() + 86400000; }); // clock a day ahead
+  await pg.evaluate(() => syncNow());                                                       // learns the server time
+  await pg.evaluate(() => { S.sparks.unshift({ id: "skewed", text: "written with a bad clock", created: Date.now() }); saveLocal(); return syncNow(); });
+  const it = (await pull()).items.find((x) => x.item.id === "skewed");
+  ok("H1 the server copy is not stamped a day ahead", it && Math.abs(it.item.updated - Date.now()) < 60000, it && (it.item.updated - Date.now()));
+  const local = await pg.evaluate(() => S.sparks.find((s) => s.id === "skewed").updated);
+  ok("H1 the device's own copy is stamped with server time too", Math.abs(local - Date.now()) < 5000, local - Date.now());
+  await pg.context().close();
+};

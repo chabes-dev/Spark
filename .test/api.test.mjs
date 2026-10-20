@@ -55,4 +55,21 @@ r=await call(sync,{code:'secret-code',since:0,push:[]},{},{'x-real-ip':'198.51.1
 ok('C5 another IP is unaffected',r.status===200,r.status);
 r=await call(sync,{code:42,since:0,push:[]},{},{'x-real-ip':'198.51.100.8'});
 ok('C5 non-string code is a clean 401',r.status===401,r.status);
+// H1: pushed items are validated and future timestamps clamped
+{
+  const now=Date.now();
+  r=await call(sync,{code:'secret-code',since:now-1,push:[
+    {coll:'sparks',item:{id:'future1',text:'x',updated:9e15}},
+    {coll:'sparks',item:{id:'bad id!',text:'x',updated:now}},
+    {coll:'sparks',item:{id:'huge',text:'x'.repeat(300000),updated:now}},
+    {coll:'sparks',item:{id:'nostamp',text:'x'}},
+    {coll:'sparks',item:{id:'__proto__',text:'x',updated:now}}]},{},{'x-real-ip':'10.0.0.2'});
+  ok('H1 sync response carries server time',typeof r.body.now==='number',r.body.now);
+  ok('H1 invalid items are reported, not stored',(r.body.invalid||[]).length===4,r.body.invalid);
+  const f=r.body.items.find(x=>x.item.id==='future1');
+  ok('H1 a far-future timestamp is clamped',f&&f.item.updated<=now+11000,f&&f.item.updated);
+  r=await call(sync,{code:'secret-code',since:now-1,push:[{coll:'sparks',item:{id:'future1',text:'edited later',updated:Date.now()+10000}}]},{},{'x-real-ip':'10.0.0.2'});
+  const g=r.body.items.find(x=>x.item.id==='future1');
+  ok('H1 the item can still be edited afterwards',g&&g.item.text==='edited later',g&&g.item.text);
+}
 srv.close();

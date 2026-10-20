@@ -611,7 +611,8 @@ function syncNow(){
     let changed=false;
     try{
       // fingerprints are only recorded once the server has accepted the push; a failed sync retries everything next time
-      const now=Date.now(),push=[],present=new Set(),pending={},gone=[];
+      // stamp edits with server time (learned on the last sync), so a device with a wrong clock can't win every conflict
+      const now=Date.now()+(SYNC.skew||0),push=[],present=new Set(),pending={},gone=[];
       SYNC_COLLS.forEach(coll=>(S[coll]||[]).forEach(it=>{
         if(!it||!it.id)return;const k=coll+':'+it.id;present.add(k);
         const f=fingerprint(it);if(SYNC.sigs[k]!==f){it.updated=now;push.push({coll,item:it});pending[k]=f}
@@ -631,7 +632,7 @@ function syncNow(){
       // pushed in chunks, each committed as soon as the server accepted it
       const CHUNK=200,chunks=[];for(let i=0;i<push.length;i+=CHUNK)chunks.push(push.slice(i,i+CHUNK));
       const commitPush=ch=>ch.forEach(({coll,item})=>{const k=coll+':'+item.id;if(item.deleted)delete SYNC.sigs[k];else if(k in pending)SYNC.sigs[k]=pending[k]});
-      const take=j=>{SYNC.ai=!!j.ai;SYNC.email=j.email||SYNC.email;
+      const take=j=>{SYNC.ai=!!j.ai;SYNC.email=j.email||SYNC.email;if(typeof j.now==='number')SYNC.skew=j.now-Date.now();
         (j.items||[]).forEach(({coll,item})=>{if(applyRemote(coll,item))changed=true});
         SYNC.since=j.next||SYNC.since;return !!j.more};
       let more=false,loops=0;
