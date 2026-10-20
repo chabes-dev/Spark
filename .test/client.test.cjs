@@ -4,7 +4,15 @@ const { spawn } = require("child_process");
 const path = require("path");
 const ROOT = path.join(__dirname, "..");
 const ok = (n, c, x) => { console.log((c ? "PASS" : "FAIL") + "  " + n + (x !== undefined ? "  (" + x + ")" : "")); if (!c) process.exitCode = 1; };
-const pull = () => fetch("http://localhost:8800/api/sync", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ code: "secret-code", since: 0, push: [] }) }).then((r) => r.json());
+// everything the server holds (all pages)
+const pull = async () => {
+  let since = 0, more = true; const items = [];
+  while (more) {
+    const j = await fetch("http://localhost:8800/api/sync", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ code: "secret-code", since, push: [] }) }).then((r) => r.json());
+    items.push(...j.items); since = j.next; more = j.more;
+  }
+  return { items };
+};
 const serverHas = async (coll, id) => (await pull()).items.find((x) => x.coll === coll && x.item.id === id);
 
 (async () => {

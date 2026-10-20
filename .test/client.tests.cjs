@@ -23,9 +23,23 @@ module.exports = {
 module.exports.C3_big_library_uploads_completely = async ({ newDevice, ok, pull }) => {
   const pg = await newDevice();
   await pg.evaluate(() => { for (let i = 0; i < 1300; i++) S.sessions.push({ id: "big" + i, notes: "x", startedAt: Date.now() - i, minutes: 10 }); saveLocal(); return syncNow(); });
-  let since = 0, n = 0, more = true;
-  while (more) { const j = await fetch("http://localhost:8800/api/sync", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ code: "secret-code", since, push: [] }) }).then((r) => r.json()); n += j.items.filter((x) => x.item.id.startsWith("big")).length; since = j.next; more = j.more; }
+  const n = (await pull()).items.filter((x) => x.item.id.startsWith("big")).length;
   ok("C3 all 1300 items reach the server", n === 1300, n);
   ok("C3 sync reports no error", !(await pg.evaluate(() => SYNC.err)), await pg.evaluate(() => SYNC.err));
   await pg.context().close();
+};
+module.exports.C2_wiped_device_does_not_delete_everything = async ({ newDevice, ok, pull }) => {
+  const a = await newDevice();
+  await a.evaluate(() => { for (let i = 0; i < 30; i++) S.sparks.push({ id: "keep" + i, text: "spark " + i, created: Date.now() - i }); saveLocal(); return syncNow(); });
+  // the device loses its data but keeps its sync state (corrupt save, bug, partial clear)
+  await a.evaluate(() => { S.sparks = []; saveLocal(); return syncNow(); });
+  const live = (await pull()).items.filter((x) => x.item.id.startsWith("keep") && !x.item.deleted).length;
+  ok("C2 the server still has all 30 sparks", live === 30, live);
+  ok("C2 the wiped device gets them back", (await a.evaluate(() => S.sparks.filter((s) => s.id.startsWith("keep")).length)) === 30);
+  ok("C2 the device warns about held-back deletions", /deletion/i.test(await a.evaluate(() => SYNC.warn || "")));
+  // a normal, small delete still goes through
+  await a.evaluate(() => { S.sparks = S.sparks.filter((s) => s.id !== "keep1"); saveLocal(); return syncNow(); });
+  const k1 = (await pull()).items.find((x) => x.item.id === "keep1");
+  ok("C2 a single delete still syncs", k1 && k1.item.deleted === true);
+  await a.context().close();
 };

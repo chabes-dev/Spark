@@ -139,6 +139,7 @@ mark{background:#F3E2A6;color:inherit;border-radius:3px;padding:0 1px}
 .sdfut{font-family:var(--serif);font-size:17px;line-height:1.45;white-space:pre-wrap;overflow-wrap:anywhere}
 .syncstat{display:grid;gap:8px;margin:14px 0}
 .syncstat div{display:flex;justify-content:space-between;gap:12px;font-size:15px;border-bottom:1px solid var(--ash-2);padding-bottom:8px}
+.syncwarn{background:#FBF1DC;border-radius:12px;padding:12px 14px;font-size:14.5px;color:#6B4E16;margin-bottom:8px}
 .syncstat span{color:var(--ink-3)}.syncstat .sel{user-select:all}.syncstat .err b{color:#A0523D}
 .briefwait{font-family:var(--mono);font-size:13px;color:var(--ink-3);margin-top:16px}
 .briefpick{display:block;width:100%;text-align:left;padding:12px 0;border-bottom:1px solid var(--ash-2)}
@@ -588,7 +589,7 @@ function markHits(html,words){
 const SYNC_KEY='spark_sync';
 const SYNC_COLLS=['sparks','sessions','dumps','projects','prompts','motivators'];
 let SYNC=(()=>{try{return JSON.parse(localStorage.getItem(SYNC_KEY))||{}}catch(e){return {}}})();
-SYNC=Object.assign({code:'',since:0,sigs:{},last:0,ai:false,email:null,err:null},SYNC);
+SYNC=Object.assign({code:'',since:0,sigs:{},last:0,ai:false,email:null,err:null,warn:null},SYNC);
 const saveSync=()=>{try{localStorage.setItem(SYNC_KEY,JSON.stringify(SYNC))}catch(e){}};
 const syncOn=()=>!!SYNC.code;
 function fingerprint(o){
@@ -615,7 +616,18 @@ function syncNow(){
         if(!it||!it.id)return;const k=coll+':'+it.id;present.add(k);
         const f=fingerprint(it);if(SYNC.sigs[k]!==f){it.updated=now;push.push({coll,item:it});pending[k]=f}
       }));
-      Object.keys(SYNC.sigs).forEach(k=>{if(!present.has(k)){const c=k.indexOf(':');push.push({coll:k.slice(0,c),item:{id:k.slice(c+1),deleted:true,updated:now}});gone.push(k)}});
+      Object.keys(SYNC.sigs).forEach(k=>{if(!present.has(k))gone.push(k)});
+      // mass-delete guard: a wiped or corrupted device must not delete the library everywhere.
+      // Too many deletions at once are held back and everything is downloaded again instead.
+      const known={},lost={},collOf=k=>k.slice(0,k.indexOf(':'));
+      Object.keys(SYNC.sigs).forEach(k=>known[collOf(k)]=(known[collOf(k)]||0)+1);gone.forEach(k=>lost[collOf(k)]=(lost[collOf(k)]||0)+1);
+      const wholesale=Object.keys(lost).some(c=>lost[c]>10&&lost[c]>known[c]*.5);
+      if(gone.length>10&&(wholesale||gone.length>Object.keys(SYNC.sigs).length*.2)){
+        gone.forEach(k=>delete SYNC.sigs[k]);SYNC.since=0;
+        SYNC.warn=`Held back ${gone.length} deletions that looked like lost data and restored those items from the server. If you really meant to delete them, delete them again a few at a time.`;
+        gone.length=0;
+      }
+      gone.forEach(k=>{const c=k.indexOf(':');push.push({coll:k.slice(0,c),item:{id:k.slice(c+1),deleted:true,updated:now}})});
       // pushed in chunks, each committed as soon as the server accepted it
       const CHUNK=200,chunks=[];for(let i=0;i<push.length;i+=CHUNK)chunks.push(push.slice(i,i+CHUNK));
       const commitPush=ch=>ch.forEach(({coll,item})=>{const k=coll+':'+item.id;if(item.deleted)delete SYNC.sigs[k];else if(k in pending)SYNC.sigs[k]=pending[k]});
@@ -687,6 +699,7 @@ function openSync(){
         ${SYNC.email?`<div><span>Spark address</span><b class="sel">${esc(SYNC.email)}</b></div>`:''}
         ${SYNC.err?`<div class="err"><span>Last problem</span><b>${esc(SYNC.err)}</b></div>`:''}
       </div>
+      ${SYNC.warn?`<div class="syncwarn">${esc(SYNC.warn)} <button class="act" id="syncwarnok">OK</button></div>`:''}
       <div class="sheet-acts" style="justify-content:flex-start"><button class="btn btn-hot" id="syncnow">Sync now</button><button class="btn" id="syncoff">Disconnect this device</button></div>`
     :`<p>Enter your sync code to connect this device. Everything you have here is kept and merged with your other devices.</p>
       <input class="sheetin" id="synccode" placeholder="Sync code" autocomplete="off" autocapitalize="off" spellcheck="false" />
@@ -702,6 +715,7 @@ function openSync(){
         if(SYNC.err){const e=SYNC.err;SYNC.code='';saveSync();toast(/code/.test(e)?'that code didn\'t work':'couldn\'t connect: '+e);openSync()}
         else{toast('connected');openSync()}};
       go.onclick=connect;inp.onkeydown=e=>{if(e.key==='Enter')connect()}}
+    const sw=el.querySelector('#syncwarnok');if(sw)sw.onclick=()=>{SYNC.warn=null;saveSync();openSync()};
     const sn=el.querySelector('#syncnow');if(sn)sn.onclick=async()=>{sn.textContent='Syncing…';await syncNow();openSync()};
     const so=el.querySelector('#syncoff');if(so)so.onclick=()=>sheetConfirm('Disconnect this device?','Your data stays on this device. It just stops syncing until you enter the code again.','Disconnect',()=>{SYNC={code:'',since:0,sigs:{},last:0,ai:false,email:null,err:null};saveSync();render()});
   });
@@ -2264,7 +2278,7 @@ function sparksHtml(active,explored){
       <button class="btn" id="historybtn">History${S.sessions.length?' · '+S.sessions.length:''}</button>
       <button class="btn" id="dumpsbtn">Morning pages${S.dumps.length?' · '+S.dumps.length:''}</button>
       <button class="btn" id="importbtn">Import emails</button>
-      <button class="btn" id="syncbtn">${syncOn()?(SYNC.err?'⚠ Sync':'⟳ Synced'):'Sync & email'}</button>
+      <button class="btn" id="syncbtn">${syncOn()?(SYNC.err||SYNC.warn?'⚠ Sync':'⟳ Synced'):'Sync & email'}</button>
     </div>`;
 }
 function sparkResultsHtml(){
