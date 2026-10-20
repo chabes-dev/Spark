@@ -1,7 +1,7 @@
 import { startMock } from "./mockredis.mjs";
 const {srv,H}=await startMock(8799);
 process.env.UPSTASH_REDIS_REST_URL="http://localhost:8799";process.env.UPSTASH_REDIS_REST_TOKEN="t";
-process.env.SPARK_SYNC_CODE="secret-code";process.env.INBOUND_KEY="ik";
+process.env.SPARK_SYNC_CODE="secret-code";process.env.INBOUND_KEY="ik";process.env.ALLOWED_SENDERS="me@example.com, Other@Example.org";
 const sync=(await import("../api/sync.js")).default, inbound=(await import("../api/inbound.js")).default;
 const {stripQuoted,parseInbound}=await import("../api/_lib.js");
 const call=async(fn,body,query={},headers={'x-real-ip':'10.0.0.1'})=>{let out={};const res={status(c){out.status=c;return res},setHeader(){return res},json(j){out.body=j}};await fn({method:"POST",body,query,headers},res);return out};
@@ -10,12 +10,12 @@ const ok=(n,c,x)=>{console.log((c?'PASS':'FAIL')+'  '+n+(x!==undefined?'  ('+JSO
 ok('wrong code rejected',(await call(sync,{code:'nope'})).status===401);
 ok('wrong inbound key rejected',(await call(inbound,{},{key:'x'})).status===403);
 // new email
-const e1={headers:{"message_id":"<a1@mail>","subject":"Agendy name middle child","date":"Sun, 20 Sep 2026 14:55:00 +0100"},plain:"Last child\nFirst child\nMiddle child\n"};
+const e1={envelope:{from:"me@example.com"},headers:{"from":"Marcelo <me@example.com>","message_id":"<a1@mail>","subject":"Agendy name middle child","date":"Sun, 20 Sep 2026 14:55:00 +0100"},plain:"Last child\nFirst child\nMiddle child\n"};
 let r=await call(inbound,e1,{key:'ik'});ok('email -> new spark',r.status===200&&!r.body.threaded,r.body);
 const sid=r.body.sparkId;
 ok('duplicate ignored',(await call(inbound,e1,{key:'ik'})).body.skipped==='duplicate');
 // reply on thread (Outlook style quote)
-const e2={headers:{"message_id":"<a2@mail>","in_reply_to":"<a1@mail>","references":"<a1@mail>","subject":"Re: Agendy name middle child"},
+const e2={envelope:{from:"me@example.com"},headers:{"from":"me@example.com","message_id":"<a2@mail>","in_reply_to":"<a1@mail>","references":"<a1@mail>","subject":"Re: Agendy name middle child"},
   plain:"Also: Only child\n\nFrom: Marcelo Chabes <m@x.com>\nDate: Sunday, 20 September 2026 at 14:55\nTo: Marcelo\nSubject: Agendy\n\nLast child\nFirst child"};
 r=await call(inbound,e2,{key:'ik'});ok('reply threads onto same spark',r.body.threaded&&r.body.sparkId===sid,r.body);
 // pull
@@ -32,7 +32,7 @@ ok('newer edit wins',r.body.items.find(x=>x.item.id===sid).item.title==='Agency 
 ok('dumps sync too',!!r.body.items.find(x=>x.coll==='dumps'&&x.item.id==='d1'));
 // imported spark with emailIds then a reply threads onto it
 await call(sync,{code:'secret-code',since:0,push:[{coll:'sparks',item:{id:'imp1',text:'feet insight',emailIds:['<old1@mail>'],updated:t}}]});
-r=await call(inbound,{headers:{"message_id":"<old2@mail>","references":"<old0@mail> <old1@mail>","subject":"Re: feet"},plain:"new thought\n\nOn Thu, 17 Sep 2026 at 12:45, Marcelo wrote:\n> feet insight"},{key:'ik'});
+r=await call(inbound,{envelope:{from:"me@example.com"},headers:{"from":"me@example.com","message_id":"<old2@mail>","references":"<old0@mail> <old1@mail>","subject":"Re: feet"},plain:"new thought\n\nOn Thu, 17 Sep 2026 at 12:45, Marcelo wrote:\n> feet insight"},{key:'ik'});
 ok('reply to an imported email threads',r.body.sparkId==='imp1'&&r.body.threaded,r.body);
 // paging
 const many=Array.from({length:450},(_,i)=>({coll:'sessions',item:{id:'s'+i,notes:'x',updated:t}}));
@@ -101,5 +101,21 @@ ok('C5 non-string code is a clean 401',r.status===401,r.status);
   all=await call(sync,{code:'secret-code',since:now-1,push:[{coll:'sparks',item:{...sp,thread:sp.thread.slice(1),threadDel:[gone],updated:Date.now()+6000}}]},{},ipx);
   sp=all.body.items.find(x=>x.item.id===id).item;
   ok('M1 a deleted follow-up stays deleted',!sp.thread.some(x=>x.id===gone)&&sp.thread.length===3,sp.thread.length);
+}
+// C4: only allowed senders can create sparks by email
+{
+  const mk=(from,env,extra={})=>({envelope:{from:env,...extra},headers:{message_id:`<c4-${Math.random()}@m>`,subject:'spam',from},plain:'buy now'});
+  r=await call(inbound,mk('Spammer <spam@evil.com>','spam@evil.com'),{key:'ik'});
+  ok('C4 a stranger cannot create a spark',r.status===200&&r.body.skipped==='sender not allowed'&&!r.body.sparkId,r.body);
+  r=await call(inbound,mk('Marcelo <me@example.com>','bounce@evil.com'),{key:'ik'});
+  ok('C4 a forged From with a foreign envelope sender is refused',r.body.skipped==='sender not allowed',r.body);
+  r=await call(inbound,mk('me@example.com','me@example.com',{spf:{result:'fail'}}),{key:'ik'});
+  ok('C4 SPF fail is refused',r.body.skipped==='sender not allowed',r.body);
+  r=await call(inbound,mk('other@example.org','prvs=123=other@example.org'),{key:'ik'});
+  ok('C4 an allowed sender (case-insensitive, BATV bounce address) gets in',!!r.body.sparkId,r.body);
+  const saved=process.env.ALLOWED_SENDERS;delete process.env.ALLOWED_SENDERS;
+  r=await call(inbound,mk('me@example.com','me@example.com'),{key:'ik'});
+  ok('C4 with no allowlist set, email-in is closed',r.body.skipped==='email-in closed: ALLOWED_SENDERS not set',r.body);
+  process.env.ALLOWED_SENDERS=saved;
 }
 srv.close();

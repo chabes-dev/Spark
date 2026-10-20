@@ -323,4 +323,27 @@ export function stripQuoted(text) {
   }
   return lines.slice(0, cut).filter((l) => !/^>/.test(l.trim())).join("\n").trim();
 }
+/* ---------- who may email sparks in ----------
+   ALLOWED_SENDERS = comma-separated addresses. The From: address must be one of them, the envelope sender (if any) must
+   be on one of their domains (bounce addresses like prvs=…=you@domain differ), and CloudMailin's SPF verdict must not be
+   fail/softfail. Unset = closed. From: can still be forged for domains without strict DMARC: this is a filter, not proof. */
+export const addrOf = (v) => {
+  const t = String(Array.isArray(v) ? v[0] : v || "");
+  const m = t.match(/<([^<>\s]+@[^<>\s]+)>/) || t.match(/([^\s<>"',;]+@[^\s<>"',;]+)/);
+  return m ? m[1].toLowerCase() : "";
+};
+export function senderCheck(b) {
+  const allowed = String(process.env.ALLOWED_SENDERS || "").split(",").map((x) => x.trim().toLowerCase()).filter(Boolean);
+  if (!allowed.length) return "email-in closed: ALLOWED_SENDERS not set";
+  const h = {};
+  Object.entries(b.headers || {}).forEach(([k, v]) => { h[k.toLowerCase().replace(/-/g, "_")] = v; });
+  const env = b.envelope || {};
+  const from = addrOf(h.from), envFrom = addrOf(env.from);
+  const spf = String((env.spf && env.spf.result) || "").toLowerCase();
+  const domains = new Set(allowed.map((a) => a.split("@")[1]));
+  if (!from || !allowed.includes(from)) return "sender not allowed";
+  if (envFrom && !domains.has(envFrom.split("@")[1])) return "sender not allowed";
+  if (spf === "fail" || spf === "softfail") return "sender not allowed";
+  return null;
+}
 export const cleanSubject = (s) => String(s || "").replace(/^\s*((re|res|fw|fwd|enc|tr|aw|wg)\s*:\s*)+/i, "").trim();

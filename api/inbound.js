@@ -1,12 +1,15 @@
 // POST /api/inbound?key=INBOUND_KEY  (CloudMailin, "JSON (normalized)" format)
 // An email to the Spark address becomes a spark; a reply on the same thread becomes a follow-up on that spark.
-import { send, fail, storageReady, redis, getItem, putItems, parseInbound, cleanSubject, linksIn, nid, aiReady, classify } from "./_lib.js";
+import { send, fail, senderCheck, storageReady, redis, getItem, putItems, parseInbound, cleanSubject, linksIn, nid, aiReady, classify } from "./_lib.js";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return send(res, 405, { error: "POST only" });
   if (!process.env.INBOUND_KEY || req.query.key !== process.env.INBOUND_KEY) return send(res, 403, { error: "bad key" });
   if (!storageReady()) return send(res, 503, { error: "storage not connected" }); // the mail service retries later
   try {
+    // 200 (not 4xx) for refused mail, so the mail service doesn't keep retrying it
+    const refused = senderCheck(req.body || {});
+    if (refused) { console.warn("inbound refused:", refused); return send(res, 200, { ok: true, skipped: refused }); }
     const m = parseInbound(req.body || {});
     if (!m.body && !m.subject) return send(res, 200, { ok: true, skipped: "empty" });
     if (m.messageId && (await redis("HGET", "msg", m.messageId))) return send(res, 200, { ok: true, skipped: "duplicate" });
