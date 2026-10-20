@@ -1,4 +1,4 @@
-// POST /api/inbound?key=INBOUND_KEY  (CloudMailin, "JSON (normalized)" format)
+// POST /api/inbound  (CloudMailin, "JSON (normalized)" format; Basic Auth password or ?key= = INBOUND_KEY)
 // An email to the Spark address becomes a spark; a reply on the same thread becomes a follow-up on that spark.
 import crypto from "crypto";
 import { send, fail, safeEqual, senderCheck, storageReady, redis, getItem, putItems, parseInbound, cleanSubject, linksIn, nid, aiReady, classify } from "./_lib.js";

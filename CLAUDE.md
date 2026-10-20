@@ -90,7 +90,12 @@ The app still works fully offline/without the server: local data is the master c
   AI kind/tags); a reply (In-Reply-To/References) → follow-up in `spark.thread`, quoted history stripped.
 - `POST /api/classify`, `POST /api/related` (brief mode) call Claude (`claude-opus-5-5`, structured JSON output,
   server-side refusal fallback). The spark library is a cached system block.
-- Local tests: `node .test/api.test.mjs`; `node .test/server.mjs` serves the app + api on :8800 with a fake Redis.
+- Hardening: wrong sync codes are rate-limited (8/IP/15 min, 200/day), items are validated and `updated` is clamped
+  to server time + 10 s, writes run under a Redis lock (`withLock`), spark follow-ups merge by id (`mergeSpark`),
+  inbound mail is claimed with HSETNX before processing (`msg` values `pending:<ts>` while in flight), and every
+  Claude call counts against `AI_DAILY_LIMIT`. Untrusted text in prompts is fenced (`fence`).
+- Tests: `node .test/api.test.mjs` (server, fake Redis) and `NODE_PATH=$(npm root -g) node .test/client.test.cjs`
+  (headless Chromium); `node .test/server.mjs` serves the app + api on :8800 with a fake Redis.
 
 ## Sparks (creative library)
 - A capture is **one** spark (multi-line text stays together). Optional fields, all migration-free: `title`, `aiTitle`,
@@ -102,8 +107,14 @@ The app still works fully offline/without the server: local data is the master c
   browser, replies folded into threads, duplicates skipped by Message-ID), Sync & email sheet.
 - Tapping a card opens the spark sheet (`openSpark`): kind, title, full text, links, follow-ups, tags, actions.
 - Desk shows one older spark a day (`resurfaced`), which can seed today's morning pages prompt.
-- Sync client: `spark_sync` localStorage key (separate from `spark_v1`) holds code, `since`, per-item fingerprints.
-  `save()` schedules a debounced sync; also on focus and every minute. `saveLocal()` saves without syncing.
+- Sync client: `spark_sync` localStorage key (separate from `spark_v1`) holds code, `since`, per-item fingerprints,
+  `skew` (server clock offset), `warn`. `save()` schedules a debounced sync; also on focus and every minute.
+  `saveLocal()` saves without syncing. Fingerprints are committed only after the server accepted a push (pushed in
+  chunks of 200). Mass deletions are held back (more than 10, and either over half a collection or over 20% overall).
+  Server `conflicts` replace the local copy; an item with unsynced local edits is never replaced by its own echo.
+  Deleting a follow-up records its id in `spark.threadDel` (the server merges threads by id).
+- AI classify on the client backs off on failure (30 s doubling to 30 min) and gives a spark up after 3 tries.
+- Security review and its fixes: `REVIEW.md`.
 
 ## History
 - The old, Git-less project `spark` (`prj_AOg9SkC0ySUGtLadqnBrXS5LdCsc`, spark-chabes-devs-projects.vercel.app) was

@@ -24,26 +24,26 @@ so anyone who learns it can fill your library and spend your AI budget.
 
 ## Severity ranking
 
-| # | Severity | Finding | Fixed in |
+| # | Severity | Finding | Fix commit |
 |---|---|---|---|
-| C1 | Critical | Edits made offline or during a failed sync are never uploaded | client |
-| C2 | Critical | A wiped or corrupted device deletes the whole library on every device | client |
-| C3 | High | First sync of a big library uploads only the first 1,000 items, silently | client + server |
-| C4 | High | Anyone who knows the Spark address can inject sparks and trigger paid AI calls | server |
-| C5 | High | Sync code can be brute-forced: no rate limit, ~27-bit code, leaked in chat | server |
-| H1 | High | A future `updated` timestamp freezes an item forever; bad clocks win conflicts | server |
-| M1 | Medium | Concurrent writes lose data (two replies, or a reply plus an edit) | server + client |
-| M2 | Medium | Typing during an in-flight sync is overwritten by the server's echo | client |
-| M3 | Medium | Pushes the server rejects as stale are silently dropped; devices diverge | server + client |
-| M4 | Medium | AI classify retries every 1.5 s forever on failure: unbounded spend | client |
-| M5 | Medium | No daily AI budget on the server | server |
-| M6 | Medium | Duplicate sparks when the mail service retries after a partial failure | server |
-| M7 | Low-Med | Inbound key travels in the URL (logged) and is compared non-constant-time | server |
-| L1 | Low | Prompt injection via emailed text into the Claude prompts | server |
-| L2 | Low | Synced `links` are rendered as `href` without a scheme check (`javascript:`) | client |
-| L3 | Low | No size caps (bodies, threads, References header); future dates from email headers | server |
-| L4 | Low | Corrupt stored JSON breaks every sync; Redis calls have no timeout; raw errors returned | server |
-| L5 | Low | Claude calls can exceed the default function timeout (brief mode) | server |
+| C1 | Critical | Edits made offline or during a failed sync are never uploaded | `f8c0eee` |
+| C2 | Critical | A wiped or corrupted device deletes the whole library on every device | `7357f49` |
+| C3 | High | First sync of a big library uploads only the first 1,000 items, silently | `7aa829f` |
+| C4 | High | Anyone who knows the Spark address can inject sparks and trigger paid AI calls | `fdcf53f` |
+| C5 | High | Sync code can be brute-forced: no rate limit, ~27-bit code, leaked in chat | `3e978a3` |
+| H1 | High | A future `updated` timestamp freezes an item forever; bad clocks win conflicts | `a2c6f63` |
+| M1 | Medium | Concurrent writes lose data (two replies, or a reply plus an edit) | `1e4ab28` |
+| M2 | Medium | Typing during an in-flight sync is overwritten by the server's echo | `ce1bb93` |
+| M3 | Medium | Pushes the server rejects as stale are silently dropped; devices diverge | `8bbfbae` |
+| M4 | Medium | AI classify retries every 1.5 s forever on failure: unbounded spend | `a040639` |
+| M5 | Medium | No daily AI budget on the server | `098eeae` |
+| M6 | Medium | Duplicate sparks when the mail service retries after a partial failure | `e4bbaf4` |
+| M7 | Low-Med | Inbound key travels in the URL (logged) and is compared non-constant-time | `05327f8` |
+| L1 | Low | Prompt injection via emailed text into the Claude prompts | `a3eead7` |
+| L2 | Low | Synced `links` are rendered as `href` without a scheme check (`javascript:`) | `9d5d3d4` |
+| L3 | Low | No size caps (bodies, threads, References header); future dates from email headers | `952883b` |
+| L4 | Low | Corrupt stored JSON breaks every sync; Redis calls have no timeout; raw errors returned | `1053d13` |
+| L5 | Low | Claude calls can exceed the default function timeout (brief mode) | `f20f54d` |
 
 ---
 
@@ -59,8 +59,9 @@ on that phone forever, with sync looking fine. Same for deletions. No attacker n
 **Effect:** if `spark_v1` is lost or unreadable while `spark_sync` survives (a corrupt save, a bug, a partial
 storage clear), every item becomes a tombstone. It is pushed, wins on the server, and is pulled as a delete by the
 other devices.
-**Fix:** a mass-delete guard. If one sync would delete more than 10 items and more than 20% of what this device
-knew, hold the deletes back, re-download everything instead, and show a warning in the Sync sheet.
+**Fix:** a mass-delete guard. If one sync would delete more than 10 items, and either over half of one collection
+or over 20% of everything this device knew, the deletes are held back. The device re-downloads everything instead
+and shows a warning in the Sync sheet. Deleting a few items at a time still syncs normally.
 
 ### C3. A big library only partly uploads (High, reliability)
 **Where:** `api/sync.js` `.slice(0, 1000)`; the client pushes everything in one request and marks it all synced.
@@ -92,8 +93,10 @@ actions). Note that guessing item IDs gets you nothing: every endpoint requires 
 **Where:** `putItems()` trusts the client's `updated`.
 **Effect:** one push with `updated: 9e15`, from a device with a wrong clock or from anyone with the code, makes that
 item permanently un-editable, because every later edit is "older". Any device whose clock runs ahead always wins.
-**Fix:** the server clamps `updated` to at most 2 minutes ahead of server time. It also validates items: ids are
-1–64 safe characters, each item is at most 256 KB, and `updated` must be a finite number.
+**Fix:** the server clamps `updated` to at most 10 s ahead of server time, and returns its clock so devices stamp
+their edits with server time (`SYNC.skew`). It also validates items (ids are 1–64 safe characters starting with a
+letter or digit, each item is at most 256 KB, `updated` must be a finite number) and reports refused ones as
+`invalid`.
 
 ### M1. Concurrent writes lose data (Medium)
 **Where:** `putItems()` reads, then writes, with no atomicity; `inbound.js` builds a reply from a stale read and
@@ -119,7 +122,8 @@ sync instead.
 errors.
 **Effect:** if `/api/classify` keeps failing after Claude has answered (a parse error, a timeout after generation),
 every open tab pays for a Claude call every 1.5 s, all day.
-**Fix:** exponential backoff (up to 30 min), and a spark is given up after 3 failed attempts.
+**Fix:** exponential backoff (30 s, doubling to 30 min), which the once-a-minute sync also respects, and a spark is
+given up after 3 failed attempts.
 
 ### M5. No AI budget (Medium, cost)
 **Fix:** a daily counter in Redis (`AI_DAILY_LIMIT`, default 300 calls) shared by classify, related and inbound. Over
@@ -156,11 +160,20 @@ that runs when tapped.
 `created` from an email's `Date:` header is clamped to now.
 
 ### L4. Robustness (Low)
-**Fix:** one corrupt stored item is skipped instead of failing every sync. Redis calls time out after 8 s with a
-clear error. 500 responses say "server error" (details go to the function log).
+**Fix:** one corrupt stored item is skipped instead of failing every sync, and a good copy can overwrite it. Redis
+calls time out after 8 s, and a storage error reply is a clear `redis: ...` error (it used to crash with
+"j.map is not a function"). 500 responses say "server error", with details in the function log (done in C5).
 
 ### L5. Timeouts (Low)
 **Fix:** `maxDuration` is 60 s for the classify, related and inbound functions.
+
+## Tests
+- `node .test/api.test.mjs`: **55 checks pass**. These are server handlers against a fake Redis, with no network.
+- `NODE_PATH=$(npm root -g) node .test/client.test.cjs`: **21 checks pass**. This is headless Chromium against the
+  real handlers.
+- Each fix's test was run before the fix and failed, then passed after it.
+- Not run: real Upstash, real CloudMailin, real Claude calls (no credentials here; the budget and prompt tests stop
+  before any call).
 
 ## Checked and fine
 - **Secrets:** `ANTHROPIC_API_KEY` and the Redis token are only read server-side (`process.env`). None are sent to the
