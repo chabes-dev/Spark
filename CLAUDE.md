@@ -98,6 +98,12 @@ The app still works fully offline/without the server: local data is the master c
   (headless Chromium); `node .test/server.mjs` serves the app + api on :8800 with a fake Redis.
 
 ## Sparks (creative library)
+- Capture box (`captureHtml`, Sparks + project pages): a visible card with a **+ Keep** button and a **+ Project** chip
+  (`CAP_PROJECT`; draft kept in `CAP_DRAFT` across re-renders). Computer: Enter keeps, Shift+Enter new line. Phone
+  (`TOUCH`): Enter is a new line, the button keeps. `#tags` typed while jotting become `tags` (`splitTags`); a line made
+  only of tags is dropped from the text, a #word in a sentence stays.
+- Sparks page filters: shelves (kind), tag chips, and a project `<select>` (`S.ui.sparkProj`: '' all, `__none`, or an id;
+  picking a project also makes it the capture default).
 - A capture is **one** spark (multi-line text stays together). Optional fields, all migration-free: `title`, `aiTitle`,
   `kind` (`idea|insight|name|brief|convo|link`; `kindByUser` when set by hand; otherwise `guessKind` heuristics),
   `tags[]`, `links[]`, `thread[]` (`{id,text,created,source}` follow-ups), `source` (`app|email|import`),

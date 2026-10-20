@@ -113,3 +113,19 @@ module.exports.L2_only_web_links_are_rendered = async ({ newDevice, ok }) => {
   ok("L2 the spark sheet renders only http(s) links", sheet.length === 1 && sheet[0] === "https://ok.example/page", JSON.stringify(sheet));
   await pg.context().close();
 };
+module.exports.capture_box_tags_and_project_filter = async ({ newDevice, ok }) => {
+  const pg = await newDevice();
+  await pg.evaluate(() => { S.sparks = []; newProject("Naming"); S.ui.view = "sparks"; render(); });
+  await pg.click("#cap"); await pg.keyboard.type("Pedicure for #hikers"); await pg.keyboard.press("Shift+Enter"); await pg.keyboard.type("#feet #ooh");
+  await pg.click("#capkeep"); await pg.waitForTimeout(400);
+  const sp = await pg.evaluate(() => S.sparks[0]);
+  ok("capture: Keep button saves, #tags become tags, a tags-only line is dropped", sp && sp.text === "Pedicure for #hikers" && sp.tags.join() === "hikers,feet,ooh", JSON.stringify(sp && [sp.text, sp.tags]));
+  await pg.click("#cap"); await pg.keyboard.type("Last child");
+  await pg.click("#capproj"); await pg.click('.picktile:has-text("Naming")');
+  ok("capture: draft survives the project picker", (await pg.inputValue("#cap")) === "Last child");
+  await pg.click("#capkeep"); await pg.waitForTimeout(400);
+  await pg.selectOption("#projsel", { label: "Naming" }); await pg.waitForTimeout(200);
+  ok("project filter shows only that project's sparks", (await pg.$$("#sparkres .spark")).length === 1);
+  await pg.evaluate(() => { S.ui.sparkProj = null; saveLocal(); });
+  await pg.context().close();
+};

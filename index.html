@@ -45,14 +45,24 @@ input,textarea{font-family:inherit;color:inherit;background:none;border:none;out
 
 .alarm{border:2px solid var(--ember);background:var(--ember-soft);color:#A8543B;padding:16px 20px;border-radius:var(--r);margin:20px 0;font-size:16px}
 
-.capture{position:relative;margin-top:20px;border-bottom:3px solid var(--ash);transition:border-color .25s}
-.capture:focus-within{border-color:var(--ember)}
-.capture textarea{width:100%;resize:none;overflow:hidden;font-family:var(--serif);font-weight:300;
-  font-size:clamp(24px,2.6vw,34px);line-height:1.35;padding:18px 150px 18px 0;min-height:60px;letter-spacing:-.01em}
-.capture textarea::placeholder{color:var(--ink-3);font-style:italic;opacity:.65}
-.capture-key{position:absolute;right:0;bottom:22px;font-family:var(--mono);font-size:13px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3);opacity:0;transition:opacity .25s;pointer-events:none}
-.capture:focus-within .capture-key{opacity:.8}
+.capture{position:relative;margin-top:22px;background:var(--surface);border:1.5px solid var(--ash);border-radius:var(--r);
+  box-shadow:var(--shadow);padding:6px 18px 12px;transition:border-color .25s,box-shadow .25s}
+.capture:focus-within{border-color:var(--ember);box-shadow:var(--shadow-2)}
+.capture textarea{display:block;width:100%;resize:none;overflow:hidden;font-family:var(--serif);font-weight:300;
+  font-size:clamp(21px,2.3vw,28px);line-height:1.38;padding:12px 0 10px;min-height:56px;letter-spacing:-.01em}
+.capture textarea:focus-visible{outline:none} /* the card's border already shows focus */
+.capture textarea::placeholder{color:var(--ink-3);font-style:italic;opacity:.75}
+.capbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.caphint{flex:1;min-width:120px;font-family:var(--mono);font-size:12px;letter-spacing:.05em;color:var(--ink-3)}
+.capproj{font-family:var(--mono);font-size:12.5px;letter-spacing:.04em;color:var(--ink-2);padding:8px 12px;border-radius:999px;border:1.5px solid var(--ash)}
+.capproj.set{border-color:var(--ember-2);color:var(--ember)}
+.capkeep{padding:10px 20px;margin-left:auto}
+@media(max-width:640px){.caphint{flex-basis:100%}}
+.capkeep:disabled{opacity:.45;cursor:default}
 .capture.flash{animation:flash .5s ease}
+.projsel{font-family:var(--mono);font-size:12.5px;letter-spacing:.04em;color:var(--ink-2);padding:8px 12px;border-radius:999px;border:1.5px solid var(--ash);background:var(--surface)}
+.projsel.on{border-color:var(--ink);color:var(--ink)}
+.taghint{font-family:var(--mono);font-size:12px;color:var(--ink-3);margin-bottom:8px}
 @keyframes flash{0%,50%{border-color:var(--ember)}100%{border-color:var(--ash)}}
 
 .startbtn{position:relative;overflow:hidden;display:block;width:100%;margin:30px 0 12px;padding:22px;border-radius:999px;background:var(--ember);color:#fff;
@@ -526,10 +536,20 @@ S.prompts=Array.isArray(S.prompts)?S.prompts:[]; // the owner's own thought star
 const projById=id=>id?S.projects.find(p=>p.id===id)||null:null;
 
 /* ---- sparks ---- */
+/* #tags typed while jotting become the spark's tags. A line made only of tags is taken out of the text;
+   a #word inside a sentence stays where it is. */
+const TAG_RE=/(^|\s)#([\p{L}][\p{L}\p{N}_-]{0,29})/gu;
+function splitTags(text){
+  const tags=[...new Set([...String(text).matchAll(TAG_RE)].map(m=>m[2].toLowerCase()))];
+  if(!tags.length)return {text,tags};
+  let t=String(text).split('\n').filter(l=>!/^\s*(#[\p{L}][\p{L}\p{N}_-]*\s*)+$/u.test(l)).join('\n');
+  t=t.trim();
+  return {text:t||String(text).trim(),tags};
+}
 function addSpark(text,projectId){
   // one capture is one spark, so a list of names or a pasted chat stays together
-  const t=String(text).replace(/\n{3,}/g,'\n\n').trim();if(!t)return [];
-  const x={id:nid(),text:t,created:Date.now(),explored:false,exploredAt:null,projectId:projectId||null,source:'app',links:linksOf(t),tags:[],thread:[]};
+  const sp=splitTags(String(text).replace(/\n{3,}/g,'\n\n').trim()),t=sp.text;if(!t)return [];
+  const x={id:nid(),text:t,created:Date.now(),explored:false,exploredAt:null,projectId:projectId||null,source:'app',links:linksOf(t),tags:sp.tags,thread:[]};
   S.sparks.unshift(x);save();return [x];
 }
 function toggleExplored(id){
@@ -2274,24 +2294,40 @@ function placeNavInd(fromView,toView,p,anim){
   ind.style.left=(a.offsetLeft+(b.offsetLeft-a.offsetLeft)*p)+'px';
   ind.style.width=(a.offsetWidth+(b.offsetWidth-a.offsetWidth)*p)+'px';
 }
+/* the capture box: a visible card with its own Keep button (on phones Enter is a new line, the button keeps) */
+let CAP_DRAFT='',CAP_PROJECT=null;
+function captureHtml(placeholder,inProject){
+  const pr=projById(CAP_PROJECT);
+  return `<div class="capture" id="capbox">
+      <textarea id="cap" rows="1" placeholder="${esc(placeholder)}">${esc(CAP_DRAFT)}</textarea>
+      <div class="capbar">
+        <span class="caphint">${TOUCH?'#tags work too':'⏎ keep · ⇧⏎ new line · #tags work too'}</span>
+        ${inProject?'':`<button class="capproj ${pr?'set':''}" id="capproj">${pr?'▸ '+esc(pr.name):'+ Project'}</button>`}
+        <button class="btn btn-hot capkeep" id="capkeep" ${CAP_DRAFT.trim()?'':'disabled'}>+ Keep</button>
+      </div>
+    </div>`;
+}
 function sparksHtml(active,explored){
-  const shelf=S.ui.shelf||'all',live=S.sparks.filter(x=>!x.explored);
+  const shelf=S.ui.shelf||'all',inProj=sparkInProjFilter,live=S.sparks.filter(x=>!x.explored&&inProj(x));
+  explored=explored.filter(inProj);
   const count=k=>k==='all'?live.length:k==='explored'?explored.length:live.filter(x=>kindOf(x)===k).length;
   const shelves=['all',...KINDS,'explored'].filter(k=>k==='all'||count(k)||shelf===k);
   const tags=allTags().slice(0,14);
   return `
-    <div class="capture" id="capbox">
-      <textarea id="cap" rows="1" placeholder="What's pulling at you?"></textarea>
-      <div class="capture-key">⏎ keep · ⇧⏎ new line</div>
-    </div>
+    ${captureHtml("Jot a spark… what's pulling at you?",false)}
     <button class="startbtn" id="startbtn">Start writing</button>
     <div class="startnote">${startNote()}</div>
     <div class="sparktools">
       <input class="sq" id="sq" type="search" placeholder="Search sparks, pages and writing…" value="${esc(S.ui.sparkQ||'')}" autocomplete="off" />
       <button class="btn" id="briefbtn">✦ Find for a brief</button>
     </div>
-    <div class="shelves" id="shelves">${shelves.map(k=>`<button class="shelf ${shelf===k?'on':''}" data-shelf="${k}">${SHELF_LABEL[k]}<span>${count(k)}</span></button>`).join('')}</div>
-    ${tags.length?`<div class="tagrow">${tags.map(t=>`<button class="tagchip ${S.ui.sparkTag===t?'on':''}" data-tag="${esc(t)}">#${esc(t)}</button>`).join('')}</div>`:''}
+    <div class="shelves" id="shelves">${shelves.map(k=>`<button class="shelf ${shelf===k?'on':''}" data-shelf="${k}">${SHELF_LABEL[k]}<span>${count(k)}</span></button>`).join('')}
+      ${S.projects.length?`<select class="projsel ${S.ui.sparkProj?'on':''}" id="projsel" aria-label="Filter by project">
+        <option value="">All projects</option>
+        ${S.projects.map(p=>`<option value="${p.id}" ${S.ui.sparkProj===p.id?'selected':''}>${esc(p.name)}</option>`).join('')}
+        <option value="__none" ${S.ui.sparkProj==='__none'?'selected':''}>No project</option></select>`:''}</div>
+    ${tags.length?`<div class="tagrow">${tags.map(t=>`<button class="tagchip ${S.ui.sparkTag===t?'on':''}" data-tag="${esc(t)}">#${esc(t)}</button>`).join('')}</div>`
+      :S.sparks.length?`<div class="taghint">Tip: add #tags while you jot, then tap a tag here to filter.</div>`:''}
     <div id="sparkres">${sparkResultsHtml()}</div>
     ${motivStrip()}
     <div class="foot">
@@ -2301,6 +2337,8 @@ function sparksHtml(active,explored){
       <button class="btn" id="syncbtn">${syncOn()?(SYNC.err||SYNC.warn?'⚠ Sync':'⟳ Synced'):'Sync & email'}</button>
     </div>`;
 }
+// the Sparks page's project filter: '' all, '__none' no project, or a project id
+const sparkInProjFilter=x=>{const f=S.ui.sparkProj;if(f&&f!=='__none'&&!projById(f))return true;return !f||(f==='__none'?!projById(x.projectId):x.projectId===f)};
 function sparkResultsHtml(){
   const q=S.ui.sparkQ||'';
   if(q.trim()){
@@ -2311,10 +2349,10 @@ function sparkResultsHtml(){
       ${r.sessions.length?`<div class="sechead"><h2>Writing</h2><span>${r.sessions.length}</span></div><div class="entries">${r.sessions.map(({x,snip})=>row('data-ssess',x.id,esc(x.sparkText||'Freewriting'),fmtDate(x.startedAt)+' · '+wc(x.notes)+' words',snip)).join('')}</div>`:''}`;
   }
   const shelf=S.ui.shelf||'all',tag=S.ui.sparkTag;
-  let list=shelf==='explored'?S.sparks.filter(x=>x.explored):S.sparks.filter(x=>!x.explored&&(shelf==='all'||kindOf(x)===shelf));
+  let list=(shelf==='explored'?S.sparks.filter(x=>x.explored):S.sparks.filter(x=>!x.explored&&(shelf==='all'||kindOf(x)===shelf))).filter(sparkInProjFilter);
   if(tag)list=list.filter(x=>(x.tags||[]).includes(tag));
   if(!S.sparks.length)return `<div class="empty">Nothing waiting. Whatever's on your mind — drop it above, or email it to your Spark address.</div>`;
-  if(!list.length)return `<div class="empty">Nothing on this shelf${tag?' with #'+esc(tag):''} yet.</div>`;
+  if(!list.length)return `<div class="empty">Nothing on this shelf${tag?' with #'+esc(tag):''}${S.ui.sparkProj&&projById(S.ui.sparkProj)?' in '+esc(projById(S.ui.sparkProj).name):''} yet.</div>`;
   if(shelf==='name')return `<div class="namewall">${list.map(x=>`<div class="namegroup" data-open="${x.id}">
       ${x.text.split('\n').map(l=>l.trim()).filter(Boolean).map(l=>`<span class="nm">${esc(l)}</span>`).join('')}
       <div class="ngm">${esc(sparkTitle(x)||'')}${sparkTitle(x)?' · ':''}${fmtDate(x.created)}</div></div>`).join('')}</div>`;
@@ -2420,10 +2458,7 @@ function projectHtml(p){
     <button class="backlink" id="toDesk">← Desk</button>
     <input class="ptitle" id="pname" value="${esc(p.name)}" title="Click to rename" />
     <div class="pstat">${ps.words.toLocaleString()} words · ${ps.sp.length} sparks · ${ps.se.length} writing · ${ps.du.length} pages${ps.lastTs?' · last touched '+ago(ps.lastTs):''}</div>
-    <div class="capture" id="capbox">
-      <textarea id="cap" rows="1" placeholder="New spark for ${esc(p.name)}…"></textarea>
-      <div class="capture-key">⏎ keep · ⇧⏎ new line</div>
-    </div>
+    ${captureHtml('New spark for '+p.name+'…',true)}
     <div class="pbtns">
       <button class="startbtn" id="pstart">Start writing</button>
       <button class="quickbtn" id="pentry">+ New entry</button>
@@ -2483,17 +2518,31 @@ function wire(){
   const np=document.getElementById('newproj');if(np)np.onclick=openNewProject;
   app.querySelectorAll('[data-proj]').forEach(b=>b.onclick=()=>openProject(b.dataset.proj));
   const cap=document.getElementById('cap');
-  if(cap){autosize(cap);cap.addEventListener('input',()=>autosize(cap));
-    cap.addEventListener('keydown',e=>{
-      if(e.key==='Enter'&&!e.shiftKey){
-        e.preventDefault();const v=cap.value.trim();if(!v)return;
-        const made=addSpark(v,S.ui.view==='project'?S.ui.projectId:null);made.forEach(x=>x.fresh=true);
-        document.getElementById('capbox').classList.add('flash');
-        cap.value='';autosize(cap);
-        setTimeout(()=>{render();const c=document.getElementById('cap');if(c)c.focus();
-          setTimeout(()=>{S.sparks.forEach(x=>delete x.fresh);save()},650)},240);
-        toast('kept');
-      }});}
+  if(cap){
+    const kb=document.getElementById('capkeep');
+    autosize(cap);
+    cap.addEventListener('input',()=>{autosize(cap);CAP_DRAFT=cap.value;if(kb)kb.disabled=!cap.value.trim()});
+    const keep=()=>{
+      const v=cap.value.trim();if(!v)return;
+      const proj=S.ui.view==='project'?S.ui.projectId:CAP_PROJECT;
+      const made=addSpark(v,proj);made.forEach(x=>x.fresh=true);
+      document.getElementById('capbox').classList.add('flash');
+      cap.value='';CAP_DRAFT='';autosize(cap);
+      setTimeout(()=>{render();const c=document.getElementById('cap');if(c&&!TOUCH)c.focus();
+        setTimeout(()=>{S.sparks.forEach(x=>delete x.fresh);save()},650)},240);
+      const t=made[0]&&made[0].tags.length?' · '+made[0].tags.map(x=>'#'+x).join(' '):'';
+      toast('kept'+t);
+    };
+    if(kb)kb.onclick=keep;
+    // computer: Enter keeps, Shift+Enter is a new line. Phone: Enter is a new line, the Keep button keeps.
+    cap.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!TOUCH){e.preventDefault();keep()}});
+  }
+  const cpj=document.getElementById('capproj');
+  if(cpj)cpj.onclick=()=>pickProject(CAP_PROJECT,v=>{CAP_PROJECT=v},()=>{closeSheet();render();const c=document.getElementById('cap');if(c){c.focus();c.setSelectionRange(c.value.length,c.value.length)}});
+  const psel=document.getElementById('projsel');
+  if(psel)psel.onchange=()=>{S.ui.sparkProj=psel.value||null;
+    if(psel.value&&psel.value!=='__none')CAP_PROJECT=psel.value; // new sparks go where you're looking
+    saveLocal();render()};
   const stb=document.getElementById('startbtn');if(stb)stb.onclick=()=>startWriting(null);
   const mh=document.getElementById('motivhome');if(mh)mh.onclick=openMotivators;
   const ib=document.getElementById('importbtn');if(ib)ib.onclick=openImport;
