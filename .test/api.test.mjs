@@ -38,9 +38,12 @@ ok('reply to an imported email threads',r.body.sparkId==='imp1'&&r.body.threaded
 const many=Array.from({length:450},(_,i)=>({coll:'sessions',item:{id:'s'+i,notes:'x',updated:t}}));
 await call(sync,{code:'secret-code',since:0,push:many});
 let since=0,got=0,more=true,loops=0;while(more&&loops<10){const q=await call(sync,{code:'secret-code',since,push:[]});got+=q.body.items.length;since=q.body.next;more=q.body.more;loops++}
-ok('paging returns everything',got>=454,got);
+ok('paging returns everything (450 sessions + 3 earlier items)',got===453,got);
 // quote stripping
 ok('gmail quote stripped',stripQuoted("hi there\n\nOn Mon, 5 Oct 2026 at 10:00, Marcelo <m@x> wrote:\n> old")==='hi there');
 ok('pt quote stripped',stripQuoted("oi\n\nEm seg., 5 de out. de 2026 às 10:00, Marcelo escreveu:\n> velho")==='oi');
 ok('html fallback',parseInbound({headers:{},html:"<p>Hello<br>World</p>"}).body==='Hello\nWorld');
+// C3: oversized push is refused, never truncated
+r=await call(sync,{code:'secret-code',since:0,push:Array.from({length:501},(_,i)=>({coll:'sessions',item:{id:'x'+i,updated:t}}))});
+ok('C3 push over 500 items is refused with 413',r.status===413,r.status);
 srv.close();

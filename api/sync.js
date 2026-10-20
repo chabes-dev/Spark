@@ -2,13 +2,16 @@
 // The phone/laptop pushes what changed locally and pulls what changed elsewhere (other device, emails).
 import { guard, send, putItems, changedSince, COLLS, aiReady, pipeline } from "./_lib.js";
 
+const MAX_PUSH = 500;
+
 export default async function handler(req, res) {
   if (!guard(req, res)) return;
   try {
     const { since = 0, push = [] } = req.body;
+    // never truncate silently: the client pushes in chunks; anything bigger is refused so nothing is lost unnoticed
+    if (Array.isArray(push) && push.length > MAX_PUSH) return send(res, 413, { error: `push at most ${MAX_PUSH} items per request` });
     const clean = (Array.isArray(push) ? push : [])
-      .filter((x) => x && COLLS.includes(x.coll) && x.item && typeof x.item.id === "string")
-      .slice(0, 1000);
+      .filter((x) => x && COLLS.includes(x.coll) && x.item && typeof x.item.id === "string");
     await putItems(clean);
     // sparks imported from old emails carry their Message-IDs: remember them so future replies thread onto them
     const map = [];

@@ -616,16 +616,15 @@ function syncNow(){
         const f=fingerprint(it);if(SYNC.sigs[k]!==f){it.updated=now;push.push({coll,item:it});pending[k]=f}
       }));
       Object.keys(SYNC.sigs).forEach(k=>{if(!present.has(k)){const c=k.indexOf(':');push.push({coll:k.slice(0,c),item:{id:k.slice(c+1),deleted:true,updated:now}});gone.push(k)}});
-      const commitPush=()=>{Object.assign(SYNC.sigs,pending);gone.forEach(k=>delete SYNC.sigs[k])};
-      let more=true,first=true,loops=0;
-      while((more||first)&&loops<40){
-        const j=await api('sync',{since:SYNC.since,push:first?push:[]});
-        if(first)commitPush();
-        first=false;loops++;
-        SYNC.ai=!!j.ai;SYNC.email=j.email||SYNC.email;
+      // pushed in chunks, each committed as soon as the server accepted it
+      const CHUNK=200,chunks=[];for(let i=0;i<push.length;i+=CHUNK)chunks.push(push.slice(i,i+CHUNK));
+      const commitPush=ch=>ch.forEach(({coll,item})=>{const k=coll+':'+item.id;if(item.deleted)delete SYNC.sigs[k];else if(k in pending)SYNC.sigs[k]=pending[k]});
+      const take=j=>{SYNC.ai=!!j.ai;SYNC.email=j.email||SYNC.email;
         (j.items||[]).forEach(({coll,item})=>{if(applyRemote(coll,item))changed=true});
-        SYNC.since=j.next||SYNC.since;more=!!j.more;
-      }
+        SYNC.since=j.next||SYNC.since;return !!j.more};
+      let more=false,loops=0;
+      for(const ch of (chunks.length?chunks:[[]])){const j=await api('sync',{since:SYNC.since,push:ch});commitPush(ch);more=take(j)}
+      while(more&&loops<40){loops++;more=take(await api('sync',{since:SYNC.since,push:[]}))}
       SYNC.last=Date.now();SYNC.err=null;
     }catch(e){SYNC.err=String(e.message||e)}
     saveSync();
