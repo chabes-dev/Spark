@@ -4,8 +4,8 @@ process.env.UPSTASH_REDIS_REST_URL="http://localhost:8799";process.env.UPSTASH_R
 process.env.SPARK_SYNC_CODE="secret-code";process.env.INBOUND_KEY="ik";
 const sync=(await import("../api/sync.js")).default, inbound=(await import("../api/inbound.js")).default;
 const {stripQuoted,parseInbound}=await import("../api/_lib.js");
-const call=async(fn,body,query={})=>{let out={};const res={status(c){out.status=c;return res},setHeader(){return res},json(j){out.body=j}};await fn({method:"POST",body,query},res);return out};
-const ok=(n,c,x)=>console.log((c?'PASS':'FAIL')+'  '+n+(x!==undefined?'  ('+JSON.stringify(x)+')':''));
+const call=async(fn,body,query={},headers={'x-real-ip':'10.0.0.1'})=>{let out={};const res={status(c){out.status=c;return res},setHeader(){return res},json(j){out.body=j}};await fn({method:"POST",body,query,headers},res);return out};
+const ok=(n,c,x)=>{console.log((c?'PASS':'FAIL')+'  '+n+(x!==undefined?'  ('+JSON.stringify(x)+')':''));if(!c)process.exitCode=1};
 // auth
 ok('wrong code rejected',(await call(sync,{code:'nope'})).status===401);
 ok('wrong inbound key rejected',(await call(inbound,{},{key:'x'})).status===403);
@@ -46,4 +46,13 @@ ok('html fallback',parseInbound({headers:{},html:"<p>Hello<br>World</p>"}).body=
 // C3: oversized push is refused, never truncated
 r=await call(sync,{code:'secret-code',since:0,push:Array.from({length:501},(_,i)=>({coll:'sessions',item:{id:'x'+i,updated:t}}))});
 ok('C3 push over 500 items is refused with 413',r.status===413,r.status);
+// C5: wrong codes are rate-limited per IP; the right code from that IP is blocked too while locked out
+const ip={'x-real-ip':'203.0.113.9'};
+for(let i=0;i<8;i++)await call(sync,{code:'guess'+i,since:0,push:[]},{},ip);
+r=await call(sync,{code:'secret-code',since:0,push:[]},{},ip);
+ok('C5 9th try from a guessing IP is refused with 429',r.status===429,r.status);
+r=await call(sync,{code:'secret-code',since:0,push:[]},{},{'x-real-ip':'198.51.100.7'});
+ok('C5 another IP is unaffected',r.status===200,r.status);
+r=await call(sync,{code:42,since:0,push:[]},{},{'x-real-ip':'198.51.100.8'});
+ok('C5 non-string code is a clean 401',r.status===401,r.status);
 srv.close();

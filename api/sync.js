@@ -1,11 +1,11 @@
 // POST /api/sync {code, since, push:[{coll,item}]} -> {items:[{coll,item}], next, more, ai}
 // The phone/laptop pushes what changed locally and pulls what changed elsewhere (other device, emails).
-import { guard, send, putItems, changedSince, COLLS, aiReady, pipeline } from "./_lib.js";
+import { guard, send, fail, putItems, changedSince, COLLS, aiReady, pipeline } from "./_lib.js";
 
 const MAX_PUSH = 500;
 
 export default async function handler(req, res) {
-  if (!guard(req, res)) return;
+  if (!(await guard(req, res))) return;
   try {
     const { since = 0, push = [] } = req.body;
     // never truncate silently: the client pushes in chunks; anything bigger is refused so nothing is lost unnoticed
@@ -22,6 +22,6 @@ export default async function handler(req, res) {
     const out = await changedSince(Number(since) || 0);
     send(res, 200, { ...out, ai: aiReady(), email: process.env.SPARK_EMAIL || null });
   } catch (e) {
-    send(res, 500, { error: String(e.message || e) });
+    fail(res, e);
   }
 }

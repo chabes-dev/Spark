@@ -1,6 +1,6 @@
 // POST /api/inbound?key=INBOUND_KEY  (CloudMailin, "JSON (normalized)" format)
 // An email to the Spark address becomes a spark; a reply on the same thread becomes a follow-up on that spark.
-import { send, storageReady, redis, getItem, putItems, parseInbound, cleanSubject, linksIn, nid, aiReady, classify } from "./_lib.js";
+import { send, fail, storageReady, redis, getItem, putItems, parseInbound, cleanSubject, linksIn, nid, aiReady, classify } from "./_lib.js";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return send(res, 405, { error: "POST only" });
@@ -48,6 +48,6 @@ export default async function handler(req, res) {
     if (m.messageId) await redis("HSET", "msg", m.messageId, spark.id);
     send(res, 200, { ok: true, sparkId: spark.id, threaded });
   } catch (e) {
-    send(res, 500, { error: String(e.message || e) });
+    fail(res, e);
   }
 }

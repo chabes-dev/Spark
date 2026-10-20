@@ -1,5 +1,6 @@
 // Shared helpers for Spark's small server: storage (Upstash Redis over REST), auth, item store, AI.
 import Anthropic from "@anthropic-ai/sdk";
+import crypto from "crypto";
 
 /* ---------- storage: Upstash Redis REST (env set by the Vercel Marketplace integration) ---------- */
 const R_URL = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
@@ -73,19 +74,43 @@ export async function changedSince(since, limit = 400) {
 }
 
 /* ---------- auth ---------- */
+// constant-time comparison (hashing first makes the lengths equal)
+export function safeEqual(a, b) {
+  if (typeof a !== "string" || typeof b !== "string" || !b) return false;
+  const h = (x) => crypto.createHash("sha256").update(x).digest();
+  return crypto.timingSafeEqual(h(a), h(b));
+}
 export function okCode(code) {
-  const want = process.env.SPARK_SYNC_CODE;
-  return !!want && typeof code === "string" && code.trim() === want;
+  return typeof code === "string" && safeEqual(code.trim(), process.env.SPARK_SYNC_CODE || "");
 }
 export function send(res, status, body) {
   res.status(status).setHeader("Cache-Control", "no-store");
   res.json(body);
 }
-export function guard(req, res) {
+// internal details go to the function log, not to whoever is calling
+export function fail(res, e) {
+  console.error(e);
+  send(res, 500, { error: "server error" });
+}
+export function clientIp(req) {
+  const h = req.headers || {};
+  return String(h["x-real-ip"] || h["x-forwarded-for"] || "").split(",")[0].trim() || "unknown";
+}
+// wrong codes: at most FAIL_PER_IP per IP per 15 min and FAIL_PER_DAY in total, then everything answers 429
+const FAIL_PER_IP = 8, FAIL_PER_DAY = 200;
+const today = () => new Date().toISOString().slice(0, 10);
+export async function guard(req, res) {
   if (req.method !== "POST") { send(res, 405, { error: "POST only" }); return false; }
   if (!storageReady()) { send(res, 503, { error: "storage not connected" }); return false; }
+  const ipKey = "authfail:" + clientIp(req), dayKey = "authfail:day:" + today();
+  const [ipFails, dayFails] = await pipeline([["GET", ipKey], ["GET", dayKey]]);
+  if (+ipFails >= FAIL_PER_IP || +dayFails >= FAIL_PER_DAY) { send(res, 429, { error: "too many wrong codes, try again later" }); return false; }
   const body = req.body || {};
-  if (!okCode(body.code)) { send(res, 401, { error: "wrong sync code" }); return false; }
+  if (!okCode(body.code)) {
+    await pipeline([["INCR", ipKey], ["EXPIRE", ipKey, "900"], ["INCR", dayKey], ["EXPIRE", dayKey, "86400"]]);
+    send(res, 401, { error: "wrong sync code" });
+    return false;
+  }
   return true;
 }
 
