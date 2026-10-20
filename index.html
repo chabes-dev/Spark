@@ -609,15 +609,19 @@ function syncNow(){
   SYNCING=(async()=>{
     let changed=false;
     try{
-      const now=Date.now(),push=[],present=new Set();
+      // fingerprints are only recorded once the server has accepted the push; a failed sync retries everything next time
+      const now=Date.now(),push=[],present=new Set(),pending={},gone=[];
       SYNC_COLLS.forEach(coll=>(S[coll]||[]).forEach(it=>{
         if(!it||!it.id)return;const k=coll+':'+it.id;present.add(k);
-        const f=fingerprint(it);if(SYNC.sigs[k]!==f){it.updated=now;push.push({coll,item:it});SYNC.sigs[k]=f}
+        const f=fingerprint(it);if(SYNC.sigs[k]!==f){it.updated=now;push.push({coll,item:it});pending[k]=f}
       }));
-      Object.keys(SYNC.sigs).forEach(k=>{if(!present.has(k)){const c=k.indexOf(':');push.push({coll:k.slice(0,c),item:{id:k.slice(c+1),deleted:true,updated:now}});delete SYNC.sigs[k]}});
+      Object.keys(SYNC.sigs).forEach(k=>{if(!present.has(k)){const c=k.indexOf(':');push.push({coll:k.slice(0,c),item:{id:k.slice(c+1),deleted:true,updated:now}});gone.push(k)}});
+      const commitPush=()=>{Object.assign(SYNC.sigs,pending);gone.forEach(k=>delete SYNC.sigs[k])};
       let more=true,first=true,loops=0;
       while((more||first)&&loops<40){
-        const j=await api('sync',{since:SYNC.since,push:first?push:[]});first=false;loops++;
+        const j=await api('sync',{since:SYNC.since,push:first?push:[]});
+        if(first)commitPush();
+        first=false;loops++;
         SYNC.ai=!!j.ai;SYNC.email=j.email||SYNC.email;
         (j.items||[]).forEach(({coll,item})=>{if(applyRemote(coll,item))changed=true});
         SYNC.since=j.next||SYNC.since;more=!!j.more;
