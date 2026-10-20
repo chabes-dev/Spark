@@ -1,5 +1,5 @@
 import { startMock } from "./mockredis.mjs";
-const {srv,H}=await startMock(8799);
+const {srv,H,state}=await startMock(8799);
 process.env.UPSTASH_REDIS_REST_URL="http://localhost:8799";process.env.UPSTASH_REDIS_REST_TOKEN="t";
 process.env.SPARK_SYNC_CODE="secret-code";process.env.INBOUND_KEY="ik";process.env.ALLOWED_SENDERS="me@example.com, Other@Example.org";
 const sync=(await import("../api/sync.js")).default, inbound=(await import("../api/inbound.js")).default;
@@ -117,5 +117,23 @@ ok('C5 non-string code is a clean 401',r.status===401,r.status);
   r=await call(inbound,mk('me@example.com','me@example.com'),{key:'ik'});
   ok('C4 with no allowlist set, email-in is closed',r.body.skipped==='email-in closed: ALLOWED_SENDERS not set',r.body);
   process.env.ALLOWED_SENDERS=saved;
+}
+// M6: retries and duplicate deliveries never create a second spark, and a failed attempt can be retried
+{
+  const count=()=>Object.keys(H.items).filter(k=>k.startsWith('sparks:')).length;
+  const mail=(extra)=>({envelope:{from:'me@example.com'},headers:{from:'me@example.com',subject:'Dup test',date:'Mon, 19 Oct 2026 10:00:00 +0000',...extra},plain:'same body'});
+  let before=count();
+  await Promise.all([1,2,3].map(()=>call(inbound,mail({message_id:'<dup1@m>'}),{key:'ik'})));
+  ok('M6 the same email delivered 3 times at once makes one spark',count()===before+1,count()-before);
+  before=count();
+  await call(inbound,mail({}),{key:'ik'});await call(inbound,mail({}),{key:'ik'});
+  ok('M6 an email without Message-ID delivered twice makes one spark',count()===before+1,count()-before);
+  before=count();
+  state.failWhen=(cmds)=>Array.isArray(cmds[0])&&cmds.some(c=>c[0]==='HSET'&&c[1]==='items');
+  r=await call(inbound,mail({message_id:'<retry1@m>'}),{key:'ik'});
+  state.failWhen=null;
+  ok('M6 a failure while writing answers 500 (the mail service retries)',r.status===500,r.status);
+  r=await call(inbound,mail({message_id:'<retry1@m>'}),{key:'ik'});
+  ok('M6 the retry then creates the spark',!!r.body.sparkId&&count()===before+1,r.body);
 }
 srv.close();

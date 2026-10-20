@@ -4,7 +4,7 @@ export function startMock(port, { failNext = null } = {}) {
   const H = {}, Z = {}, SETS = {}, KV = {}, EXP = {};
   const h = (k) => (H[k] ||= {}), z = (k) => (Z[k] ||= {}), st = (k) => (SETS[k] ||= new Set());
   const live = (k) => { if (EXP[k] && EXP[k] < Date.now()) { delete KV[k]; delete EXP[k]; } return KV[k]; };
-  const state = { H, Z, KV, failNext, calls: 0 };
+  const state = { H, Z, KV, failNext, failWhen: null, calls: 0 };
   function run(c) {
     const [cmd, ...a] = c; const C = String(cmd).toUpperCase();
     if (C === "HGET") return h(a[0])[a[1]] ?? null;
@@ -36,6 +36,7 @@ export function startMock(port, { failNext = null } = {}) {
       state.calls++;
       const body = JSON.parse(b); let out;
       if (state.failNext && state.failNext-- > 0) { res.statusCode = 500; res.end('{"error":"boom"}'); return; }
+      if (state.failWhen && state.failWhen(body)) { res.setHeader("content-type", "application/json"); res.end('{"error":"injected failure"}'); return; }
       try { out = req.url.endsWith("/pipeline") ? body.map((c) => ({ result: run(c) })) : { result: run(body) }; } catch (e) { out = { error: e.message }; }
       res.setHeader("content-type", "application/json"); res.end(JSON.stringify(out));
     });

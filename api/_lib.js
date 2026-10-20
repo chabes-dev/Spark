@@ -297,6 +297,7 @@ export function parseInbound(b) {
     inReplyTo: ids(h.in_reply_to),
     references: ids(h.references),
     subject: String(one(h.subject) || b.subject || "").trim(),
+    from: addrOf(h.from || (b.envelope && b.envelope.from)),
     date: Date.parse(one(h.date)) || Date.now(),
     body: body.trim(),
     reply: String(b.reply_plain || "").replace(/\r\n/g, "\n").trim() || stripQuoted(body),
