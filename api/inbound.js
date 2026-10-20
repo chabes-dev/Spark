@@ -1,7 +1,19 @@
 // POST /api/inbound?key=INBOUND_KEY  (CloudMailin, "JSON (normalized)" format)
 // An email to the Spark address becomes a spark; a reply on the same thread becomes a follow-up on that spark.
 import crypto from "crypto";
-import { send, fail, senderCheck, storageReady, redis, getItem, putItems, parseInbound, cleanSubject, linksIn, nid, aiReady, classify } from "./_lib.js";
+import { send, fail, safeEqual, senderCheck, storageReady, redis, getItem, putItems, parseInbound, cleanSubject, linksIn, nid, aiReady, classify } from "./_lib.js";
+
+// CloudMailin can send HTTP Basic Auth (https://user:INBOUND_KEY@host/api/inbound), which keeps the key out of URLs
+// and logs; the older ?key= form still works. Both are compared in constant time.
+function inboundAuthorised(req) {
+  const want = process.env.INBOUND_KEY || "";
+  const auth = String((req.headers || {}).authorization || "");
+  if (/^basic /i.test(auth)) {
+    const dec = Buffer.from(auth.slice(6).trim(), "base64").toString();
+    return safeEqual(dec.slice(dec.indexOf(":") + 1), want);
+  }
+  return safeEqual(String((req.query || {}).key || ""), want);
+}
 
 // "pending:<time>" marks an email being processed; a claim older than 2 minutes (a crashed attempt) can be taken over
 async function claim(id) {
@@ -14,7 +26,7 @@ async function claim(id) {
 export default async function handler(req, res) {
   let dedupe = null;
   if (req.method !== "POST") return send(res, 405, { error: "POST only" });
-  if (!process.env.INBOUND_KEY || req.query.key !== process.env.INBOUND_KEY) return send(res, 403, { error: "bad key" });
+  if (!inboundAuthorised(req)) return send(res, 403, { error: "bad key" });
   if (!storageReady()) return send(res, 503, { error: "storage not connected" }); // the mail service retries later
   try {
     // 200 (not 4xx) for refused mail, so the mail service doesn't keep retrying it

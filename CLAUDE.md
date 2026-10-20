@@ -85,7 +85,7 @@ The app still works fully offline/without the server: local data is the master c
 - `POST /api/sync` push changed items / pull changes since a server timestamp; newest `updated` wins; deletions are
   `{id,deleted:true}` tombstones. Synced collections: sparks, sessions, dumps, projects, prompts, motivators
   (not settings/ui/active/dumpDraft).
-- `POST /api/inbound?key=INBOUND_KEY` CloudMailin "JSON (normalized)" webhook: new email → spark (title from subject,
+- `POST /api/inbound` (auth: Basic, password = `INBOUND_KEY`, or `?key=INBOUND_KEY`) CloudMailin "JSON (normalized)" webhook: new email → spark (title from subject,
   AI kind/tags); a reply (In-Reply-To/References) → follow-up in `spark.thread`, quoted history stripped.
 - `POST /api/classify`, `POST /api/related` (brief mode) call Claude (`claude-opus-5-5`, structured JSON output,
   server-side refusal fallback). The spark library is a cached system block.

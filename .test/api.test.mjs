@@ -136,4 +136,15 @@ ok('C5 non-string code is a clean 401',r.status===401,r.status);
   r=await call(inbound,mail({message_id:'<retry1@m>'}),{key:'ik'});
   ok('M6 the retry then creates the spark',!!r.body.sparkId&&count()===before+1,r.body);
 }
+// M7: Basic Auth (password = INBOUND_KEY) works without the key in the URL
+{
+  const b64=(x)=>Buffer.from(x).toString('base64');
+  const mail={envelope:{from:'me@example.com'},headers:{from:'me@example.com',message_id:'<m7@m>',subject:'basic'},plain:'via basic auth'};
+  r=await call(inbound,mail,{},{authorization:'Basic '+b64('spark:wrong')});
+  ok('M7 wrong Basic password is refused',r.status===403,r.status);
+  r=await call(inbound,mail,{},{authorization:'Basic '+b64('spark:ik')});
+  ok('M7 right Basic password is accepted',r.status===200&&!!r.body.sparkId,r.body);
+  r=await call(inbound,mail,{key:'ik '},{});
+  ok('M7 a near-miss ?key= is refused',r.status===403,r.status);
+}
 srv.close();
