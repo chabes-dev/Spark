@@ -758,7 +758,9 @@ function openSpark(id){
     };
     el.querySelectorAll('[data-kind]').forEach(b=>b.onclick=()=>{s.kind=b.dataset.kind;s.kindByUser=true;save();
       el.querySelectorAll('[data-kind]').forEach(x=>x.classList.toggle('on',x===b))});
-    el.querySelectorAll('[data-fudel]').forEach(b=>b.onclick=()=>{s.thread=(s.thread||[]).filter(x=>x.id!==b.dataset.fudel);save();closeSheet();openSpark(id)});
+    el.querySelectorAll('[data-fudel]').forEach(b=>b.onclick=()=>{s.thread=(s.thread||[]).filter(x=>x.id!==b.dataset.fudel);
+      s.threadDel=[...(s.threadDel||[]),b.dataset.fudel]; // tells the server's merge this follow-up is gone on purpose
+      save();closeSheet();openSpark(id)});
     el.querySelector('#sdfollow').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();keep();closeSheet();render();openSpark(id)}});
     el.querySelector('#ok').onclick=()=>{keep();closeSheet();render()};
     el.querySelector('#sdwrite').onclick=()=>{keep();closeSheet();writeSpark(id)};

@@ -22,12 +22,11 @@ export default async function handler(req, res) {
 
     let spark, threaded = false;
     if (parent) {
+      // only the new follow-up is sent; putItems merges it into the stored spark under the lock,
+      // so concurrent replies and edits made meanwhile are all kept
       const text = m.reply || m.body;
-      spark = { ...parent };
-      spark.thread = [...(parent.thread || []), { id: nid(), text, created: m.date, source: "email" }];
-      spark.links = [...new Set([...(parent.links || []), ...linksIn(text)])];
-      spark.emailIds = [...new Set([...(parent.emailIds || []), m.messageId].filter(Boolean))];
-      spark.updated = Date.now();
+      spark = { id: parent.id, thread: [{ id: nid(), text, created: m.date, source: "email" }],
+        links: linksIn(text), emailIds: m.messageId ? [m.messageId] : [], updated: Date.now() };
       threaded = true;
     } else {
       spark = {
@@ -44,7 +43,7 @@ export default async function handler(req, res) {
         } catch (e) { /* sorting can happen later from the app */ }
       }
     }
-    await putItems([{ coll: "sparks", item: spark }], { force: true });
+    await putItems([{ coll: "sparks", item: spark }], threaded ? { append: true } : { force: true });
     if (m.messageId) await redis("HSET", "msg", m.messageId, spark.id);
     send(res, 200, { ok: true, sparkId: spark.id, threaded });
   } catch (e) {

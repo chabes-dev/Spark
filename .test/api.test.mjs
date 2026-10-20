@@ -80,4 +80,26 @@ ok('C5 non-string code is a clean 401',r.status===401,r.status);
   const c=(r.body.conflicts||[]).find(x=>x.item.id==='m3');
   ok('M3 rejected push is returned as a conflict with the stored version',c&&c.item.text==='new',r.body.conflicts);
 }
+// M1: concurrent writes keep every follow-up
+{
+  const now=Date.now(),ipx={'x-real-ip':'10.0.0.4'};
+  const root={headers:{message_id:'<m1root@mail>',subject:'Concurrency',from:'me@example.com'},envelope:{from:'me@example.com'},plain:'root'};
+  const rr=await call(inbound,root,{key:'ik'});const id=rr.body.sparkId;
+  const reply=(n)=>({headers:{message_id:`<m1r${n}@mail>`,in_reply_to:'<m1root@mail>',subject:'Re: Concurrency',from:'me@example.com'},envelope:{from:'me@example.com'},plain:'reply '+n});
+  await Promise.all([1,2,3].map(n=>call(inbound,reply(n),{key:'ik'})));
+  let all=await call(sync,{code:'secret-code',since:now-1,push:[]},{},ipx);
+  let sp=all.body.items.find(x=>x.item.id===id).item;
+  ok('M1 three replies arriving together are all kept',sp.thread.length===3,sp.thread.map(x=>x.text));
+  // a device edits tags from a copy that doesn't have the newest reply yet
+  const stale={...sp,thread:sp.thread.slice(0,2),tags:['edited'],updated:Date.now()+5000};
+  await call(inbound,reply(4),{key:'ik'});
+  all=await call(sync,{code:'secret-code',since:now-1,push:[{coll:'sparks',item:stale}]},{},ipx);
+  sp=all.body.items.find(x=>x.item.id===id).item;
+  ok('M1 an edit from a stale copy keeps the newer reply and the edit',sp.thread.length===4&&sp.tags[0]==='edited',[sp.thread.length,sp.tags]);
+  // a follow-up deleted on a device stays deleted
+  const gone=sp.thread[0].id;
+  all=await call(sync,{code:'secret-code',since:now-1,push:[{coll:'sparks',item:{...sp,thread:sp.thread.slice(1),threadDel:[gone],updated:Date.now()+6000}}]},{},ipx);
+  sp=all.body.items.find(x=>x.item.id===id).item;
+  ok('M1 a deleted follow-up stays deleted',!sp.thread.some(x=>x.id===gone)&&sp.thread.length===3,sp.thread.length);
+}
 srv.close();

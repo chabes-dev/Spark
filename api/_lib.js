@@ -49,26 +49,68 @@ export async function getItem(coll, id) {
   const v = await redis("HGET", "items", key(coll, id));
   return v ? JSON.parse(v) : null;
 }
-// last write wins on `updated`. Returns {written, conflicts}: conflicts carry the stored (newer) version of every
-// rejected item, so the device that pushed it can adopt it instead of silently keeping a diverged copy.
-export async function putItems(list, { force = false } = {}) {
+/* ---------- writes are serialised: one short Redis lock around read-modify-write ---------- */
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+export async function withLock(name, fn, { ttl = 10000, wait = 8000 } = {}) {
+  const k = "lock:" + name, token = nid() + Math.random().toString(36).slice(2);
+  const until = Date.now() + wait;
+  while (!(await redis("SET", k, token, "NX", "PX", String(ttl)))) {
+    if (Date.now() > until) throw new Error("busy: " + name);
+    await sleep(30 + Math.random() * 70);
+  }
+  try { return await fn(); } finally { if ((await redis("GET", k)) === token) await redis("DEL", k); }
+}
+// a spark's follow-ups from both copies survive; follow-ups deleted on purpose (threadDel) stay deleted
+export function mergeSpark(winner, other) {
+  const del = new Set([...(winner.threadDel || []), ...(other.threadDel || [])]);
+  const byId = new Map();
+  [...(winner.thread || []), ...(other.thread || [])].forEach((t) => { if (t && t.id && !del.has(t.id) && !byId.has(t.id)) byId.set(t.id, t); });
+  const out = { ...winner, thread: [...byId.values()].sort((x, y) => (x.created || 0) - (y.created || 0)) };
+  if (del.size) out.threadDel = [...del].slice(-500);
+  const ids = [...new Set([...(winner.emailIds || []), ...(other.emailIds || [])])];
+  if (ids.length) out.emailIds = ids;
+  return out;
+}
+const bothSparks = (coll, a, b) => coll === "sparks" && a && b && !a.deleted && !b.deleted;
+
+// last write wins on `updated`, except that spark follow-ups are merged. Returns {written, conflicts}: conflicts
+// carry the stored version of every refused item, so the device that pushed it can adopt it.
+// append: merge the item's follow-ups/emailIds/links into the stored spark and keep its other fields (email replies).
+export async function putItems(list, { force = false, append = false } = {}) {
   if (!list.length) return { written: 0, conflicts: [] };
-  const keys = list.map((x) => key(x.coll, x.item.id));
-  const cur = await redis("HMGET", "items", ...keys);
-  const now = Date.now();
-  const cmds = [], conflicts = [];
-  let n = 0;
-  list.forEach((x, i) => {
-    // nobody (a wrong clock, a bug, or anyone with the code) can freeze an item with a far-future timestamp
-    if (x.item.updated > now + MAX_AHEAD) x.item = { ...x.item, updated: now + MAX_AHEAD };
-    const old = cur[i] ? JSON.parse(cur[i]) : null;
-    if (!force && old && (old.updated || 0) > (x.item.updated || 0)) { conflicts.push({ coll: x.coll, item: old }); return; }
-    cmds.push(["HSET", "items", keys[i], JSON.stringify(x.item)]);
-    cmds.push(["ZADD", "upd", String(now + n / 1000), keys[i]]); // unique score per write keeps paging exact
-    n++;
+  return withLock("items", async () => {
+    const keys = list.map((x) => key(x.coll, x.item.id));
+    const cur = await redis("HMGET", "items", ...keys);
+    const now = Date.now();
+    const cmds = [], conflicts = [];
+    let n = 0;
+    const write = (k, item) => {
+      cmds.push(["HSET", "items", k, JSON.stringify(item)]);
+      cmds.push(["ZADD", "upd", String(now + n / 1000), k]); // unique score per write keeps paging exact
+      n++;
+    };
+    list.forEach((x, i) => {
+      // nobody (a wrong clock, a bug, or anyone with the code) can freeze an item with a far-future timestamp
+      if (x.item.updated > now + MAX_AHEAD) x.item = { ...x.item, updated: now + MAX_AHEAD };
+      const old = cur[i] ? JSON.parse(cur[i]) : null;
+      if (append && bothSparks(x.coll, old, x.item)) {
+        const m = mergeSpark(old, x.item);
+        m.links = [...new Set([...(old.links || []), ...(x.item.links || [])])];
+        m.updated = Math.max(now, old.updated || 0);
+        return write(keys[i], m);
+      }
+      if (!force && old && (old.updated || 0) > (x.item.updated || 0)) {
+        // refused as stale, but follow-ups it carries are still kept
+        const keep = bothSparks(x.coll, old, x.item) ? mergeSpark(old, x.item) : old;
+        if (JSON.stringify(keep) !== JSON.stringify(old)) write(keys[i], keep);
+        conflicts.push({ coll: x.coll, item: keep });
+        return;
+      }
+      write(keys[i], bothSparks(x.coll, old, x.item) && !force ? mergeSpark(x.item, old) : x.item);
+    });
+    await pipeline(cmds);
+    return { written: n, conflicts };
   });
-  await pipeline(cmds);
-  return { written: n, conflicts };
 }
 // everything written after `since` (server ms), oldest first, in pages
 export async function changedSince(since, limit = 400) {

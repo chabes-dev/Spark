@@ -78,3 +78,13 @@ module.exports.M2_typing_during_a_sync_is_not_overwritten = async ({ newDevice, 
   ok("M2 and it reaches the server on the next sync", it && it.item.text === "third, typed while syncing", it && it.item.text);
   await pg.context().close();
 };
+module.exports.M1_deleted_follow_up_stays_deleted = async ({ newDevice, ok, pull }) => {
+  const pg = await newDevice();
+  await pg.evaluate(() => { S.sparks.unshift({ id: "fu", text: "root", created: Date.now(), thread: [{ id: "f1", text: "keep", created: 1 }, { id: "f2", text: "drop", created: 2 }] }); saveLocal(); return syncNow(); });
+  await pg.evaluate(() => { S.ui.view = "sparks"; render(); openSpark("fu"); });
+  await pg.click('[data-fudel="f2"]');
+  await pg.evaluate(() => syncNow());
+  const it = (await pull()).items.find((x) => x.item.id === "fu");
+  ok("M1 a follow-up deleted in the app stays deleted after the server merge", it && it.item.thread.length === 1 && it.item.thread[0].id === "f1", it && it.item.thread.map((x) => x.id));
+  await pg.context().close();
+};
