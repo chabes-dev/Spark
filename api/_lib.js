@@ -180,8 +180,18 @@ let _client = null;
 const client = () => (_client ||= new Anthropic());
 const MODEL = "claude-opus-5-5";
 
+/* daily budget: every Claude call counts (classify, brief search, emails); AI_DAILY_LIMIT, default 300 a day */
+export class BudgetError extends Error {}
+export async function spendAI() {
+  const limit = Math.max(0, parseInt(process.env.AI_DAILY_LIMIT || "300", 10) || 0);
+  const k = "ai:" + new Date().toISOString().slice(0, 10);
+  const [n] = await pipeline([["INCR", k], ["EXPIRE", k, "172800"]]);
+  if (n > limit) throw new BudgetError("daily AI limit reached");
+}
+
 // one call, JSON back (structured output); safety declines fall back server-side
 export async function askJSON({ system, user, schema, effort = "low", maxTokens = 4000 }) {
+  await spendAI();
   const r = await client().beta.messages.create({
     model: MODEL,
     max_tokens: maxTokens,

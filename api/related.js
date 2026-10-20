@@ -1,5 +1,5 @@
 // POST /api/related {code, brief, sparks:[{id,kind,title,text,tags}]} -> {picks:[{id,why}]}
-import { guard, send, fail, related, aiReady } from "./_lib.js";
+import { guard, send, fail, BudgetError, related, aiReady } from "./_lib.js";
 
 export default async function handler(req, res) {
   if (!(await guard(req, res))) return;
@@ -10,6 +10,7 @@ export default async function handler(req, res) {
     const picks = await related(brief, sparks.slice(0, 800));
     send(res, 200, { picks });
   } catch (e) {
+    if (e instanceof BudgetError) return send(res, 429, { error: "daily AI limit reached" });
     fail(res, e);
   }
 }

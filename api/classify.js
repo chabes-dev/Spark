@@ -1,5 +1,5 @@
 // POST /api/classify {code, items:[{id,title,text}], vocab:[tag]} -> {results:[{id,kind,title,tags}]}
-import { guard, send, fail, classify, aiReady } from "./_lib.js";
+import { guard, send, fail, BudgetError, classify, aiReady } from "./_lib.js";
 
 export default async function handler(req, res) {
   if (!(await guard(req, res))) return;
@@ -9,6 +9,7 @@ export default async function handler(req, res) {
     const results = items.length ? await classify(items, req.body.vocab || []) : [];
     send(res, 200, { results });
   } catch (e) {
+    if (e instanceof BudgetError) return send(res, 429, { error: "daily AI limit reached" });
     fail(res, e);
   }
 }

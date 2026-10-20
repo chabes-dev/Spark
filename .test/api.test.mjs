@@ -147,4 +147,18 @@ ok('C5 non-string code is a clean 401',r.status===401,r.status);
   r=await call(inbound,mail,{key:'ik '},{});
   ok('M7 a near-miss ?key= is refused',r.status===403,r.status);
 }
+// M5: a daily AI budget stops Claude calls before they are made
+{
+  process.env.ANTHROPIC_API_KEY='test-key-never-used';process.env.AI_DAILY_LIMIT='5';
+  const classifyEp=(await import('../api/classify.js')).default, relatedEp=(await import('../api/related.js')).default;
+  state.KV['ai:'+new Date().toISOString().slice(0,10)]='5';           // budget already spent today
+  const ipx={'x-real-ip':'10.0.0.5'};
+  r=await call(classifyEp,{code:'secret-code',items:[{id:'a',text:'x'}]},{},ipx);
+  ok('M5 classify answers 429 once the daily AI budget is spent',r.status===429,r);
+  r=await call(relatedEp,{code:'secret-code',brief:'shoes',sparks:[{id:'a',text:'x'}]},{},ipx);
+  ok('M5 brief search answers 429 too',r.status===429,r.status);
+  r=await call(inbound,{envelope:{from:'me@example.com'},headers:{from:'me@example.com',message_id:'<m5@m>',subject:'no ai'},plain:'still stored'},{key:'ik'});
+  ok('M5 email still becomes a spark, just unsorted',!!r.body.sparkId,r.body);
+  delete process.env.ANTHROPIC_API_KEY;
+}
 srv.close();

@@ -81,7 +81,8 @@ The app still works fully offline/without the server: local data is the master c
   used for pulls), hash `msg` (email Message-ID → spark id, for threading), set `tags`.
 - Env: `SPARK_SYNC_CODE` (the code a device enters to sync), `INBOUND_KEY` (secret in the email webhook URL),
   `SPARK_EMAIL` (address shown in the app), `ANTHROPIC_API_KEY` (AI sorting + brief search; optional),
-  `ALLOWED_SENDERS` (comma-separated addresses that may email sparks in; unset = email-in closed).
+  `ALLOWED_SENDERS` (comma-separated addresses that may email sparks in; unset = email-in closed),
+  `AI_DAILY_LIMIT` (Claude calls per day across classify, brief search and email; default 300, then 429).
 - `POST /api/sync` push changed items / pull changes since a server timestamp; newest `updated` wins; deletions are
   `{id,deleted:true}` tombstones. Synced collections: sparks, sessions, dumps, projects, prompts, motivators
   (not settings/ui/active/dumpDraft).
