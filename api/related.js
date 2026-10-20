@@ -1,6 +1,9 @@
 // POST /api/related {code, brief, sparks:[{id,kind,title,text,tags}]} -> {picks:[{id,why}]}
 import { guard, send, fail, BudgetError, related, aiReady } from "./_lib.js";
 
+// Claude calls (brief mode over a big library especially) can take longer than the default timeout
+export const config = { maxDuration: 60 };
+
 export default async function handler(req, res) {
   if (!(await guard(req, res))) return;
   if (!aiReady()) return send(res, 503, { error: "AI key not set" });

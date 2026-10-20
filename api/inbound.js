@@ -3,6 +3,9 @@
 import crypto from "crypto";
 import { send, fail, safeEqual, senderCheck, storageReady, redis, getItem, putItems, parseInbound, cleanSubject, linksIn, nid, aiReady, classify } from "./_lib.js";
 
+// Claude calls (brief mode over a big library especially) can take longer than the default timeout
+export const config = { maxDuration: 60 };
+
 // CloudMailin can send HTTP Basic Auth (https://user:INBOUND_KEY@host/api/inbound), which keeps the key out of URLs
 // and logs; the older ?key= form still works. Both are compared in constant time.
 function inboundAuthorised(req) {

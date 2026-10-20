@@ -204,4 +204,6 @@ ok('C5 non-string code is a clean 401',r.status===401,r.status);
   process.env.UPSTASH_REDIS_REST_URL=keep;delete process.env.REDIS_TIMEOUT_MS;hang.close();
   ok('L4 a hung storage call times out',!!err&&Date.now()-t0<2000,[err,Date.now()-t0]);
 }
+// L5: the functions that call Claude may run up to 60 s
+for(const f of ['classify','related','inbound']){const m=await import(`../api/${f}.js`);ok(`L5 ${f} allows 60 s`,m.config&&m.config.maxDuration===60)}
 srv.close();

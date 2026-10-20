@@ -1,6 +1,9 @@
 // POST /api/classify {code, items:[{id,title,text}], vocab:[tag]} -> {results:[{id,kind,title,tags}]}
 import { guard, send, fail, BudgetError, classify, aiReady } from "./_lib.js";
 
+// Claude calls (brief mode over a big library especially) can take longer than the default timeout
+export const config = { maxDuration: 60 };
+
 export default async function handler(req, res) {
   if (!(await guard(req, res))) return;
   if (!aiReady()) return send(res, 503, { error: "AI key not set" });
