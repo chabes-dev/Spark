@@ -65,3 +65,16 @@ module.exports.M3_rejected_push_adopts_the_server_version = async ({ newDevice, 
   ok("M3 the device adopts the server's newer version", (await pg.evaluate(() => S.sparks.find((s) => s.id === "contested").text)) === "newer elsewhere");
   await pg.context().close();
 };
+module.exports.M2_typing_during_a_sync_is_not_overwritten = async ({ newDevice, ok, pull }) => {
+  const pg = await newDevice();
+  await pg.evaluate(() => { S.sparks.unshift({ id: "typing", text: "first", created: Date.now() }); saveLocal(); return syncNow(); });
+  await pg.route("**/api/sync", async (r) => { await new Promise((x) => setTimeout(x, 400)); r.continue(); }); // slow network
+  await pg.evaluate(() => { S.sparks.find((s) => s.id === "typing").text = "second"; saveLocal(); window.__p = syncNow(); });
+  await pg.evaluate(() => { S.sparks.find((s) => s.id === "typing").text = "third, typed while syncing"; saveLocal(); return window.__p; });
+  await pg.unroute("**/api/sync");
+  ok("M2 text typed during the sync survives the echo", (await pg.evaluate(() => S.sparks.find((s) => s.id === "typing").text)) === "third, typed while syncing");
+  await pg.evaluate(() => syncNow());
+  const it = (await pull()).items.find((x) => x.item.id === "typing");
+  ok("M2 and it reaches the server on the next sync", it && it.item.text === "third, typed while syncing", it && it.item.text);
+  await pg.context().close();
+};

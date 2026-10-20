@@ -658,6 +658,9 @@ function applyRemote(coll,item,serverWins){
     if(local)list.splice(i,1);delete SYNC.sigs[k];return !!local;
   }
   if(!serverWins&&local&&(local.updated||0)>(item.updated||0))return false;
+  // the local copy changed since it was last synced (e.g. typed while this sync was in flight) and the incoming
+  // version is not newer than ours (often just the echo of our own push): keep ours, it goes up on the next sync
+  if(!serverWins&&local&&SYNC.sigs[k]!==fingerprint(local)&&(local.updated||0)>=(item.updated||0))return false;
   if(local&&fingerprint(local)===fingerprint(item)){SYNC.sigs[k]=fingerprint(item);local.updated=item.updated;return false}
   if(local){Object.keys(local).forEach(x=>delete local[x]);Object.assign(local,item)} // in place: open sheets keep their reference
   else{
