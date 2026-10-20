@@ -76,6 +76,9 @@ The app still works fully offline/without the server: local data is the master c
   so written text is always saved.
 
 ## Server (`api/`)
+- **Status (2026-10-20):** sync is live (Upstash Redis connected via the Vercel Marketplace, `KV_REST_API_*` env).
+  The owner chose **no paid AI** (no `ANTHROPIC_API_KEY`; the app uses its free built-in rules) and has **not set up
+  CloudMailin** (email-in inactive). The owner is not a developer: keep any setup they must do to a few clicks.
 - Storage: Upstash Redis via the Vercel Marketplace (env `UPSTASH_REDIS_REST_URL`/`_TOKEN` or `KV_REST_API_URL`/`_TOKEN`),
   called over REST with `fetch` (`api/_lib.js`). Keys: hash `items` (`<coll>:<id>` → JSON), zset `upd` (server write time,
   used for pulls), hash `msg` (email Message-ID → spark id, for threading), set `tags`.
