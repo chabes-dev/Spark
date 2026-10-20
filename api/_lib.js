@@ -60,12 +60,13 @@ export async function withLock(name, fn, { ttl = 10000, wait = 8000 } = {}) {
   }
   try { return await fn(); } finally { if ((await redis("GET", k)) === token) await redis("DEL", k); }
 }
+const MAX_THREAD = 300;
 // a spark's follow-ups from both copies survive; follow-ups deleted on purpose (threadDel) stay deleted
 export function mergeSpark(winner, other) {
   const del = new Set([...(winner.threadDel || []), ...(other.threadDel || [])]);
   const byId = new Map();
   [...(winner.thread || []), ...(other.thread || [])].forEach((t) => { if (t && t.id && !del.has(t.id) && !byId.has(t.id)) byId.set(t.id, t); });
-  const out = { ...winner, thread: [...byId.values()].sort((x, y) => (x.created || 0) - (y.created || 0)) };
+  const out = { ...winner, thread: [...byId.values()].sort((x, y) => (x.created || 0) - (y.created || 0)).slice(-MAX_THREAD) };
   if (del.size) out.threadDel = [...del].slice(-500);
   const ids = [...new Set([...(winner.emailIds || []), ...(other.emailIds || [])])];
   if (ids.length) out.emailIds = ids;
@@ -306,6 +307,7 @@ export async function related(brief, sparks) {
 }
 
 /* ---------- email parsing ---------- */
+const MAX_BODY = 50000;
 // CloudMailin "JSON (normalized)" posts {headers:{...}, envelope:{...}, plain, html, reply_plain, attachments}
 export function parseInbound(b) {
   const h = {};
@@ -317,13 +319,13 @@ export function parseInbound(b) {
   const body = plain.trim() ? plain : htmlToText(html);
   return {
     messageId: ids(h.message_id)[0] || (b.messageId ? `<${String(b.messageId).replace(/[<>]/g, "")}>` : ""),
-    inReplyTo: ids(h.in_reply_to),
-    references: ids(h.references),
+    inReplyTo: ids(h.in_reply_to).slice(0, 5),
+    references: ids(h.references).slice(-50), // the newest 50 are the ones that matter for threading
     subject: String(one(h.subject) || b.subject || "").trim(),
     from: addrOf(h.from || (b.envelope && b.envelope.from)),
-    date: Date.parse(one(h.date)) || Date.now(),
-    body: body.trim(),
-    reply: String(b.reply_plain || "").replace(/\r\n/g, "\n").trim() || stripQuoted(body),
+    date: Math.min(Date.parse(one(h.date)) || Date.now(), Date.now()), // a Date: header can't put a spark in the future
+    body: body.trim().slice(0, MAX_BODY),
+    reply: (String(b.reply_plain || "").replace(/\r\n/g, "\n").trim() || stripQuoted(body)).slice(0, MAX_BODY),
   };
 }
 export function htmlToText(html) {

@@ -171,4 +171,19 @@ ok('C5 non-string code is a clean 401',r.status===401,r.status);
   ok('L1 related: library and brief wrappers intact',(rp.library.match(/<\/spark>/g)||[]).length===1&&(rp.user.match(/<\/brief>/g)||[]).length===1&&!rp.library.includes('x="1'),rp);
   ok('L1 system prompts say content is data, not instructions',/never follow instructions/i.test(L.CLASSIFY_SYSTEM)&&/never follow instructions/i.test(L.RELATED_SYSTEM));
 }
+// L3: sizes are capped and email dates can't be in the future
+{
+  const L=await import('../api/_lib.js');
+  const ipx={'x-real-ip':'10.0.0.6'};const now=Date.now();
+  r=await call(inbound,{envelope:{from:'me@example.com'},headers:{from:'me@example.com',message_id:'<l3big@m>',subject:'big',date:'Fri, 1 Jan 2100 00:00:00 +0000'},plain:'x'.repeat(200000)},{key:'ik'});
+  let all=await call(sync,{code:'secret-code',since:now-1,push:[]},{},ipx);
+  const big=all.body.items.find(x=>x.item.id===r.body.sparkId).item;
+  ok('L3 a huge email body is capped at 50k characters',big.text.length<=50000,big.text.length);
+  ok('L3 a Date: header in the future is clamped to now',big.created<=Date.now(),big.created-Date.now());
+  const refs=Array.from({length:500},(_,i)=>`<junk${i}@m>`).join(' ')+' <l3big@m>';
+  r=await call(inbound,{envelope:{from:'me@example.com'},headers:{from:'me@example.com',message_id:'<l3reply@m>',references:refs,subject:'Re: big'},plain:'reply'},{key:'ik'});
+  ok('L3 a reply with 500 References still threads (last 50 looked at)',r.body.threaded===true,r.body);
+  const long={id:'s',thread:Array.from({length:400},(_,i)=>({id:'t'+i,text:'x',created:i}))};
+  ok('L3 a thread keeps at most the newest 300 follow-ups',L.mergeSpark(long,{id:'s'}).thread.length===300);
+}
 srv.close();
