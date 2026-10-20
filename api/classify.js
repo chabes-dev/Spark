@@ -1,4 +1,4 @@
-// POST /api/classify {code, items:[{id,title,text}], vocab:[tag]} -> {results:[{id,kind,title,tags}]}
+// POST /api/classify {code, items:[{id,title,text,note}], vocab:[tag]} -> {results:[{id,kind,title,tags,facets}]}
 import { guard, send, fail, BudgetError, classify, aiReady } from "./_lib.js";
 
 // Claude calls (brief mode over a big library especially) can take longer than the default timeout

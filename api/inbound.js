@@ -69,7 +69,7 @@ export default async function handler(req, res) {
         try {
           const vocab = await redis("SMEMBERS", "tags");
           const [c] = await classify([{ id: spark.id, title: spark.title, text: spark.text }], vocab || []);
-          if (c) { spark.kind = c.kind; spark.tags = c.tags; if (!spark.title) spark.title = c.title; spark.aiTitle = c.title; spark.classified = true; }
+          if (c) { spark.kind = c.kind; spark.tags = c.tags; spark.facets = c.facets; if (!spark.title) spark.title = c.title; spark.aiTitle = c.title; spark.classified = true; }
           if (c && c.tags.length) await redis("SADD", "tags", ...c.tags);
         } catch (e) { /* sorting can happen later from the app */ }
       }

@@ -144,6 +144,25 @@ mark{background:#F3E2A6;color:inherit;border-radius:3px;padding:0 1px}
 .sdtext{font-family:var(--serif);font-size:18px;line-height:1.5;white-space:pre-wrap;max-height:42vh;overflow:auto;overflow-wrap:anywhere}
 .sdlinks{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
 .sdthread{margin-top:8px}
+.sdnote{margin-top:18px;border-left:3px solid var(--ember);padding:2px 0 4px 16px}
+.sdnotel,.notectxl{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ember);margin-bottom:6px}
+.sdnotet{font-family:var(--serif);font-size:18px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere;max-height:36vh;overflow:auto;margin-bottom:8px}
+.sdnoteinvite{display:block;width:100%;text-align:left;margin-top:18px;padding:16px 18px;border-radius:14px;border:1.5px dashed var(--ember-2);background:var(--ember-soft)}
+.sdnoteinvite b{display:block;font-family:var(--serif);font-weight:400;font-size:21px;color:var(--ink)}
+.sdnoteinvite span{display:block;font-size:14px;color:var(--ink-2);margin-top:3px}
+.sdnoteinvite:hover{border-color:var(--ember)}
+.sdfacets{margin-top:14px;display:grid;gap:6px}
+.sdfacets:empty{display:none}
+.sdfacet{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.sdfl{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);min-width:88px}
+.fchip{font-size:13.5px;padding:4px 10px;border-radius:999px;background:var(--ash-2);color:var(--ink-2)}
+.fchip:hover{background:var(--ember-soft);color:var(--ember)}
+.snote{position:relative;z-index:1;font-family:var(--serif);font-style:italic;font-size:15px;line-height:1.45;color:var(--ink-2);margin-top:10px}
+.sfacets{position:relative;z-index:1;display:flex;flex-wrap:wrap;gap:5px;margin-top:9px}
+.sfacets span{font-size:12px;padding:2px 8px;border-radius:999px;background:var(--ember-soft);color:var(--ember)}
+.notectx{margin:6px 0 22px;width:100%}
+.notectxt{font-family:var(--serif);font-size:24px;line-height:1.25;color:var(--ink)}
+.notectxs{font-family:var(--serif);font-size:16px;line-height:1.45;color:var(--ink-3);margin-top:6px;white-space:pre-line}
 .sdfu{border-left:3px solid var(--ember-2);padding:4px 0 4px 14px;margin-top:12px}
 .sdfum{font-family:var(--mono);font-size:11.5px;color:var(--ink-3);display:flex;align-items:center;gap:6px}
 .sdfut{font-family:var(--serif);font-size:17px;line-height:1.45;white-space:pre-wrap;overflow-wrap:anywhere}
@@ -578,7 +597,11 @@ function guessKind(s){
 }
 const kindOf=s=>KINDS.includes(s.kind)?s.kind:guessKind(s);
 const sparkTitle=s=>(s.title&&s.title.trim())||s.aiTitle||'';
-const sparkAllText=s=>[s.title,s.aiTitle,s.text,...(s.thread||[]).map(x=>x.text),...(s.tags||[]).map(x=>'#'+x)].filter(Boolean).join('\n');
+const FACETS=['tone','brands','categories','products','themes','formats'];
+const FACET_LABEL={tone:'Tone',brands:'Brands',categories:'Categories',products:'Products',themes:'Themes',formats:'Formats'};
+const facetVals=s=>FACETS.flatMap(f=>((s.facets||{})[f]||[]));
+const sparkBody=s=>[s.text,...(s.thread||[]).map(x=>x.text)].filter(Boolean).join('\n');
+const sparkAllText=s=>[s.title,s.aiTitle,sparkBody(s),s.note,...(s.tags||[]).map(x=>'#'+x),...facetVals(s)].filter(Boolean).join('\n');
 const fold=t=>String(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
 function allTags(){const m={};S.sparks.forEach(s=>(s.tags||[]).forEach(t=>m[t]=(m[t]||0)+1));return Object.entries(m).sort((a,b)=>b[1]-a[1]).map(x=>x[0])}
 
@@ -706,15 +729,16 @@ async function classifyPending(){
   CLASSIFYING=true;clearTimeout(CLASSIFY_TIMER);
   let failed=false;
   try{
-    const j=await api('classify',{items:todo.map(s=>({id:s.id,title:s.title||'',text:sparkAllText(s).slice(0,3000)})),vocab:allTags()});
+    const j=await api('classify',{items:todo.map(s=>({id:s.id,title:s.title||'',text:sparkBody(s).slice(0,3000),note:(s.note||'').slice(0,6000)})),vocab:allTags()});
     (j.results||[]).forEach(r=>{
       const s=S.sparks.find(x=>x.id===r.id);if(!s)return;
       if(!s.kindByUser)s.kind=r.kind;
       if(!(s.tags&&s.tags.length))s.tags=r.tags;
       s.aiTitle=r.title;s.classified=true;
+      if(r.facets)s.facets=r.facets;
     });
     todo.forEach(s=>s.classified=true);
-    CLASSIFY_BACKOFF=0;
+    CLASSIFY_BACKOFF=0;refreshOpenFacets();
     save();if(!document.getElementById('canvas')&&S.ui.view==='sparks'&&!document.activeElement.matches('input,textarea'))render();
   }catch(e){
     failed=true;
@@ -762,6 +786,34 @@ function openSync(){
 /* ---- spark detail: full text, follow-ups (threads), kind, tags, links ---- */
 function fmtDate(ts){return new Date(ts).toLocaleDateString(undefined,{day:'numeric',month:'short',year:new Date(ts).getFullYear()===new Date().getFullYear()?undefined:'numeric'})}
 const linkLabel=u=>{try{const x=new URL(u);return x.hostname.replace(/^www\./,'')+(x.pathname.length>1?x.pathname.slice(0,24):'')}catch(e){return u.slice(0,40)}};
+/* "Why does this spark you?": written on the full writing canvas (sounds, themes, fade), saved as spark.note.
+   Closing it asks the AI to read the note and pick out facets (tone, brands, categories, products, themes, formats). */
+let NOTE_BEFORE='';
+function openNote(id){
+  const s=S.sparks.find(x=>x.id===id);if(!s)return;
+  NOTE_BEFORE=s.note||'';ensureAudio();
+  openReview('note',id,()=>{afterNote(id);openSpark(id)});
+}
+function afterNote(id){
+  const s=S.sparks.find(x=>x.id===id);if(!s||(s.note||'')===NOTE_BEFORE)return;
+  // #tags written in the note count as tags straight away (free, works offline)
+  const nt=splitTags(s.note||'').tags;if(nt.length)s.tags=[...new Set([...(s.tags||[]),...nt])].slice(0,12);
+  s.classified=false;s.classifyTries=0;save();
+  if(syncOn()&&SYNC.ai&&String(s.note||'').trim()){CLASSIFY_NEXT=0;toast('Spark is reading your note…');syncNow().then(()=>classifyPending())}
+}
+function facetsHtml(s){
+  return FACETS.filter(f=>((s.facets||{})[f]||[]).length).map(f=>`<div class="sdfacet"><span class="sdfl">${FACET_LABEL[f]}</span>${s.facets[f].map(v=>`<button class="fchip" data-fsearch="${esc(v)}">${esc(v)}</button>`).join('')}</div>`).join('');
+}
+// facets arrive a few seconds after the note is written: fill them into the open sheet without touching what's being typed
+function refreshOpenFacets(){
+  const box=document.getElementById('sdfacets');if(!box)return;
+  const s=S.sparks.find(x=>x.id===box.dataset.sid);if(!s)return;
+  box.innerHTML=facetsHtml(s);wireFacetChips(box);
+}
+function wireFacetChips(root){
+  root.querySelectorAll('[data-fsearch]').forEach(b=>b.onclick=()=>{const k=document.getElementById('ok');if(k)k.click();
+    S.ui.sparkQ=b.dataset.fsearch;if(S.ui.view!=='sparks')S.ui.view='sparks';saveLocal();render();window.scrollTo(0,0)});
+}
 function openSpark(id){
   const s=S.sparks.find(x=>x.id===id);if(!s)return;
   const k=kindOf(s),links=[...new Set([...webLinks(s.links),...linksOf(sparkAllText(s))])];
@@ -770,6 +822,10 @@ function openSpark(id){
     <div class="sdmeta">${fmtDate(s.created)}${s.source==='email'?' · by email':s.source==='import'?' · imported':''}${projById(s.projectId)?' · '+esc(projById(s.projectId).name):''}</div>
     <div class="sdtext">${esc(s.text)}</div>
     ${links.length?`<div class="sdlinks">${links.map(u=>`<a href="${esc(u)}" target="_blank" rel="noopener">↗ ${esc(linkLabel(u))}</a>`).join('')}</div>`:''}
+    ${s.note&&s.note.trim()?`<div class="sdnote"><div class="sdnotel">Why it sparks you</div><div class="sdnotet">${esc(s.note)}</div>
+        <button class="act" id="sdnotego">✎ Keep writing</button></div>`
+      :`<button class="sdnoteinvite" id="sdnotego"><b>✎ Why does this spark you?</b><span>Write freely about it, like your morning pages. Spark picks out the tone, brands, categories and more.</span></button>`}
+    <div class="sdfacets" id="sdfacets" data-sid="${s.id}">${facetsHtml(s)}</div>
     <div class="sdthread">${(s.thread||[]).map(t=>`<div class="sdfu"><div class="sdfum">${fmtDate(t.created)}${t.source==='email'?' · email reply':''}<button class="act del" data-fudel="${t.id}">×</button></div><div class="sdfut">${esc(t.text)}</div></div>`).join('')}</div>
     <textarea class="sheetin" id="sdfollow" rows="2" placeholder="Add a follow-up thought…"></textarea>
     <input class="sheetin" id="sdtags" placeholder="tags, comma separated" value="${esc((s.tags||[]).join(', '))}" />
@@ -797,6 +853,8 @@ function openSpark(id){
     el.querySelector('#ok').onclick=()=>{keep();closeSheet();render()};
     el.querySelector('#sdwrite').onclick=()=>{keep();closeSheet();writeSpark(id)};
     el.querySelector('#sdedit').onclick=()=>{keep();closeSheet();openReview('spark',id)};
+    el.querySelector('#sdnotego').onclick=()=>{keep();openNote(id)};
+    wireFacetChips(el);
     el.querySelector('#sdproj').onclick=()=>{keep();pickProject(s.projectId,v=>{s.projectId=v},()=>{closeSheet();render();openSpark(id)})};
     el.querySelector('#sdexp').onclick=()=>{keep();closeSheet();toggleExplored(id)};
     el.querySelector('#sddel').onclick=()=>sheetConfirm('Delete this spark?',sparkTitle(s)||s.text.slice(0,140),'Delete',()=>{S.sparks=S.sparks.filter(x=>x.id!==id);save();render()});
@@ -1651,11 +1709,11 @@ function exitReviewDone(){
 function reviewLookup(){
   if(REVIEW_KIND==='session')return S.sessions.find(x=>x.id===REVIEW_ID);
   if(REVIEW_KIND==='dump')return S.dumps.find(x=>x.id===REVIEW_ID);
-  if(REVIEW_KIND==='spark')return S.sparks.find(x=>x.id===REVIEW_ID);
+  if(REVIEW_KIND==='spark'||REVIEW_KIND==='note')return S.sparks.find(x=>x.id===REVIEW_ID);
   return null;
 }
-function reviewGetText(item){return REVIEW_KIND==='session'?(item.notes||''):(item.text||'')}
-function reviewSetText(item,v){if(REVIEW_KIND==='session')item.notes=v;else{item.text=v;if(REVIEW_KIND==='dump')item.words=wc(v)}}
+function reviewGetText(item){return REVIEW_KIND==='session'?(item.notes||''):REVIEW_KIND==='note'?(item.note||''):(item.text||'')}
+function reviewSetText(item,v){if(REVIEW_KIND==='session')item.notes=v;else if(REVIEW_KIND==='note')item.note=v;else{item.text=v;if(REVIEW_KIND==='dump')item.words=wc(v)}}
 function reviewGetTitle(item){
   if(REVIEW_KIND==='session')return item.sparkText||'';
   return item.title||'';
@@ -1735,7 +1793,7 @@ let CBAR_OPEN=false; // phone: the settings pills are tucked behind •••
 function hasLock(){
   if(PHASE==='dump')return true;
   if(PHASE==='write')return !!(S.active&&!S.active.wrapped);
-  if(PHASE==='review'){const it=reviewLookup();return !!(it&&it.untimed)}
+  if(PHASE==='review'){const it=reviewLookup();return !!(it&&(it.untimed||REVIEW_KIND==='note'))}
   return false;
 }
 function cbarInner(){
@@ -1860,6 +1918,14 @@ function reviewHtml(){
   const item=reviewLookup();
   if(!item)return `<div class="cbar fadeui">${cbarInner()}</div><div class="cbody writebody"><div class="empty">That entry is gone.</div></div>`;
   const text=reviewGetText(item);
+  if(REVIEW_KIND==='note')return `<div class="cbar fadeui">${cbarInner()}</div>
+    <div class="cbody writebody tw">
+      <div class="notectx"><div class="notectxl">Why does this spark you?</div>
+        ${sparkTitle(item)?`<div class="notectxt">${esc(sparkTitle(item))}</div>`:''}
+        <div class="notectxs">${esc(item.text.replace(URL_RE,'').trim().slice(0,240))}${item.text.length>240?'…':''}</div></div>
+      <textarea class="cwrite" id="rtext" placeholder="Write freely. What's funny, true or useful here? Who could it be for? What does it remind you of?">${esc(text)}</textarea>
+    </div>
+    <div class="cfoot fadeui"><span class="cwc" id="cwc3">${wc(text)} words</span><button class="btn" id="savebtn">Save</button></div>`;
   return `<div class="cbar fadeui">${cbarInner()}</div>
     <div class="cbody writebody tw">
       <div class="sname${item.untimed?' autofade':''}" id="sname" contenteditable="true" data-ph="${esc(reviewTitlePlaceholder(item))}">${esc(reviewGetTitle(item))}</div>
@@ -1963,7 +2029,7 @@ function wireCanvas(c){
       c.classList.toggle('typing',wc(reviewGetText(item))>0);
       ta.oninput=()=>{reviewSetText(item,ta.value);save();autosize(ta);const w=c.querySelector('#cwc3');if(w)w.textContent=wc(ta.value)+' words';
         c.classList.toggle('typing',wc(ta.value)>0)};
-      if(item.untimed)wireAppendOnly(ta,S.settings.lockWrite);
+      if(item.untimed||REVIEW_KIND==='note')wireAppendOnly(ta,S.settings.lockWrite);
       wireTypingSound(ta);
       const sv=c.querySelector('#savebtn');if(sv)sv.onclick=()=>{save();toast('saved')};
       if(!reviewGetText(item))ta.focus();
@@ -2251,10 +2317,13 @@ function sparkCard(s,words){
     ${title?`<div class="stitle">${hl(esc(title))}</div>`:''}
     ${body}
     ${links.length?`<div class="slinks">${links.map(u=>`<a href="${esc(u)}" target="_blank" rel="noopener">↗ ${esc(linkLabel(u))}</a>`).join('')}</div>`:''}
+    ${s.note&&s.note.trim()?`<div class="snote">“${esc(s.note.trim().slice(0,150))}${s.note.trim().length>150?'…':''}”</div>`:''}
+    ${facetVals(s).length?`<div class="sfacets">${[...((s.facets||{}).brands||[]),...((s.facets||{}).tone||[])].slice(0,4).map(v=>`<span>${esc(v)}</span>`).join('')}</div>`:''}
     ${fu||(s.tags&&s.tags.length)?`<div class="sfoot">${fu?`<span class="sfu">↳ ${fu} follow-up${fu>1?'s':''}</span>`:''}${(s.tags||[]).slice(0,4).map(t=>`<span class="stag">#${esc(t)}</span>`).join('')}</div>`:''}
     <div class="age">${ago(s.created)}${projById(s.projectId)?` · <span class="ptag">${esc(projById(s.projectId).name)}</span>`:''}</div>
     <div class="floatbar">
       <button class="act" data-swrite="${s.id}">Write</button>
+      <button class="act" data-snote="${s.id}">Why</button>
       <button class="act" data-sedit="${s.id}">Edit</button>
       <button class="act" data-sproj="${s.id}">Project</button>
       <button class="act" data-explore="${s.id}">${s.explored?'Bring back':'Explored'}</button>
@@ -2569,6 +2638,7 @@ function wireSparkCards(root){
   root.querySelectorAll('.spark a').forEach(a=>a.addEventListener('click',e=>e.stopPropagation()));
   root.querySelectorAll('[data-swrite]').forEach(b=>b.onclick=e=>{e.stopPropagation();writeSpark(b.dataset.swrite)});
   root.querySelectorAll('[data-sedit]').forEach(b=>b.onclick=e=>{e.stopPropagation();openReview('spark',b.dataset.sedit)});
+  root.querySelectorAll('[data-snote]').forEach(b=>b.onclick=e=>{e.stopPropagation();openNote(b.dataset.snote)});
   root.querySelectorAll('[data-explore]').forEach(b=>b.onclick=e=>{e.stopPropagation();toggleExplored(b.dataset.explore)});
   root.querySelectorAll('[data-sproj]').forEach(b=>b.onclick=e=>{e.stopPropagation();
     const s=S.sparks.find(x=>x.id===b.dataset.sproj);if(!s)return;

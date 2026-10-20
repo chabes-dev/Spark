@@ -118,6 +118,10 @@ The app still works fully offline/without the server: local data is the master c
   "Find for a brief" (AI via `/api/related`, keyword fallback offline), Import emails (.mbox/.eml/.json, parsed in the
   browser, replies folded into threads, duplicates skipped by Message-ID), Sync & email sheet.
 - Tapping a card opens the spark sheet (`openSpark`): kind, title, full text, links, follow-ups, tags, actions.
+- "Why does this spark you?": `spark.note`, written on the full writing canvas (review kind `note`, `openNote`; sounds,
+  themes, fade, lock). On close (`afterNote`) #tags in the note become tags and the AI re-reads the spark: classify gets
+  the note separately and returns `facets` {tone, brands, categories, products, themes, formats} (`FACETS`), shown in the
+  sheet (tap = search) and as a few chips + a note excerpt on the card. Search and brief mode include note and facets.
 - Desk shows one older spark a day (`resurfaced`), which can seed today's morning pages prompt.
 - Sync client: `spark_sync` localStorage key (separate from `spark_v1`) holds code, `since`, per-item fingerprints,
   `skew` (server clock offset), `warn`. `save()` schedules a debounced sync; also on focus and every minute.

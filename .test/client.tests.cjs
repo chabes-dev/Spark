@@ -129,3 +129,38 @@ module.exports.capture_box_tags_and_project_filter = async ({ newDevice, ok }) =
   await pg.evaluate(() => { S.ui.sparkProj = null; saveLocal(); });
   await pg.context().close();
 };
+module.exports.why_note_and_facets = async ({ newDevice, ok, pull }) => {
+  const pg = await newDevice();
+  let sent = null;
+  await pg.route("**/api/classify", async (r) => {
+    sent = JSON.parse(r.request().postData());
+    const it = sent.items[0];
+    r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ results: [{ id: it.id, kind: "idea", title: "Slowest man for time-lapse", tags: ["video"],
+      facets: { tone: ["funny", "absurd"], brands: ["Apple"], categories: ["tech"], products: ["time-lapse"], themes: ["slowness"], formats: ["social video"] } }] }) });
+  });
+  await pg.evaluate(() => { S.sparks.unshift({ id: "slow", text: "Homem mais lento do mundo pra promover timelapse\nhttps://youtube.com/shorts/LLgiPER4ctk", created: Date.now(), tags: [], classified: true }); saveLocal(); SYNC.ai = true; saveSync(); S.ui.view = "sparks"; S.ui.sparkQ = ""; S.ui.sparkTag = null; S.ui.sparkProj = null; render(); });
+  await pg.click('.spark[data-id="slow"] .t');
+  ok("why: the sheet invites you to write why", !!(await pg.$(".sdnoteinvite")));
+  await pg.click("#sdnotego");
+  ok("why: opens the writing canvas with the spark as context", (await pg.textContent(".notectx")).includes("Homem mais lento"));
+  ok("why: the writing fades and has the lock switch, like pages", await pg.$eval("#rtext", (t) => t.classList.contains("fading")) && !!(await pg.$("#clock")));
+  await pg.click("#rtext");
+  await pg.keyboard.type("a guy who is the slowest person on earth, so funny for time lapse. would work for apple #floors");
+  await pg.keyboard.press("Escape"); await pg.waitForTimeout(1500);
+  const s = await pg.evaluate(() => S.sparks.find((x) => x.id === "slow"));
+  ok("why: the note is saved on the spark", s.note.startsWith("a guy who is the slowest"));
+  ok("why: #tags in the note become tags", (s.tags || []).includes("floors"), JSON.stringify(s.tags));
+  ok("why: the AI gets the note separately", sent && sent.items[0].note.includes("slowest person") && !sent.items[0].text.includes("slowest person"));
+  ok("why: facets are stored", s.facets && s.facets.brands[0] === "Apple" && s.facets.tone.length === 2, JSON.stringify(s.facets));
+  ok("why: back on the spark sheet, the note and facets show", (await pg.textContent(".sdnotet")).includes("slowest") && (await pg.$$(".fchip")).length === 7);
+  await pg.click('.fchip:has-text("Apple")');
+  ok("why: tapping a facet searches for it", (await pg.inputValue("#sq")) === "Apple" && (await pg.$$('#sparkres .spark[data-id="slow"]')).length === 1);
+  ok("why: the card shows the note and facets", (await pg.textContent('.spark[data-id="slow"] .snote')).includes("slowest") && (await pg.$$('.spark[data-id="slow"] .sfacets span')).length >= 2);
+  await pg.evaluate(() => syncNow());
+  const srv = (await pull()).items.find((x) => x.item.id === "slow");
+  ok("why: the note and facets sync", srv && srv.item.note.includes("slowest") && srv.item.facets.brands[0] === "Apple");
+  await pg.screenshot({ path: "/tmp/claude-0/-home-user-Spark/4c9f90c7-4736-51ca-9905-9c48800840b5/scratchpad/why-card.png" });
+  await pg.evaluate(() => { S.ui.sparkQ = ""; saveLocal(); });
+  await pg.unroute("**/api/classify");
+  await pg.context().close();
+};
