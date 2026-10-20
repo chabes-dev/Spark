@@ -15,8 +15,9 @@ so anyone who learns it can fill your library and spend your AI budget.
 
 1. **Rotate both secrets.** The sync code and the inbound key were pasted into a chat transcript. Set new values in
    Vercel (`SPARK_SYNC_CODE`: use 5+ random words; `INBOUND_KEY`: 40 hex chars) and update the CloudMailin URL.
-2. **Add `ALLOWED_SENDERS`** in Vercel: comma-separated addresses allowed to create sparks by email, e.g.
-   `marcelo.chabes@mediaartslab.com,marcelogimeneschabes@gmail.com`. After this branch, email-in is **closed by
+2. ~~**Add `ALLOWED_SENDERS`** in Vercel~~ **Done (2026-10-20):** set for Production and Preview to
+   `marcelo.chabes@mediaartslab.com,marcelogimeneschabes@gmail.com,marcelogimeneschabes@icloud.com`.
+   (Comma-separated addresses allowed to create sparks by email.) Without it, email-in would be **closed by
    default** until this is set (see C4).
 3. Optional: `AI_DAILY_LIMIT` (default 300 Claude calls a day).
 4. In CloudMailin, prefer Basic Auth over the `?key=` URL: target `https://spark:<INBOUND_KEY>@…/api/inbound`
