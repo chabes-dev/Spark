@@ -674,12 +674,15 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 setInterval(()=>{if(document.visibilityState==='visible')scheduleSync(100)},60000);
 
 /* AI sorting for sparks made in the app or imported (emails are sorted by the server as they arrive) */
-let CLASSIFYING=false;
+let CLASSIFYING=false,CLASSIFY_BACKOFF=0,CLASSIFY_TIMER=null,CLASSIFY_NEXT=0;
+// failures back off (30 s, doubling, max 30 min) and a spark is given up after 3 failed attempts,
+// so a broken server can never turn into a paid Claude call every few seconds
 async function classifyPending(){
-  if(CLASSIFYING||!syncOn()||!SYNC.ai)return;
+  if(CLASSIFYING||!syncOn()||!SYNC.ai||Date.now()<CLASSIFY_NEXT)return; // also called after every sync: respect the backoff
   const todo=S.sparks.filter(s=>!s.classified&&!s.deleted&&String(s.text||'').trim()).slice(0,20);
   if(!todo.length)return;
-  CLASSIFYING=true;
+  CLASSIFYING=true;clearTimeout(CLASSIFY_TIMER);
+  let failed=false;
   try{
     const j=await api('classify',{items:todo.map(s=>({id:s.id,title:s.title||'',text:sparkAllText(s).slice(0,3000)})),vocab:allTags()});
     (j.results||[]).forEach(r=>{
@@ -689,10 +692,17 @@ async function classifyPending(){
       s.aiTitle=r.title;s.classified=true;
     });
     todo.forEach(s=>s.classified=true);
+    CLASSIFY_BACKOFF=0;
     save();if(!document.getElementById('canvas')&&S.ui.view==='sparks'&&!document.activeElement.matches('input,textarea'))render();
-  }catch(e){}
+  }catch(e){
+    failed=true;
+    todo.forEach(s=>{s.classifyTries=(s.classifyTries||0)+1;if(s.classifyTries>=3)s.classified=true});
+    saveLocal();
+    CLASSIFY_BACKOFF=Math.min(CLASSIFY_BACKOFF?CLASSIFY_BACKOFF*2:30000,1800000);
+    CLASSIFY_NEXT=Date.now()+CLASSIFY_BACKOFF;
+  }
   CLASSIFYING=false;
-  if(S.sparks.some(s=>!s.classified&&String(s.text||'').trim()))setTimeout(classifyPending,1500);
+  if(S.sparks.some(s=>!s.classified&&String(s.text||'').trim()))CLASSIFY_TIMER=setTimeout(classifyPending,failed?CLASSIFY_BACKOFF:1500);
 }
 
 function openSync(){

@@ -88,3 +88,18 @@ module.exports.M1_deleted_follow_up_stays_deleted = async ({ newDevice, ok, pull
   ok("M1 a follow-up deleted in the app stays deleted after the server merge", it && it.item.thread.length === 1 && it.item.thread[0].id === "f1", it && it.item.thread.map((x) => x.id));
   await pg.context().close();
 };
+module.exports.M4_failing_classify_backs_off = async ({ newDevice, ok }) => {
+  const pg = await newDevice();
+  let calls = 0;
+  await pg.route("**/api/classify", (r) => { calls++; r.fulfill({ status: 500, contentType: "application/json", body: '{"error":"server error"}' }); });
+  await pg.evaluate(() => { S.sparks.unshift({ id: "uncl", text: "please sort me", created: Date.now() }); saveLocal(); SYNC.ai = true; classifyPending(); });
+  await pg.waitForTimeout(5000);
+  ok("M4 a failing classify is not retried every 1.5 s", calls <= 1, calls + " calls in 5 s");
+  await pg.evaluate(() => classifyPending());                       // what every sync does
+  ok("M4 the once-a-minute sync doesn't bypass the backoff", calls <= 1, calls);
+  // after 3 failed attempts a spark is given up on
+  await pg.evaluate(async () => { for (let i = 0; i < 3; i++) { CLASSIFY_NEXT = 0; clearTimeout(CLASSIFY_TIMER); await classifyPending(); } });
+  ok("M4 a spark is given up after 3 failed attempts", await pg.evaluate(() => { const s = S.sparks.find((x) => x.id === "uncl"); return s.classified === true && s.classifyTries >= 3; }));
+  await pg.unroute("**/api/classify");
+  await pg.context().close();
+};
