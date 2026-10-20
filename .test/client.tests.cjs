@@ -103,3 +103,13 @@ module.exports.M4_failing_classify_backs_off = async ({ newDevice, ok }) => {
   await pg.unroute("**/api/classify");
   await pg.context().close();
 };
+module.exports.L2_only_web_links_are_rendered = async ({ newDevice, ok }) => {
+  const pg = await newDevice();
+  await pg.evaluate(() => { S.sparks.unshift({ id: "lnk", text: "see this", created: Date.now(), links: ["javascript:alert(document.cookie)", " JaVaScRiPt:alert(1)", "data:text/html,x", "https://ok.example/page"] }); saveLocal(); S.ui.view = "sparks"; S.ui.sparkQ = ""; S.ui.shelf = "all"; render(); });
+  const card = await pg.$$eval('.spark[data-id="lnk"] a', (a) => a.map((x) => x.getAttribute("href")));
+  await pg.evaluate(() => openSpark("lnk"));
+  const sheet = await pg.$$eval(".sdlinks a", (a) => a.map((x) => x.getAttribute("href")));
+  ok("L2 a card renders only http(s) links", card.length === 1 && card[0] === "https://ok.example/page", JSON.stringify(card));
+  ok("L2 the spark sheet renders only http(s) links", sheet.length === 1 && sheet[0] === "https://ok.example/page", JSON.stringify(sheet));
+  await pg.context().close();
+};

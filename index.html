@@ -543,6 +543,8 @@ const KIND_LABEL={idea:'Idea',insight:'Insight',name:'Names',brief:'Brief',convo
 const SHELF_LABEL={all:'All',idea:'Ideas',insight:'Insights',name:'Names',brief:'Briefs',convo:'Chats',link:'Links',explored:'Explored'};
 const URL_RE=/https?:\/\/[^\s<>()"']+[^\s<>()"'.,;:!?]/g;
 const linksOf=t=>[...new Set(String(t||'').match(URL_RE)||[])];
+// links stored on a spark come from other devices and email: only plain web links are ever rendered as href
+const webLinks=a=>(Array.isArray(a)?a:[]).filter(u=>typeof u==='string'&&/^https?:\/\/[^\s]+$/i.test(u));
 function guessKind(s){
   const t=String(s.text||''),lines=t.split('\n').map(x=>x.trim()).filter(Boolean);
   const stamp=lines.filter(l=>/^\[?\d{1,2}[:.]\d{2}/.test(l)||/^\[\d{1,2}\/\d{1,2}/.test(l)).length;
@@ -742,7 +744,7 @@ function fmtDate(ts){return new Date(ts).toLocaleDateString(undefined,{day:'nume
 const linkLabel=u=>{try{const x=new URL(u);return x.hostname.replace(/^www\./,'')+(x.pathname.length>1?x.pathname.slice(0,24):'')}catch(e){return u.slice(0,40)}};
 function openSpark(id){
   const s=S.sparks.find(x=>x.id===id);if(!s)return;
-  const k=kindOf(s),links=[...new Set([...(s.links||[]),...linksOf(sparkAllText(s))])];
+  const k=kindOf(s),links=[...new Set([...webLinks(s.links),...linksOf(sparkAllText(s))])];
   sheet(`<div class="sdkind">${KINDS.map(x=>`<button class="kchip ${x===k?'on':''}" data-kind="${x}">${KIND_LABEL[x]}</button>`).join('')}</div>
     <input class="sdtitle" id="sdtitle" placeholder="${esc(s.aiTitle||'Add a title')}" value="${esc(s.title||'')}" />
     <div class="sdmeta">${fmtDate(s.created)}${s.source==='email'?' · by email':s.source==='import'?' · imported':''}${projById(s.projectId)?' · '+esc(projById(s.projectId).name):''}</div>
@@ -2219,7 +2221,7 @@ function finishSession(markExplored,early){
 /* ---- home ---- */
 const app=document.getElementById('app');
 function sparkCard(s,words){
-  const k=kindOf(s),title=sparkTitle(s),fu=(s.thread||[]).length,links=(s.links&&s.links.length?s.links:linksOf(s.text)).slice(0,2);
+  const k=kindOf(s),title=sparkTitle(s),fu=(s.thread||[]).length,links=(webLinks(s.links).length?webLinks(s.links):linksOf(s.text)).slice(0,2);
   const hl=h=>Array.isArray(words)?markHits(h,words):h;
   const body=k==='name'
     ?`<div class="snames">${s.text.split('\n').map(x=>x.trim()).filter(Boolean).slice(0,14).map(x=>`<span>${hl(esc(x))}</span>`).join('')}</div>`
