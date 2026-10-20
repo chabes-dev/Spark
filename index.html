@@ -633,6 +633,8 @@ function syncNow(){
       const CHUNK=200,chunks=[];for(let i=0;i<push.length;i+=CHUNK)chunks.push(push.slice(i,i+CHUNK));
       const commitPush=ch=>ch.forEach(({coll,item})=>{const k=coll+':'+item.id;if(item.deleted)delete SYNC.sigs[k];else if(k in pending)SYNC.sigs[k]=pending[k]});
       const take=j=>{SYNC.ai=!!j.ai;SYNC.email=j.email||SYNC.email;if(typeof j.now==='number')SYNC.skew=j.now-Date.now();
+        // pushes the server refused as stale: its newer version replaces ours
+        (j.conflicts||[]).forEach(({coll,item})=>{if(applyRemote(coll,item,true))changed=true});
         (j.items||[]).forEach(({coll,item})=>{if(applyRemote(coll,item))changed=true});
         SYNC.since=j.next||SYNC.since;return !!j.more};
       let more=false,loops=0;
@@ -648,14 +650,14 @@ function syncNow(){
   })();
   return SYNCING;
 }
-function applyRemote(coll,item){
+function applyRemote(coll,item,serverWins){
   if(!SYNC_COLLS.includes(coll)||!item||!item.id)return false;
   const list=S[coll]||(S[coll]=[]),k=coll+':'+item.id,i=list.findIndex(x=>x.id===item.id),local=i>=0?list[i]:null;
   if(item.deleted){
-    if(local&&(local.updated||0)>(item.updated||0))return false;
+    if(!serverWins&&local&&(local.updated||0)>(item.updated||0))return false;
     if(local)list.splice(i,1);delete SYNC.sigs[k];return !!local;
   }
-  if(local&&(local.updated||0)>(item.updated||0))return false;
+  if(!serverWins&&local&&(local.updated||0)>(item.updated||0))return false;
   if(local&&fingerprint(local)===fingerprint(item)){SYNC.sigs[k]=fingerprint(item);local.updated=item.updated;return false}
   if(local){Object.keys(local).forEach(x=>delete local[x]);Object.assign(local,item)} // in place: open sheets keep their reference
   else{

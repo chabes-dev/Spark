@@ -49,25 +49,26 @@ export async function getItem(coll, id) {
   const v = await redis("HGET", "items", key(coll, id));
   return v ? JSON.parse(v) : null;
 }
-// last write wins on `updated`; returns true when written
+// last write wins on `updated`. Returns {written, conflicts}: conflicts carry the stored (newer) version of every
+// rejected item, so the device that pushed it can adopt it instead of silently keeping a diverged copy.
 export async function putItems(list, { force = false } = {}) {
-  if (!list.length) return 0;
+  if (!list.length) return { written: 0, conflicts: [] };
   const keys = list.map((x) => key(x.coll, x.item.id));
   const cur = await redis("HMGET", "items", ...keys);
   const now = Date.now();
-  const cmds = [];
+  const cmds = [], conflicts = [];
   let n = 0;
   list.forEach((x, i) => {
     // nobody (a wrong clock, a bug, or anyone with the code) can freeze an item with a far-future timestamp
     if (x.item.updated > now + MAX_AHEAD) x.item = { ...x.item, updated: now + MAX_AHEAD };
     const old = cur[i] ? JSON.parse(cur[i]) : null;
-    if (!force && old && (old.updated || 0) > (x.item.updated || 0)) return;
+    if (!force && old && (old.updated || 0) > (x.item.updated || 0)) { conflicts.push({ coll: x.coll, item: old }); return; }
     cmds.push(["HSET", "items", keys[i], JSON.stringify(x.item)]);
     cmds.push(["ZADD", "upd", String(now + n / 1000), keys[i]]); // unique score per write keeps paging exact
     n++;
   });
   await pipeline(cmds);
-  return n;
+  return { written: n, conflicts };
 }
 // everything written after `since` (server ms), oldest first, in pages
 export async function changedSince(since, limit = 400) {

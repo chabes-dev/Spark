@@ -54,3 +54,14 @@ module.exports.H1_device_with_wrong_clock_uses_server_time = async ({ newDevice,
   ok("H1 the device's own copy is stamped with server time too", Math.abs(local - Date.now()) < 5000, local - Date.now());
   await pg.context().close();
 };
+const post = (body) => fetch("http://localhost:8800/api/sync", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ code: "secret-code", since: Date.now(), ...body }) }).then((r) => r.json());
+module.exports.M3_rejected_push_adopts_the_server_version = async ({ newDevice, ok }) => {
+  const pg = await newDevice();
+  await pg.evaluate(() => { S.sparks.unshift({ id: "contested", text: "v1", created: Date.now() }); saveLocal(); return syncNow(); });
+  // another device writes a newer version that this device has already "seen past" (its since is later)
+  await post({ push: [{ coll: "sparks", item: { id: "contested", text: "newer elsewhere", created: Date.now(), updated: Date.now() + 9000 } }] });
+  await pg.evaluate(() => { SYNC.since = Date.now() + 60000; saveSync(); });
+  await pg.evaluate(() => { S.sparks.find((s) => s.id === "contested").text = "older local edit"; saveLocal(); return syncNow(); });
+  ok("M3 the device adopts the server's newer version", (await pg.evaluate(() => S.sparks.find((s) => s.id === "contested").text)) === "newer elsewhere");
+  await pg.context().close();
+};

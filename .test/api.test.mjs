@@ -72,4 +72,12 @@ ok('C5 non-string code is a clean 401',r.status===401,r.status);
   const g=r.body.items.find(x=>x.item.id==='future1');
   ok('H1 the item can still be edited afterwards',g&&g.item.text==='edited later',g&&g.item.text);
 }
+// M3: a push older than the stored version comes back as a conflict carrying the stored version
+{
+  const now=Date.now();
+  await call(sync,{code:'secret-code',since:now,push:[{coll:'sparks',item:{id:'m3',text:'new',updated:now+5000}}]},{},{'x-real-ip':'10.0.0.3'});
+  r=await call(sync,{code:'secret-code',since:now+60000,push:[{coll:'sparks',item:{id:'m3',text:'old',updated:now}}]},{},{'x-real-ip':'10.0.0.3'});
+  const c=(r.body.conflicts||[]).find(x=>x.item.id==='m3');
+  ok('M3 rejected push is returned as a conflict with the stored version',c&&c.item.text==='new',r.body.conflicts);
+}
 srv.close();
