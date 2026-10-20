@@ -1,6 +1,6 @@
 import http from "http";import fs from "fs";import { startMock } from "./mockredis.mjs";
 await startMock(8799);
-Object.assign(process.env,{UPSTASH_REDIS_REST_URL:"http://localhost:8799",UPSTASH_REDIS_REST_TOKEN:"t",SPARK_SYNC_CODE:"secret-code",INBOUND_KEY:"ik",SPARK_EMAIL:"spark123@cloudmailin.net"});
+Object.assign(process.env,{UPSTASH_REDIS_REST_URL:"http://localhost:8799",UPSTASH_REDIS_REST_TOKEN:"t",SPARK_SYNC_CODE:"secret-code",INBOUND_KEY:"ik",SPARK_EMAIL:"spark123@cloudmailin.net",ALLOWED_SENDERS:"me@example.com"});
 const routes={};for(const n of ["sync","inbound","classify","related"])routes[n]=(await import(`../api/${n}.js`)).default;
 http.createServer((req,res)=>{
   const u=new URL(req.url,"http://x");
