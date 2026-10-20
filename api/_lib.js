@@ -183,7 +183,8 @@ export const linksIn = (t) => [...new Set((String(t || "").match(/https?:\/\/[^\
 export const KINDS = ["idea", "insight", "name", "brief", "convo", "link"];
 
 /* ---------- AI (Claude) ---------- */
-export const aiReady = () => !!process.env.ANTHROPIC_API_KEY;
+// AI provider: Gemini (free tier, GEMINI_API_KEY) is used when set; Claude (ANTHROPIC_API_KEY) otherwise.
+export const aiReady = () => !!(process.env.GEMINI_API_KEY || process.env.ANTHROPIC_API_KEY);
 let _client = null;
 const client = () => (_client ||= new Anthropic());
 const MODEL = "claude-opus-5-5";
@@ -200,6 +201,7 @@ export async function spendAI() {
 // one call, JSON back (structured output); safety declines fall back server-side
 export async function askJSON({ system, user, schema, effort = "low", maxTokens = 4000 }) {
   await spendAI();
+  if (process.env.GEMINI_API_KEY) return askGemini({ system, user, schema });
   const r = await client().beta.messages.create({
     model: MODEL,
     max_tokens: maxTokens,
@@ -212,6 +214,41 @@ export async function askJSON({ system, user, schema, effort = "low", maxTokens 
   if (r.stop_reason === "refusal") throw new Error("declined");
   const text = r.content.filter((b) => b.type === "text").map((b) => b.text).join("");
   return JSON.parse(text);
+}
+
+/* Gemini (free tier). The free models are often busy, so a short list is tried in order: a busy (503) or slow model
+   moves on to the next one; a quota error (429) counts as "AI unavailable for now" so the app falls back to its rules. */
+const GEMINI_MODELS = () => (process.env.GEMINI_MODELS || "gemini-flash-lite-latest,gemini-flash-latest,gemini-2.5-flash-lite").split(",").map((x) => x.trim()).filter(Boolean);
+export function geminiBody({ system, user, schema }) {
+  const sys = typeof system === "string" ? system : (system || []).map((b) => b.text).join("\n\n");
+  return {
+    systemInstruction: { parts: [{ text: sys }] },
+    contents: [{ role: "user", parts: [{ text: user }] }],
+    generationConfig: { responseMimeType: "application/json", responseJsonSchema: schema },
+  };
+}
+async function askGemini(req) {
+  const body = JSON.stringify(geminiBody(req));
+  let last = null;
+  for (const model of GEMINI_MODELS()) {
+    let r;
+    try {
+      r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
+        method: "POST",
+        headers: { "x-goog-api-key": process.env.GEMINI_API_KEY, "Content-Type": "application/json" },
+        body,
+        signal: AbortSignal.timeout(+process.env.GEMINI_TIMEOUT_MS || 18000), // 3 tries stay under the 60 s function limit
+      });
+    } catch (e) { last = new Error(`gemini ${model}: ${e.name === "TimeoutError" ? "timed out" : e.message}`); continue; }
+    if (r.status === 429) throw new BudgetError("free AI quota reached for now");
+    if (!r.ok) { last = new Error(`gemini ${model}: HTTP ${r.status}`); continue; }
+    const j = await r.json();
+    const cand = (j.candidates || [])[0];
+    const text = ((cand && cand.content && cand.content.parts) || []).filter((p) => !p.thought).map((p) => p.text || "").join("");
+    if (!text) { last = new Error(`gemini ${model}: empty answer (${cand && cand.finishReason})`); continue; }
+    return JSON.parse(text);
+  }
+  throw last || new Error("gemini: no model answered");
 }
 
 export const CLASSIFY_SYSTEM = `You sort the creative "sparks" of an advertising creative (a copywriter / creative director).

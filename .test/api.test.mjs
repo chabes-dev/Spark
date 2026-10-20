@@ -206,4 +206,27 @@ ok('C5 non-string code is a clean 401',r.status===401,r.status);
 }
 // L5: the functions that call Claude may run up to 60 s
 for(const f of ['classify','related','inbound']){const m=await import(`../api/${f}.js`);ok(`L5 ${f} allows 60 s`,m.config&&m.config.maxDuration===60)}
+// Gemini: free models tried in order; busy -> next model; quota -> 429 to the app; answer parsed from JSON text
+{
+  const realFetch=globalThis.fetch;let calls=[];let mode='busy-then-ok';
+  globalThis.fetch=async(url,opts)=>{
+    if(!String(url).includes('generativelanguage'))return realFetch(url,opts);
+    const model=String(url).split('/models/')[1].split(':')[0];calls.push(model);
+    const reply=(o)=>new Response(JSON.stringify(o),{status:200,headers:{'content-type':'application/json'}});
+    if(mode==='quota')return new Response('{"error":{"code":429}}',{status:429});
+    if(mode==='busy-then-ok'&&calls.length===1)return new Response('{"error":{"code":503}}',{status:503});
+    const body=JSON.parse(opts.body);
+    ok('Gemini gets JSON schema + system text',body.generationConfig.responseJsonSchema&&body.systemInstruction.parts[0].text.length>20);
+    return reply({candidates:[{content:{parts:[{text:'thinking',thought:true},{text:JSON.stringify({results:[{id:'a',kind:'name',title:'Agency names',tags:['naming']}]})}]}}]});
+  };
+  process.env.GEMINI_API_KEY='g-test';delete process.env.ANTHROPIC_API_KEY;process.env.AI_DAILY_LIMIT='1000';
+  const classifyEp=(await import('../api/classify.js')).default;const ipx={'x-real-ip':'10.0.0.9'};
+  r=await call(classifyEp,{code:'secret-code',items:[{id:'a',text:'Last child\nFirst child'}]},{},ipx);
+  ok('Gemini: a busy model falls through to the next one',calls.length===2&&calls[0]!==calls[1],calls);
+  ok('Gemini: the answer is parsed (thought parts ignored)',r.status===200&&r.body.results[0].kind==='name'&&r.body.results[0].title==='Agency names',r.body);
+  mode='quota';calls=[];
+  r=await call(classifyEp,{code:'secret-code',items:[{id:'a',text:'x'}]},{},ipx);
+  ok('Gemini: free quota reached -> 429 so the app backs off and uses its rules',r.status===429,r.status);
+  globalThis.fetch=realFetch;delete process.env.GEMINI_API_KEY;
+}
 srv.close();
