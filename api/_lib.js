@@ -3,30 +3,37 @@ import Anthropic from "@anthropic-ai/sdk";
 import crypto from "crypto";
 
 /* ---------- storage: Upstash Redis REST (env set by the Vercel Marketplace integration) ---------- */
-const R_URL = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
-const R_TOK = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
-export const storageReady = () => !!(R_URL && R_TOK);
+const rUrl = () => process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
+const rTok = () => process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
+export const storageReady = () => !!(rUrl() && rTok());
 
+// every storage call has a timeout and fails with a clear "redis: …" error (never a hang or a TypeError)
+async function rest(path, payload) {
+  let r;
+  try {
+    r = await fetch(rUrl() + path, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${rTok()}`, "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(+process.env.REDIS_TIMEOUT_MS || 8000),
+    });
+  } catch (e) { throw new Error("redis: " + (e.name === "TimeoutError" ? "timed out" : e.message)); }
+  let j;
+  try { j = await r.json(); } catch (e) { throw new Error(`redis: HTTP ${r.status}, not JSON`); }
+  if (j && !Array.isArray(j) && j.error) throw new Error("redis: " + j.error);
+  return j;
+}
 export async function redis(...cmd) {
-  const r = await fetch(R_URL, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${R_TOK}`, "Content-Type": "application/json" },
-    body: JSON.stringify(cmd),
-  });
-  const j = await r.json();
-  if (j.error) throw new Error("redis: " + j.error);
-  return j.result;
+  return (await rest("", cmd)).result;
 }
 export async function pipeline(cmds) {
   if (!cmds.length) return [];
-  const r = await fetch(R_URL + "/pipeline", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${R_TOK}`, "Content-Type": "application/json" },
-    body: JSON.stringify(cmds),
-  });
-  const j = await r.json();
+  const j = await rest("/pipeline", cmds);
+  if (!Array.isArray(j)) throw new Error("redis: unexpected pipeline reply");
   return j.map((x) => { if (x.error) throw new Error("redis: " + x.error); return x.result; });
 }
+// one corrupt stored item must not break every sync: it reads as missing (and a good copy can overwrite it)
+export const parseStored = (v) => { if (!v) return null; try { return JSON.parse(v); } catch (e) { console.error("corrupt item skipped"); return null; } };
 
 /* ---------- item store ----------
    hash  items  "<coll>:<id>" -> JSON item (every item carries `updated`, client clock ms; deletions are {id,deleted:true})
@@ -46,8 +53,7 @@ export function validPush(x) {
 const key = (coll, id) => `${coll}:${id}`;
 
 export async function getItem(coll, id) {
-  const v = await redis("HGET", "items", key(coll, id));
-  return v ? JSON.parse(v) : null;
+  return parseStored(await redis("HGET", "items", key(coll, id)));
 }
 /* ---------- writes are serialised: one short Redis lock around read-modify-write ---------- */
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -93,7 +99,7 @@ export async function putItems(list, { force = false, append = false } = {}) {
     list.forEach((x, i) => {
       // nobody (a wrong clock, a bug, or anyone with the code) can freeze an item with a far-future timestamp
       if (x.item.updated > now + MAX_AHEAD) x.item = { ...x.item, updated: now + MAX_AHEAD };
-      const old = cur[i] ? JSON.parse(cur[i]) : null;
+      const old = parseStored(cur[i]);
       if (append && bothSparks(x.coll, old, x.item)) {
         const m = mergeSpark(old, x.item);
         m.links = [...new Set([...(old.links || []), ...(x.item.links || [])])];
@@ -122,9 +128,10 @@ export async function changedSince(since, limit = 400) {
   const vals = await redis("HMGET", "items", ...keys);
   const items = [];
   keys.forEach((k, i) => {
-    if (!vals[i]) return;
+    const item = parseStored(vals[i]);
+    if (!item) return;
     const c = k.indexOf(":");
-    items.push({ coll: k.slice(0, c), item: JSON.parse(vals[i]) });
+    items.push({ coll: k.slice(0, c), item });
   });
   return { items, next: scores[scores.length - 1], more: keys.length === limit };
 }

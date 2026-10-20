@@ -186,4 +186,22 @@ ok('C5 non-string code is a clean 401',r.status===401,r.status);
   const long={id:'s',thread:Array.from({length:400},(_,i)=>({id:'t'+i,text:'x',created:i}))};
   ok('L3 a thread keeps at most the newest 300 follow-ups',L.mergeSpark(long,{id:'s'}).thread.length===300);
 }
+// L4: one corrupt item, an error object from storage, or a hung storage call don't take sync down
+{
+  const L=await import('../api/_lib.js');const ipx={'x-real-ip':'10.0.0.7'};const now=Date.now();
+  H.items['sparks:corrupt']='{not json';state.Z.upd['sparks:corrupt']=now+1;
+  r=await call(sync,{code:'secret-code',since:now,push:[]},{},ipx);
+  ok('L4 a corrupt stored item is skipped, sync still works',r.status===200,r.status);
+  r=await call(sync,{code:'secret-code',since:now,push:[{coll:'sparks',item:{id:'corrupt',text:'repaired',updated:Date.now()}}]},{},ipx);
+  ok('L4 and it can be overwritten by a good copy',r.status===200&&r.body.items.some(x=>x.item.id==='corrupt'&&x.item.text==='repaired'),r.status);
+  state.failWhen=(cmds)=>Array.isArray(cmds[0]);
+  let err=null;try{await L.pipeline([['GET','x']])}catch(e){err=e.message}
+  state.failWhen=null;
+  ok('L4 a storage error on a pipeline is a clear error, not a crash',/^redis: /.test(err||''),err);
+  const http=await import('http');const hang=http.createServer(()=>{}).listen(8797);
+  const keep=process.env.UPSTASH_REDIS_REST_URL;process.env.UPSTASH_REDIS_REST_URL='http://localhost:8797';process.env.REDIS_TIMEOUT_MS='300';
+  const t0=Date.now();err=null;try{await L.redis('GET','x')}catch(e){err=e.message}
+  process.env.UPSTASH_REDIS_REST_URL=keep;delete process.env.REDIS_TIMEOUT_MS;hang.close();
+  ok('L4 a hung storage call times out',!!err&&Date.now()-t0<2000,[err,Date.now()-t0]);
+}
 srv.close();
