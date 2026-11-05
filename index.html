@@ -11,6 +11,11 @@
 <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
 <title>Spark</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='15' fill='%23F5F3EE'/%3E%3Ccircle cx='32' cy='32' r='16' fill='none' stroke='%234F6B62' stroke-width='5' stroke-linecap='round' stroke-dasharray='87 13'/%3E%3C/svg%3E" />
+<script>
+/* the Cloudflare copy gets an ember icon so it can sit next to the old (green) Vercel one; the Worker serves the
+   matching apple-touch-icon */
+if(!/\.vercel\.app$/.test(location.hostname))document.querySelector('link[rel=icon]').href=document.querySelector('link[rel=icon]').href.replace('%234F6B62','%23C65D3B');
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">

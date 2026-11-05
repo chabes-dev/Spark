@@ -49,6 +49,8 @@ export default {
       if (!handler) return Response.json({ error: "not found" }, { status: 404 });
       return runApi(request, env, handler);
     }
+    // the Cloudflare copy's home-screen icon is ember, so it's easy to tell apart from the old green Vercel one
+    if (pathname === "/apple-touch-icon.png") return env.ASSETS.fetch(new URL("/apple-touch-icon-new.png", request.url));
     return env.ASSETS.fetch(request);
   },
 };

@@ -2,7 +2,9 @@
 
 ## What this is
 Spark is a **single-file app**: everything the browser runs (HTML, CSS, JS) lives in `index.html` at the repo root, plus
-`apple-touch-icon.png` (180×180, the iPhone home-screen icon). No framework, no bundler, no build step.
+`apple-touch-icon.png` (180×180, the iPhone home-screen icon; green). The Cloudflare copy shows an ember version
+(`apple-touch-icon-new.png`, served by the Worker at the same path; the tab favicon is recoloured off `*.vercel.app`) so the
+owner can tell it apart from the old Vercel copy. No framework, no bundler, no build step.
 
 Since 2026-10 there is also a **small server** in `api/` (Node-style handlers, owner-approved; run by a Cloudflare Worker, see Deploying) for sync, the Spark
 email address and AI sorting. `package.json` exists only for its one dependency (`@anthropic-ai/sdk`); Vercel installs it.
