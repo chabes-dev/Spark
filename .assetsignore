@@ -1,0 +1,16 @@
+# Only the app itself is published: index.html and the icon.
+.git
+.gitignore
+.vercelignore
+.assetsignore
+.wrangler
+.dev.vars
+.test
+.claude
+node_modules
+api
+worker
+wrangler.jsonc
+package.json
+package-lock.json
+*.md

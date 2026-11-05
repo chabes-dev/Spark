@@ -4,7 +4,7 @@
 Spark is a **single-file app**: everything the browser runs (HTML, CSS, JS) lives in `index.html` at the repo root, plus
 `apple-touch-icon.png` (180×180, the iPhone home-screen icon). No framework, no bundler, no build step.
 
-Since 2026-10 there is also a **small server** in `api/` (Vercel Node functions, owner-approved) for sync, the Spark
+Since 2026-10 there is also a **small server** in `api/` (Node-style handlers, owner-approved; run by a Cloudflare Worker, see Deploying) for sync, the Spark
 email address and AI sorting. `package.json` exists only for its one dependency (`@anthropic-ai/sdk`); Vercel installs it.
 The app still works fully offline/without the server: local data is the master copy.
 
@@ -13,13 +13,19 @@ The app still works fully offline/without the server: local data is the master c
 - Keep the app single-file. Don't add a build step, bundler, or more dependencies unless the owner explicitly asks.
 
 ## Deploying
-- Deploy = commit + push to `main`. The GitHub repo is connected to the Vercel project, and every push to `main` goes to production.
-- Other branches get preview deployments only. (Cloud Claude Code sessions push to a feature branch, and the change ships when that branch is merged into `main`.)
-- **Never create a new Vercel project** and never run `vercel` in a way that could create one. The project is `spark-v2`
-  (ID `prj_htrvy05SfhaRoWfwMB7Lgib7hBwm`, team `chabes-devs-projects` / `team_9EpNt6jfuHaKQ6rhLde8MC8w`).
-- Production URL: https://spark-v2-chabes-devs-projects.vercel.app
-- Vercel Authentication is set to **previews only** (`ssoProtection.deploymentType: preview`). Production must stay
-  public: the iPhone home-screen app and its icon fetch have no Vercel login. The owner's data is local, nothing leaks.
+- **Since 2026-11 Spark runs on Cloudflare** (a Worker named `spark`, like the owner's Daily Ritual app). The Vercel
+  account was paused on 2026-10-24 because *other* apps used up the shared free Blob allowance, which took Spark down too.
+- Deploy = commit + push to `main`. The GitHub repo is connected to the Cloudflare Worker (Workers Builds), and every
+  push to `main` goes to production. `wrangler.jsonc` + `worker/index.js`: the Worker serves the repo root as static
+  files (`.assetsignore` keeps server code, tests, docs and config out) and runs `/api/*` through the same `api/`
+  handlers via a small req/res adapter, so `api/` stays the one copy of the server logic.
+- Worker secrets (set in the Cloudflare dashboard, never in the repo): `SPARK_SYNC_CODE`, `KV_REST_API_URL`,
+  `KV_REST_API_TOKEN` (the same Upstash database as before, so synced data carried over), `GEMINI_API_KEY`; optional
+  `ALLOWED_SENDERS`, `INBOUND_KEY`, `SPARK_EMAIL`. Local run: `wrangler dev` with a `.dev.vars` file (gitignored).
+- The old Vercel project `spark-v2` (`prj_htrvy05SfhaRoWfwMB7Lgib7hBwm`, team `team_9EpNt6jfuHaKQ6rhLde8MC8w`,
+  https://spark-v2-chabes-devs-projects.vercel.app) is kept as a fallback and still builds from `main`.
+  **Never create a new Vercel project.** Production must stay public (the iPhone home-screen app has no login).
+- A new domain starts with empty localStorage: on a new address the owner re-enters the sync code to pull their data.
 
 ## Data: handle with care
 - All user data is in the browser's `localStorage` under the key **`spark_v1`** (`const KEY` in `index.html`).

@@ -1,0 +1,17 @@
+/* Cloudflare: the app's files plus the api/ server (worker/index.js), deployed from GitHub on
+   every merge to main. The files are served straight from the repo root; .assetsignore keeps
+   everything that isn't part of the app (server code, tests, docs, config) from being published.
+   Secrets (SPARK_SYNC_CODE, KV_REST_API_URL, KV_REST_API_TOKEN, GEMINI_API_KEY, ...) are set on
+   the Worker in Cloudflare, never here. */
+{
+  "name": "spark",
+  "main": "worker/index.js",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": ".",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*"]
+  },
+  "observability": { "enabled": true }
+}
