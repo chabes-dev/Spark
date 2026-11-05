@@ -26,6 +26,9 @@ The app still works fully offline/without the server: local data is the master c
   https://spark-v2-chabes-devs-projects.vercel.app) is kept as a fallback and still builds from `main`.
   **Never create a new Vercel project.** Production must stay public (the iPhone home-screen app has no login).
 - A new domain starts with empty localStorage: on a new address the owner re-enters the sync code to pull their data.
+  Settings, `dumpDraft` and `active` don't sync: **Backup** (Sparks page footer, `openBackup`) downloads all of `S` as
+  `spark-backup-<date>.json`; Restore merges it (`mergeBackup`: by id, newer `updated`/`created` wins, backup settings win,
+  a second draft becomes a "Recovered draft" page). Nothing local is ever deleted by a restore.
 
 ## Data: handle with care
 - All user data is in the browser's `localStorage` under the key **`spark_v1`** (`const KEY` in `index.html`).

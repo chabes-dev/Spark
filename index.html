@@ -1203,6 +1203,66 @@ function exportDumps(){
   toast('exported '+list.length+' dumps');
 }
 
+/* ---- backup & restore: one .json file with everything on this device (settings and drafts too), for moving to a
+   new address. Restoring merges: items are matched by id and the newer copy wins, so nothing written here is lost. ---- */
+const BACKUP_COLLS=['sparks','sessions','dumps','projects','prompts','motivators'];
+function backupNow(){
+  const data={app:'spark',v:1,exported:Date.now(),from:location.host,data:S};
+  const b=new Blob([JSON.stringify(data)],{type:'application/json'});
+  const url=URL.createObjectURL(b),a=document.createElement('a');
+  a.href=url;a.download='spark-backup-'+new Date().toISOString().slice(0,10)+'.json';
+  a.style.display='none';document.body.appendChild(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(url);a.remove()},4000);
+  toast('backup saved');
+}
+const stamp=x=>+(x&&(x.updated||x.created))||0;
+function mergeBackup(B){
+  const n={added:0,newer:0};
+  BACKUP_COLLS.forEach(c=>{
+    if(!Array.isArray(B[c]))return;
+    S[c]=Array.isArray(S[c])?S[c]:[];
+    const byId=new Map(S[c].map((x,i)=>[x&&x.id,i]));
+    B[c].forEach(x=>{
+      if(!x||typeof x!=='object'||!x.id)return;
+      if(!byId.has(x.id)){S[c].push(x);byId.set(x.id,S[c].length-1);n.added++}
+      else{const i=byId.get(x.id);if(stamp(x)>stamp(S[c][i])){S[c][i]=x;n.newer++}}
+    });
+  });
+  ['sparks','sessions','dumps'].forEach(c=>S[c].sort((a,b)=>(b.created||0)-(a.created||0)));
+  // the backup holds the owner's long-time preferences: they win
+  if(B.settings&&typeof B.settings==='object')Object.assign(S.settings,B.settings);
+  // an unfinished morning-pages draft: taken over, or kept as a page if this device has its own draft
+  const bd=B.dumpDraft;
+  if(bd&&bd.text&&bd.text.trim()&&!(S.dumpDraft&&S.dumpDraft.text===bd.text)){
+    if(!(S.dumpDraft&&S.dumpDraft.text&&S.dumpDraft.text.trim()))S.dumpDraft=bd;
+    else if(!S.dumps.some(d=>d.text===bd.text)){S.dumps.unshift({id:nid(),text:bd.text,created:bd.startedAt||Date.now(),words:wc(bd.text),projectId:bd.projectId||null,title:'Recovered draft'});n.added++}
+  }
+  if(B.active&&!S.active)S.active=B.active;
+  return n;
+}
+function openBackup(){
+  sheet(`<h3>Backup & restore</h3>
+    <p><b>Backup</b> saves one file with everything on this device: sparks, pages, entries, projects, your settings and any draft.</p>
+    <div class="sheet-acts" style="justify-content:flex-start"><button class="btn btn-hot" id="bkgo">↓ Download backup</button></div>
+    <p><b>Restore</b> adds a backup to what's here. Nothing here is deleted: when both have the same item, the newer one is kept. Your settings come from the backup.</p>
+    <input type="file" id="bkfile" accept=".json,application/json" />
+    <div id="bkres"></div>
+    <div class="sheet-acts"><button class="btn" id="ok">Close</button></div>`,
+  el=>{
+    el.querySelector('#ok').onclick=closeSheet;
+    el.querySelector('#bkgo').onclick=backupNow;
+    el.querySelector('#bkfile').onchange=async e=>{
+      const out=el.querySelector('#bkres'),f=e.target.files[0];if(!f)return;
+      let B=null;try{const j=JSON.parse(await f.text());B=j&&j.app==='spark'?j.data:j}catch(err){}
+      if(!B||typeof B!=='object'||!BACKUP_COLLS.some(c=>Array.isArray(B[c]))){out.innerHTML='<div class="impsum">That file isn\'t a Spark backup.</div>';return}
+      const n=mergeBackup(B);
+      save();closeSheet();render();
+      toast(`restored · ${n.added} added${n.newer?', '+n.newer+' updated':''}`);
+      if(syncOn())syncNow();
+    };
+  });
+}
+
 /* ---- audio: shared context ---- */
 let actx=null;
 function ensureAudio(){
@@ -2403,6 +2463,7 @@ function sparksHtml(active,explored){
       <button class="btn" id="historybtn">History${S.sessions.length?' · '+S.sessions.length:''}</button>
       <button class="btn" id="dumpsbtn">Morning pages${S.dumps.length?' · '+S.dumps.length:''}</button>
       <button class="btn" id="importbtn">Import emails</button>
+      <button class="btn" id="backupbtn">Backup</button>
       <button class="btn" id="syncbtn">${syncOn()?(SYNC.err||SYNC.warn?'⚠ Sync':'⟳ Synced'):'Sync & email'}</button>
     </div>`;
 }
@@ -2615,6 +2676,7 @@ function wire(){
   const stb=document.getElementById('startbtn');if(stb)stb.onclick=()=>startWriting(null);
   const mh=document.getElementById('motivhome');if(mh)mh.onclick=openMotivators;
   const ib=document.getElementById('importbtn');if(ib)ib.onclick=openImport;
+  const bkb=document.getElementById('backupbtn');if(bkb)bkb.onclick=openBackup;
   const syb=document.getElementById('syncbtn');if(syb)syb.onclick=openSync;
   const bb=document.getElementById('briefbtn');if(bb)bb.onclick=()=>openBrief();
   app.querySelectorAll('[data-shelf]').forEach(b=>b.onclick=()=>{S.ui.shelf=b.dataset.shelf;S.ui.sparkQ='';saveLocal();render()});

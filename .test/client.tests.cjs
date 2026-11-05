@@ -164,3 +164,38 @@ module.exports.why_note_and_facets = async ({ newDevice, ok, pull }) => {
   await pg.unroute("**/api/classify");
   await pg.context().close();
 };
+module.exports.backup_restore = async ({ newDevice, ok }) => {
+  // the old address: a spark, a page, a draft and non-default settings, none of it synced
+  const a = await newDevice();
+  await a.evaluate(() => { SYNC.code = ""; saveSync();
+    S.sparks.unshift({ id: "bk1", text: "old idea", created: 1000, updated: 1000 }, { id: "bk2", text: "edited here later", created: 1000, updated: 1000 });
+    S.dumps.unshift({ id: "bkd", text: "an old page", created: 2000, words: 3 });
+    S.dumpDraft = { text: "half a page", startedAt: 3000 }; S.settings.theme = "clean"; S.settings.typingVol = 0.2; saveLocal();
+    S.ui.view = "sparks"; render(); });
+  await a.click("#backupbtn");
+  const [dl] = await Promise.all([a.waitForEvent("download"), a.click("#bkgo")]);
+  const file = "/tmp/claude-0/-home-user-Spark/4c9f90c7-4736-51ca-9905-9c48800840b5/scratchpad/spark-backup-test.json";
+  await dl.saveAs(file);
+  ok("backup: the file is named spark-backup-<date>.json", /^spark-backup-\d{4}-\d\d-\d\d\.json$/.test(dl.suggestedFilename()), dl.suggestedFilename());
+  await a.context().close();
+  // the new address: its own spark, a newer copy of bk2 and its own draft
+  const b = await newDevice();
+  await b.evaluate(() => { SYNC.code = ""; saveSync();
+    S.sparks.unshift({ id: "new1", text: "written on the new address", created: 5000, updated: 5000 }, { id: "bk2", text: "edited on the new address", created: 1000, updated: 9000 });
+    S.dumpDraft = { text: "today's draft", startedAt: 6000 }; saveLocal(); S.ui.view = "sparks"; render(); });
+  await b.click("#backupbtn");
+  await b.setInputFiles("#bkfile", file);
+  await b.waitForTimeout(500);
+  const s = await b.evaluate(() => ({ sparks: S.sparks.map((x) => x.id + ":" + x.text), dumps: S.dumps.map((d) => d.title || d.text), draft: S.dumpDraft.text, theme: S.settings.theme, vol: S.settings.typingVol,
+    stored: JSON.parse(localStorage.getItem("spark_v1")).sparks.length }));
+  ok("restore: sparks from the backup are added", s.sparks.includes("bk1:old idea"), JSON.stringify(s.sparks));
+  ok("restore: sparks written here are kept", s.sparks.includes("new1:written on the new address"));
+  ok("restore: the newer copy wins", s.sparks.includes("bk2:edited on the new address") && !s.sparks.includes("bk2:edited here later"));
+  ok("restore: pages come back", s.dumps.includes("an old page"));
+  ok("restore: the old draft is kept as a page, today's draft stays", s.dumps.includes("Recovered draft") && s.draft === "today's draft", JSON.stringify(s.dumps));
+  ok("restore: settings come from the backup", s.theme === "clean" && s.vol === 0.2);
+  ok("restore: saved to the device", s.stored === s.sparks.length);
+  await b.click("#backupbtn"); await b.setInputFiles("#bkfile", file); await b.waitForTimeout(500);
+  ok("restore: restoring twice adds nothing", (await b.evaluate(() => S.sparks.length)) === s.sparks.length && (await b.evaluate(() => S.dumps.filter((d) => d.title === "Recovered draft").length)) === 1);
+  await b.context().close();
+};
