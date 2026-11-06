@@ -2549,7 +2549,7 @@ function pageHtml(view){
   const last=S.sessions[0];
   const tab=view==='project'?'desk':view;
   const syncTxt=syncOn()?(SYNC.err||SYNC.warn?'⚠ sync':'⟳ synced'):'';
-  return `<div class="wrap${view==='desk'||view==='history'?' wide':''}">
+  return `<div class="wrap wide">
     <div class="top"><div class="title">Spark</div>
       <nav class="nav" id="nav"><span class="navind" id="navind"></span>${[['desk','Desk'],['history','History'],['sparks','Sparks']].map(([v,l])=>`<button class="navb ${tab===v?'on':''}" data-view="${v}">${l}</button>`).join('')}</nav>
       <div class="topr">${syncTxt?`<button class="synctag" id="synctag">${syncTxt}</button>`:''}<button class="morebtn" id="morebtn" aria-label="More">⋯</button>
@@ -3113,7 +3113,7 @@ function appBack(){
     if(ghostFor===to+dir)return;
     dropGhost();
     ghost=document.createElement('div');ghost.className='swipeghost';
-    ghost.innerHTML=`<div class="wrap"><div class="pagebody">${bodyHtml(to)}</div></div>`;
+    ghost.innerHTML=`<div class="wrap wide"><div class="pagebody">${bodyHtml(to)}</div></div>`;
     const top=wrapEl().getBoundingClientRect().top;ghost.style.top=top+'px';ghost.style.height=(innerHeight-Math.min(top,0)-Math.max(top,0))+'px';
     document.body.appendChild(ghost);
     ghostFor=to+dir;
