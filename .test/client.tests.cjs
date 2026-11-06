@@ -172,7 +172,7 @@ module.exports.backup_restore = async ({ newDevice, ok }) => {
     S.dumps.unshift({ id: "bkd", text: "an old page", created: 2000, words: 3 });
     S.dumpDraft = { text: "half a page", startedAt: 3000 }; S.settings.theme = "clean"; S.settings.typingVol = 0.2; saveLocal();
     S.ui.view = "sparks"; render(); });
-  await a.click("#backupbtn");
+  await a.click("#morebtn"); await a.click("#backupbtn");
   const [dl] = await Promise.all([a.waitForEvent("download"), a.click("#bkgo")]);
   const file = "/tmp/claude-0/-home-user-Spark/4c9f90c7-4736-51ca-9905-9c48800840b5/scratchpad/spark-backup-test.json";
   await dl.saveAs(file);
@@ -183,7 +183,7 @@ module.exports.backup_restore = async ({ newDevice, ok }) => {
   await b.evaluate(() => { SYNC.code = ""; saveSync();
     S.sparks.unshift({ id: "new1", text: "written on the new address", created: 5000, updated: 5000 }, { id: "bk2", text: "edited on the new address", created: 1000, updated: 9000 });
     S.dumpDraft = { text: "today's draft", startedAt: 6000 }; saveLocal(); S.ui.view = "sparks"; render(); });
-  await b.click("#backupbtn");
+  await b.click("#morebtn"); await b.click("#backupbtn");
   await b.setInputFiles("#bkfile", file);
   await b.waitForTimeout(500);
   const s = await b.evaluate(() => ({ sparks: S.sparks.map((x) => x.id + ":" + x.text), dumps: S.dumps.map((d) => d.title || d.text), draft: S.dumpDraft.text, theme: S.settings.theme, vol: S.settings.typingVol,
@@ -195,7 +195,7 @@ module.exports.backup_restore = async ({ newDevice, ok }) => {
   ok("restore: the old draft is kept as a page, today's draft stays", s.dumps.includes("Recovered draft") && s.draft === "today's draft", JSON.stringify(s.dumps));
   ok("restore: settings come from the backup", s.theme === "clean" && s.vol === 0.2);
   ok("restore: saved to the device", s.stored === s.sparks.length);
-  await b.click("#backupbtn"); await b.setInputFiles("#bkfile", file); await b.waitForTimeout(500);
+  await b.click("#morebtn"); await b.click("#backupbtn"); await b.setInputFiles("#bkfile", file); await b.waitForTimeout(500);
   ok("restore: restoring twice adds nothing", (await b.evaluate(() => S.sparks.length)) === s.sparks.length && (await b.evaluate(() => S.dumps.filter((d) => d.title === "Recovered draft").length)) === 1);
   await b.context().close();
 };
@@ -211,20 +211,20 @@ module.exports.restore_pages_txt = async ({ newDevice, ok }) => {
     await dl.saveAs(file); await a.context().close();
     const b = await newDevice({ locale });
     await b.evaluate(() => { SYNC.code = ""; saveSync(); S.dumps = [{ id: "keep", text: "second page", created: 1, words: 2 }]; saveLocal(); S.ui.view = "sparks"; render(); });
-    await b.click("#backupbtn"); await b.setInputFiles("#bkfile", file); await b.waitForTimeout(400);
+    await b.click("#morebtn"); await b.click("#backupbtn"); await b.setInputFiles("#bkfile", file); await b.waitForTimeout(400);
     const d = await b.evaluate(() => S.dumps.map((x) => [x.text, new Date(x.created).toISOString().slice(0, 16)]));
     const first = d.find((x) => x[0].startsWith("first page"));
     ok(`restore .txt (${locale}): the missing page comes back with its text`, first && first[0] === "first page\n\nwith a blank line", JSON.stringify(d));
     ok(`restore .txt (${locale}): with its date`, first && first[1] === new Date(2026, 9, 3, 7, 5).toISOString().slice(0, 16), first && first[1]);
     ok(`restore .txt (${locale}): a page already here isn't doubled`, d.filter((x) => x[0] === "second page").length === 1);
-    await b.click("#backupbtn"); await b.setInputFiles("#bkfile", file); await b.waitForTimeout(300);
+    await b.click("#morebtn"); await b.click("#backupbtn"); await b.setInputFiles("#bkfile", file); await b.waitForTimeout(300);
     ok(`restore .txt (${locale}): restoring again says it's all here`, (await b.textContent("#bkres")).includes("already here"));
     await b.context().close();
   }
 };
 module.exports.template_energy_reset = async ({ newDevice, ok }) => {
   const pg = await newDevice();
-  await pg.evaluate(() => { S.ui.view = "sparks"; render(); });
+  await pg.evaluate(() => { S.ui.view = "desk"; render(); });
   await pg.click("#tplbtn");
   ok("template: the picker lists Energy reset", (await pg.textContent(".sheet")).includes("Energy reset"));
   await pg.click('[data-tpl="energy"]');
@@ -250,7 +250,7 @@ module.exports.template_energy_reset = async ({ newDevice, ok }) => {
   ok("template: opening it again shows the form with the answer", (await pg.inputValue('textarea[data-a="2"]')) === "Shrink it: one slide, not a deck." && (await pg.$$('.tplzone.on[data-zone="thriving"]')).length === 1);
   await pg.keyboard.press("Escape"); await pg.evaluate(() => closeSheet());
   const n = await pg.evaluate(() => S.sessions.length);
-  await pg.evaluate(() => { S.ui.view = "sparks"; render(); });
+  await pg.evaluate(() => { S.ui.view = "desk"; render(); });
   await pg.click("#tplbtn"); await pg.click('[data-tpl="energy"]'); await pg.keyboard.press("Escape"); await pg.waitForTimeout(200);
   ok("template: an untouched one is dropped, like an empty entry", (await pg.evaluate(() => S.sessions.length)) === n);
   await pg.evaluate(() => { S.projects.push({ id: "pt", name: "Deck", created: Date.now() }); S.ui.view = "project"; S.ui.projectId = "pt"; saveLocal(); render(); });
@@ -258,5 +258,55 @@ module.exports.template_energy_reset = async ({ newDevice, ok }) => {
   await pg.click('textarea[data-a="0"]'); await pg.keyboard.type("Because it's mine");
   await pg.keyboard.press("Escape"); await pg.waitForTimeout(200);
   ok("template: from a project page it lands in that project", (await pg.evaluate(() => S.sessions[0].projectId)) === "pt");
+  await pg.context().close();
+};
+module.exports.desk_history_redesign = async ({ newDevice, ok }) => {
+  const pg = await newDevice();
+  const shot = (n) => pg.screenshot({ path: `/tmp/claude-0/-home-user-Spark/4c9f90c7-4736-51ca-9905-9c48800840b5/scratchpad/${n}.png`, fullPage: true });
+  await pg.setViewportSize({ width: 1360, height: 950 });
+  await pg.evaluate(() => {
+    const now = Date.now(), day = 86400000;
+    S.motivators = [{ id: "m1", text: "Write the messy version first.", created: 1 }];
+    S.projects = [{ id: "pj", name: "SOIP pitch deck", created: now - 40 * day }];
+    S.dumps = [{ id: "d1", text: "yesterday's pages", created: now - day, words: 380 }];
+    S.sessions = [{ id: "s1", sparkText: "SOIP intro", projectId: "pj", minutes: 25, startedAt: now - day + 60000, endedAt: now - day + 1600000, actualMs: 1500000, notes: "What if the first slide is just the question we ask clients", completed: true }];
+    S.sparks = [{ id: "sp1", text: "Half Light\nfor the coffee brand that only opens at dawn", created: now - 2 * day, tags: [] }];
+    S.ui.view = "desk"; S.ui.histQ = ""; S.ui.histF = "all"; saveLocal(); render();
+  });
+  ok("redesign: three tabs, Desk · History · Sparks", (await pg.$$eval(".navb", (b) => b.map((x) => x.textContent))).join() === "Desk,History,Sparks");
+  ok("redesign: no pages yet → the writing block is plain", !(await pg.$(".startblock.done")) && (await pg.textContent(".sbstate")) === "No pages yet today");
+  ok("redesign: your line for today is one of your motivators", (await pg.textContent(".sbq")) === "Write the messy version first.");
+  ok("redesign: a spark idea marks its day with a dot", (await pg.$$(".heatgrid .hc.idea")).length === 1);
+  ok("redesign: writing days count pages, sessions and ideas", (await pg.$$eval(".dcal .bigstat b", (b) => b.map((x) => x.textContent)))[3] === "2");
+  ok("redesign: projects sit in one table", (await pg.textContent(".ptab")).includes("SOIP pitch deck"));
+  await shot("desk-before");
+  const yk = await pg.evaluate(() => dayKey(Date.now() - 86400000));
+  await pg.click(`.hc[data-day="${yk}"]`);
+  ok("redesign: clicking a day lists what was written", (await pg.textContent("#deskday")).includes("Yesterday") && (await pg.$$("#deskday .ditem")).length === 2);
+  await pg.evaluate(() => { S.dumps.unshift({ id: "d0", text: "today's pages", created: Date.now(), words: 412 }); saveLocal(); render(); });
+  ok("redesign: pages done → the writing block turns green", !!(await pg.$(".startblock.done")) && (await pg.textContent(".sbstate")).includes("412"));
+  await shot("desk-done");
+  await pg.click('[data-view="history"]');
+  ok("redesign: History lists everything, grouped by day", (await pg.$$(".hrow")).length === 4 && (await pg.$$(".hday")).length === 3);
+  ok("redesign: the newest one is open in the reading pane", (await pg.textContent(".hreader h2")) === "Morning pages" && (await pg.textContent(".htext")) === "today's pages");
+  await pg.click('[data-hkey="s:s1"]');
+  ok("redesign: clicking a row reads it on the right", (await pg.textContent(".hreader h2")).startsWith("SOIP intro"));
+  await shot("history");
+  await pg.click('[data-hf="sparks"]');
+  ok("redesign: filter chips narrow the list", (await pg.$$(".hrow")).length === 1);
+  await pg.click('[data-hf="all"]'); await pg.fill("#hq", "coffee");
+  ok("redesign: search finds sparks too", (await pg.$$(".hrow")).length === 1);
+  await pg.evaluate(() => { S.ui.histQ = ""; saveLocal(); });
+  await pg.click('[data-view="sparks"]');
+  ok("redesign: Sparks keeps capture, search and brief, without the old footer", !!(await pg.$("#cap")) && !!(await pg.$("#sq")) && !!(await pg.$("#briefbtn")) && !(await pg.$(".foot")) && !(await pg.$("#startbtn")));
+  await pg.click("#morebtn");
+  ok("redesign: ⋯ holds sync, backup, import, export, motivators", (await pg.$$("#topmenu.on button")).length === 5);
+  await pg.click("#syncbtn");
+  ok("redesign: ⋯ → Sync opens the sync sheet", (await pg.textContent(".sheet h3")).includes("Sync"));
+  await pg.evaluate(() => closeSheet());
+  await pg.setViewportSize({ width: 390, height: 844 });
+  await pg.click('[data-view="desk"]');
+  ok("redesign: on a phone the writing block comes first", await pg.evaluate(() => document.querySelector(".dright").getBoundingClientRect().top < document.querySelector(".dcal").getBoundingClientRect().top));
+  await shot("desk-phone");
   await pg.context().close();
 };
