@@ -75,6 +75,12 @@ The app still works fully offline/without the server: local data is the master c
   (z-index:-1) in the canvas, with a soft `.veil` behind the text column. Snow is a small canvas loop (`snowfall`).
   `settings.motion` (default on) plus the OS Reduce Motion setting (`motionOn()`) freeze Dawn and Snowfall.
   `clean` is pure white, no paper texture.
+- Templates (`TEMPLATES`, now just `energy` = "Energy reset"): **▤ New from template** under Start writing (Sparks page,
+  `#tplbtn`) and on project pages (`#ptplbtn`) opens `openTemplates`. `newFromTemplate` makes an untimed session with
+  `template`, `zone` (one of the four zones or null) and `answers[]` (one per question); the title (`sparkText`) is
+  "Energy Reset — <weekday d month>" (en-GB). The review canvas shows it as a form (`tplHtml`/`wireTpl`): zone buttons with
+  descriptions, fixed questions (not editable) and an answer box under each; nothing is required and there is no lock.
+  `tplCompose` writes `notes` from the zone line + answered questions (history, search, sync). Left untouched, it's dropped.
 - Morning pages are listed in the "Morning pages" sheet (`openDumps`), reachable from the Sparks page footer and the
   Desk card ("See all pages").
 - Sparks may carry an optional `title` (set in the spark editor), shown as a heading on the spark card.

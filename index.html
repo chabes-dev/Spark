@@ -359,6 +359,32 @@ mark{background:#F3E2A6;color:inherit;border-radius:3px;padding:0 1px}
 .cbody.tw::before{content:'';flex:none;height:var(--twtop,16px)}
 .cbody.tw::after{content:'';flex:none;height:50vh}
 .cbody.tw .cwrite{min-height:0}
+/* templates (Energy reset): fixed questions, the owner only writes the answers */
+.tplbody{justify-content:flex-start;align-items:stretch}
+.tplbody .sname{align-self:center;margin-bottom:6px}
+.tplsec{width:100%;margin:22px 0 4px}
+.tplh{font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--caccent);margin-bottom:10px}
+.tplzones{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.tplzone{text-align:left;padding:11px 13px;border-radius:14px;border:1.5px solid var(--ash);background:rgba(255,255,255,.55);color:var(--ink);transition:.2s;-webkit-tap-highlight-color:transparent}
+.tplzone b{display:block;font-family:var(--serif);font-size:18px;font-weight:500}
+.tplzone span{display:block;font-size:13px;line-height:1.35;color:var(--ink-2);margin-top:3px}
+.tplzone.on{border-color:var(--caccent);background:var(--cpaper);box-shadow:0 0 0 3px color-mix(in srgb,var(--caccent) 18%,transparent)}
+.tplzone.on b{color:var(--caccent)}
+.tplzline{font-family:var(--serif);font-size:17px;line-height:1.5;color:var(--ink-2);margin-top:14px}
+.tplzline b{color:var(--ink);border-bottom:1.5px solid var(--caccent);padding:0 4px}
+.tplq{font-family:var(--serif);font-size:19px;font-weight:500;line-height:1.35;color:var(--ink);user-select:none;-webkit-user-select:none}
+.tplq small{display:block;font-size:14px;font-weight:400;font-style:italic;color:var(--ink-3);margin-top:2px}
+.tpla{width:100%;min-height:1.65em;margin-top:6px;padding:4px 0 6px;border:none;border-bottom:1px dashed var(--ash);background:transparent;resize:none;overflow:hidden;
+  font-family:var(--cfont,var(--serif));font-size:max(16px,var(--wsize,22px));line-height:1.55;color:var(--ink)}
+.tpla:focus{outline:none;border-bottom-color:var(--caccent)}
+.tpla::placeholder{color:var(--ink-3);opacity:.5;font-style:italic}
+.tplpick{display:block;width:100%;text-align:left;padding:14px 16px;border-radius:16px;border:1.5px solid var(--ash);background:var(--paper);margin-top:10px}
+.tplpick b{display:block;font-family:var(--serif);font-size:20px;font-weight:500;color:var(--ink)}
+.tplpick span{display:block;font-size:14px;color:var(--ink-2);margin-top:3px}
+.tplpick:hover{border-color:var(--ember)}
+.tplbtn{display:block;margin:-4px auto 28px;padding:8px 16px;border-radius:999px;border:1.5px solid var(--ash);background:transparent;color:var(--ink-2);
+  font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
+.tplbtn:hover{border-color:var(--ember);color:var(--ember)}
 /* fresh writing fades out toward the top; --f0/--f1 are the visible top edge in the textarea's own coordinates (updateFade) */
 .cbody.tw .cwrite.fading{-webkit-mask-image:linear-gradient(to bottom,transparent var(--f0,-9999px),#000 var(--f1,-9999px));
   mask-image:linear-gradient(to bottom,transparent var(--f0,-9999px),#000 var(--f1,-9999px))}
@@ -464,6 +490,7 @@ mark{background:#F3E2A6;color:inherit;border-radius:3px;padding:0 1px}
 .pstat{font-family:var(--mono);font-size:12.5px;color:var(--ink-3);letter-spacing:.07em;text-transform:uppercase;margin-top:6px}
 .pbtns{display:grid;grid-template-columns:2fr 1fr;gap:12px;margin:30px 0 36px}
 .pbtns .startbtn,.pbtns .quickbtn{margin:0;height:100%}
+.startnote+.tplbtn{margin-top:-26px}
 .startnote{font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--ink-3);text-align:center;margin:-2px 0 36px}
 .pbtns+.startnote{margin-top:-24px}
 .pickspark{font-family:var(--serif);font-size:clamp(22px,3vw,30px);font-weight:400;line-height:1.3;margin-bottom:6px}
@@ -1787,7 +1814,7 @@ function exitReviewDone(){
   const item=reviewLookup();
   if(item&&item.untimed){
     // free entries: drop if left empty, otherwise count the time spent writing
-    if(!(item.notes||'').trim()&&!item.sparkText)S.sessions=S.sessions.filter(x=>x!==item);
+    if(!(item.notes||'').trim()&&(!item.sparkText||tplOf(item)))S.sessions=S.sessions.filter(x=>x!==item);
     else{item.actualMs=(item.actualMs||0)+(Date.now()-REVIEW_OPENED);item.endedAt=Date.now()}
     save();
   }
@@ -1884,7 +1911,7 @@ let CBAR_OPEN=false; // phone: the settings pills are tucked behind •••
 function hasLock(){
   if(PHASE==='dump')return true;
   if(PHASE==='write')return !!(S.active&&!S.active.wrapped);
-  if(PHASE==='review'){const it=reviewLookup();return !!(it&&(it.untimed||REVIEW_KIND==='note'))}
+  if(PHASE==='review'){const it=reviewLookup();return !!(it&&!(REVIEW_KIND==='session'&&tplOf(it))&&(it.untimed||REVIEW_KIND==='note'))}
   return false;
 }
 function cbarInner(){
@@ -2008,6 +2035,7 @@ function writeHtml(){
 function reviewHtml(){
   const item=reviewLookup();
   if(!item)return `<div class="cbar fadeui">${cbarInner()}</div><div class="cbody writebody"><div class="empty">That entry is gone.</div></div>`;
+  if(REVIEW_KIND==='session'&&tplOf(item))return tplHtml(item);
   const text=reviewGetText(item);
   if(REVIEW_KIND==='note')return `<div class="cbar fadeui">${cbarInner()}</div>
     <div class="cbody writebody tw">
@@ -2114,6 +2142,7 @@ function wireCanvas(c){
     }
   }else if(PHASE==='review'){
     const item=reviewLookup();
+    if(item&&REVIEW_KIND==='session'&&tplOf(item))wireTpl(c,item);
     const ta=c.querySelector('#rtext');
     if(item&&ta){
       autosize(ta);
@@ -2477,6 +2506,7 @@ function sparksHtml(active,explored){
     ${captureHtml("Jot a spark… what's pulling at you?",false)}
     <button class="startbtn" id="startbtn">Start writing</button>
     <div class="startnote">${startNote()}</div>
+    <button class="tplbtn" id="tplbtn">▤ New from template</button>
     <div class="sparktools">
       <input class="sq" id="sq" type="search" placeholder="Search sparks, pages and writing…" value="${esc(S.ui.sparkQ||'')}" autocomplete="off" />
       <button class="btn" id="briefbtn">✦ Find for a brief</button>
@@ -2625,6 +2655,7 @@ function projectHtml(p){
       <button class="quickbtn" id="pentry">+ New entry</button>
     </div>
     <div class="startnote">${startNote()}</div>
+    <button class="tplbtn" id="ptplbtn">▤ New from template</button>
     <div class="sechead"><h2>Sparks</h2><span>${ps.sp.length}</span></div>
     ${ps.sp.length?`<div class="sparkgrid">${ps.sp.map(sparkCard).join('')}</div>`:`<div class="empty">No sparks here yet — drop one above.</div>`}
     <div class="psec"><div class="sechead"><h2>Writing</h2><span>${writing.length}</span></div>
@@ -2634,6 +2665,73 @@ function projectHtml(p){
       ${ps.du.length?ps.du.map(x=>entryRow('data-pe-d',x.id,esc(x.title||x.text.slice(0,80)),`${dt(x.created)} · ${x.words} words`)).join('')
         :`<div class="empty">No pages here yet. Start a session from this page and they'll land here.</div>`}</div>
     <div class="foot"><button class="btn btn-danger" id="pdel">Delete project</button></div>`;
+}
+/* ---- writing templates: a new free entry with fixed questions; the owner writes only the answers (none required) ---- */
+const TEMPLATES={
+  energy:{name:'Energy reset',blurb:'Name where you are, then a few questions to get unstuck.',title:d=>'Energy Reset — '+d.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'}),
+    zoneHead:"Where I am — name it, don't judge it",
+    zones:[['thriving','Thriving','calm, focused, sleeping well, enjoying things'],['reacting','Reacting','stressed, irritable, tired, harder to focus'],
+      ['struggling','Struggling','anxious or low most days, pulling away, hard to keep up'],['unwell','Unwell','hard to get through the day, feeling hopeless, needs support now']],
+    zoneLine:z=>`I'm in the ${z} zone right now, and it's normal to move through zones. It's information, not a grade.`,
+    qs:['Why do I care about it?',"What's the coolest thing about it? (like an ad breakfast note)",'Kill it, shrink it, or keep it?',
+      'Why am I avoiding it? (fear, boredom, waiting on someone?)','What would I say to a friend who felt like this?',
+      "What can I do that doesn't depend on anyone — so I know I tried everything in my power?",
+      'What are the next 2 easiest and quickest steps to get this moving?',"Not helpful? Whats the quickest way to restart this?"]}};
+const tplOf=it=>it&&it.template&&TEMPLATES[it.template]||null;
+// the entry's text (history, search, word counts, sync) is built from the zone and the answered questions
+function tplCompose(it){
+  const T=tplOf(it),z=T.zones.find(x=>x[0]===it.zone),out=[];
+  if(z)out.push(T.zoneLine(z[1]));
+  T.qs.forEach((q,i)=>{const a=((it.answers||[])[i]||'').trim();if(a)out.push(q+'\n'+a)});
+  it.notes=out.join('\n\n');
+}
+const tplWords=it=>(it.answers||[]).reduce((n,a)=>n+wc(a),0);
+function newFromTemplate(key,projectId){
+  const now=Date.now(),T=TEMPLATES[key];
+  const e={id:nid(),sparkId:null,sparkText:T.title(new Date(now)),projectId:projectId||null,minutes:0,startedAt:now,endedAt:now,actualMs:0,notes:'',completed:true,untimed:true,
+    template:key,zone:null,answers:T.qs.map(()=>'')};
+  S.sessions.unshift(e);save();openReview('session',e.id,render);
+}
+function openTemplates(projectId){
+  sheet(`<h3>New from template</h3>
+    <p>Starts a new entry with the questions already in place. You only write the answers, and you can skip any.</p>
+    ${Object.entries(TEMPLATES).map(([k,T])=>`<button class="tplpick" data-tpl="${k}"><b>${esc(T.name)}</b><span>${esc(T.blurb)}</span></button>`).join('')}
+    <div class="sheet-acts"><button class="btn" id="ok">Close</button></div>`,
+  el=>{
+    el.querySelector('#ok').onclick=closeSheet;
+    el.querySelectorAll('[data-tpl]').forEach(b=>b.onclick=()=>newFromTemplate(b.dataset.tpl,projectId));
+  });
+}
+function tplHtml(item){
+  const T=tplOf(item),z=T.zones.find(x=>x[0]===item.zone),ans=item.answers||[];
+  return `<div class="cbar fadeui">${cbarInner()}</div>
+    <div class="cbody writebody tplbody">
+      <div class="sname" id="sname" contenteditable="true" data-ph="${esc(T.name)}">${esc(item.sparkText||'')}</div>
+      <div class="tplsec"><div class="tplh">${esc(T.zoneHead)}</div>
+        <div class="tplzones">${T.zones.map(([k,n,d])=>`<button class="tplzone${item.zone===k?' on':''}" data-zone="${k}" aria-pressed="${item.zone===k}"><b>${n}</b><span>${d}</span></button>`).join('')}</div>
+        <div class="tplzline" id="tplzline">${T.zoneLine(`<b>${z?z[1]:'________'}</b>`)}</div></div>
+      ${T.qs.map((q,i)=>{const m=q.match(/^(.*?)\s*(\(.*\))?$/);return `<div class="tplsec"><div class="tplq">${esc(m[1])}${m[2]?`<small>${esc(m[2])}</small>`:''}</div>
+        <textarea class="tpla" data-a="${i}" rows="1" placeholder="…">${esc(ans[i]||'')}</textarea></div>`}).join('')}
+    </div>
+    <div class="cfoot fadeui"><span class="cwc" id="cwc3">${tplWords(item)} words</span><button class="btn" id="savebtn">Save</button></div>`;
+}
+function wireTpl(c,item){
+  const T=tplOf(item);item.answers=T.qs.map((_,i)=>(item.answers||[])[i]||'');
+  const upd=()=>{tplCompose(item);save();const w=c.querySelector('#cwc3');if(w)w.textContent=tplWords(item)+' words'};
+  c.querySelectorAll('[data-zone]').forEach(b=>b.onclick=()=>{
+    item.zone=item.zone===b.dataset.zone?null:b.dataset.zone;upd();
+    c.querySelectorAll('[data-zone]').forEach(x=>{const on=x.dataset.zone===item.zone;x.classList.toggle('on',on);x.setAttribute('aria-pressed',on)});
+    const z=T.zones.find(x=>x[0]===item.zone);c.querySelector('#tplzline').innerHTML=T.zoneLine(`<b>${z?z[1]:'________'}</b>`);
+  });
+  const tas=[...c.querySelectorAll('textarea.tpla')];
+  tas.forEach(ta=>{autosize(ta);ta.oninput=()=>{item.answers[+ta.dataset.a]=ta.value;autosize(ta);upd()};wireTypingSound(ta);
+    ta.addEventListener('pointerdown',()=>{if(CBAR_OPEN){CBAR_OPEN=false;closePopover();const b=c.querySelector('.cbar');if(b)b.classList.remove('open')}})});
+  const sn=c.querySelector('#sname');
+  if(sn){['input','blur'].forEach(ev=>sn.addEventListener(ev,()=>{item.sparkText=sn.textContent.trim()||T.title(new Date(item.startedAt));save()}));
+    sn.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();sn.blur()}})}
+  const sv=c.querySelector('#savebtn');if(sv)sv.onclick=()=>{save();toast('saved')};
+  // the cursor waits on the first empty answer; the zones above stay in view
+  const first=tas.find(t=>!t.value.trim());if(first)first.focus({preventScroll:true});
 }
 function newEntry(projectId){
   const now=Date.now();
@@ -2648,6 +2746,7 @@ function wireProject(){
     nm.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();nm.blur()}if(e.key==='Escape'){nm.value=p.name;nm.blur()}})}
   const ps=document.getElementById('pstart');if(ps)ps.onclick=()=>startWriting(id);
   const pe=document.getElementById('pentry');if(pe)pe.onclick=()=>newEntry(id);
+  const pt=document.getElementById('ptplbtn');if(pt)pt.onclick=()=>openTemplates(id);
   app.querySelectorAll('[data-pe-s]').forEach(b=>b.onclick=()=>openReview('session',b.dataset.peS,render));
   app.querySelectorAll('[data-pe-d]').forEach(b=>b.onclick=()=>openReview('dump',b.dataset.peD,render));
   const del=document.getElementById('pdel');
@@ -2705,6 +2804,7 @@ function wire(){
     if(psel.value&&psel.value!=='__none')CAP_PROJECT=psel.value; // new sparks go where you're looking
     saveLocal();render()};
   const stb=document.getElementById('startbtn');if(stb)stb.onclick=()=>startWriting(null);
+  const tpb=document.getElementById('tplbtn');if(tpb)tpb.onclick=()=>openTemplates(null);
   const mh=document.getElementById('motivhome');if(mh)mh.onclick=openMotivators;
   const ib=document.getElementById('importbtn');if(ib)ib.onclick=openImport;
   const bkb=document.getElementById('backupbtn');if(bkb)bkb.onclick=openBackup;
