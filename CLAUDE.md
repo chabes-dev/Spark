@@ -28,7 +28,7 @@ The app still works fully offline/without the server: local data is the master c
   https://spark-v2-chabes-devs-projects.vercel.app) is kept as a fallback and still builds from `main`.
   **Never create a new Vercel project.** Production must stay public (the iPhone home-screen app has no login).
 - A new domain starts with empty localStorage: on a new address the owner re-enters the sync code to pull their data.
-  Settings, `dumpDraft` and `active` don't sync: **Backup** (Sparks page footer, `openBackup`) downloads all of `S` as
+  Settings, `dumpDraft` and `active` don't sync: **Backup** (⋯ menu, `openBackup`) downloads all of `S` as
   `spark-backup-<date>.json`; Restore merges it (`mergeBackup`: by id, newer `updated`/`created` wins, backup settings win,
   a second draft becomes a "Recovered draft" page). Nothing local is ever deleted by a restore. Restore also reads the
   older morning pages `.txt` export (`dumpsFromTxt`; dates parsed in the device's locale by `parseLocalStamp`; pages
@@ -42,11 +42,25 @@ The app still works fully offline/without the server: local data is the master c
 - Shape (top level): `sparks`, `sessions` (creative writing), `dumps` (= the owner's **morning pages**), `motivators`,
   `projects` (`{id,name,created}`), `active`, `dumpDraft`, `settings`, `ui`. Sparks, sessions and dumps can carry a `projectId`.
   Sessions with `untimed:true` are free entries written from a project page (no timer, no dump). `ui.view` is
-  `sparks` | `desk` | `project` (+ `ui.projectId`).
+  `desk` | `history` | `sparks` | `project` (+ `ui.projectId`); History keeps `ui.histQ` (search) and `ui.histF` (filter).
 - Existing migrations (keep them): string `collections` + `dump.collection` → `projects` + `projectId`;
   old keyboard typing presets → `classic` typewriter.
-- The Desk streak counts days with at least one dump (morning pages), in local time. The heatmap shows as many weeks as fit
-  the card (`heatWeeks`, max 26), so it never scrolls; it re-fits on resize/rotation.
+- **Three tabs: Desk · History · Sparks** (since 2026-11). Header: tabs, a sync tag, and a **⋯ menu** (`#topmenu`: Sync &
+  email, Backup & restore, Import emails, Export morning pages .txt, Motivators). Phones swipe Desk ⇄ History ⇄ Sparks.
+- **Desk** (`deskHtml`), the home screen. Wide screens: left = **Your writing** (calendar) + **Your work**; right = one
+  sticky **writing block** (`.startblock`). Phones stack it with the writing block first.
+  - Calendar (`writingByDay`) counts *all* writing per local day: dump words, session/entry/template words (`wc(notes)`),
+    and sparks captured (their words, plus an orange **idea dot**). Stats: writing days in a row, pages streak (dumps only,
+    `pagesByDay`), best writing streak, days written. Clicking a day (`DESK_DAY`, `deskDayHtml`) lists that day's items.
+    The heatmap shows as many weeks as fit (`heatWeeks`: max 26 on phones, 44 on wide screens), so it never scrolls.
+  - Your work: "This week" line (sessions, minutes, all words) + a projects table (last edited, words, this-week bar;
+    a "No project" row opens History).
+  - Writing block: plain/outlined until today's morning pages exist, then green (`.startblock.done`) with "Pages ✓ ·
+    N words" and **Keep going**. Big **Start writing** (`#startbtn`, `startWriting`), **Today's pages** (`#deskpages`),
+    **From template** (`#tplbtn`), and **Your line for today** (`lineOfDay`: one of the owner's `motivators` per day).
+- **History** (`historyHtml`): everything written (pages, sessions, entries, resets, sparks) grouped by day, search +
+  filter chips, 120 at a time. Wide screens read the picked item in a pane on the right (Open to edit, Project, Delete);
+  phones open it directly. It replaced the old History and Morning pages sheets as the main way in (`openHistory`/`openDumps` remain).
 - The app always opens on the Desk (boot sets `ui.view='desk'`). `settings.typingVol` (0–1, default 0.5) scales typing sounds.
   `settings.wsize` (0–5, default 2) picks the writing font size from `WSIZES`.
 - Writing screens use typewriter scrolling (`.cbody.tw` + `recenter()`): the caret line is kept at the vertical middle.
@@ -54,10 +68,10 @@ The app still works fully offline/without the server: local data is the master c
   only when the owner clicks ✦ Prompt. A dump written with one shown stores it as `dump.prompt`.
 - Flow: morning pages → Ready → "pages done" screen (Back to Desk / Continue to a creative session). Never jump straight
   into the duration picker after Ready.
-- Entry points: one **Start writing** button (Sparks page and project pages; `startWriting`) — morning pages first,
+- Entry points: one **Start writing** button (Desk writing block and project pages; `startWriting`) — morning pages first,
   or straight to the time/spark picker if today's pages exist (`pagesDoneToday`). No separate "quick start": 10 min is a
   chip on the picker. **Write** on a spark card skips pages and only asks for the time (`writeSpark`, `PICK_SPARK`).
-  Desk's "Write today's pages" is pages only.
+  Desk's "Today's pages" is pages only.
 - `active.paused` (ms left) marks a session paused by swipe-back; Desk/Sparks show a Resume/Finish bar.
   Starting a new session while one is paused asks first (`askPausedThen`, canvas phase `pausedq`).
 - Lock switch (`#clock`, `toggleLock`) on morning pages, timed sessions and free entries: locked = append-only
@@ -75,8 +89,13 @@ The app still works fully offline/without the server: local data is the master c
   (z-index:-1) in the canvas, with a soft `.veil` behind the text column. Snow is a small canvas loop (`snowfall`).
   `settings.motion` (default on) plus the OS Reduce Motion setting (`motionOn()`) freeze Dawn and Snowfall.
   `clean` is pure white, no paper texture.
-- Morning pages are listed in the "Morning pages" sheet (`openDumps`), reachable from the Sparks page footer and the
-  Desk card ("See all pages").
+- Templates (`TEMPLATES`, now just `energy` = "Energy reset"): **From template** in the Desk writing block (`#tplbtn`)
+  and on project pages (`#ptplbtn`) opens `openTemplates`. `newFromTemplate` makes an untimed session with
+  `template`, `zone` (one of the four zones or null) and `answers[]` (one per question); the title (`sparkText`) is
+  "Energy Reset — <weekday d month>" (en-GB). The review canvas shows it as a form (`tplHtml`/`wireTpl`): zone buttons with
+  descriptions, fixed questions (not editable) and an answer box under each; nothing is required and there is no lock.
+  `tplCompose` writes `notes` from the zone line + answered questions (history, search, sync). Left untouched, it's dropped.
+- Morning pages are read back in History (filter "Pages"); the .txt export lives in the ⋯ menu.
 - Sparks may carry an optional `title` (set in the spark editor), shown as a heading on the spark card.
 - Phones: writing-screen settings hide behind ••• (`CBAR_OPEN`, `.cbar.open`), exit reads "Done" on touch (`TOUCH`),
   the canvas follows `visualViewport` so the centred line stays above the keyboard (`fitCanvas`), spark-card actions are
@@ -127,15 +146,16 @@ The app still works fully offline/without the server: local data is the master c
   `kind` (`idea|insight|name|brief|convo|link`; `kindByUser` when set by hand; otherwise `guessKind` heuristics),
   `tags[]`, `links[]`, `thread[]` (`{id,text,created,source}` follow-ups), `source` (`app|email|import`),
   `emailIds[]`, `classified`, `updated`.
-- Sparks page: search across sparks/pages/writing (accent-insensitive), shelves by kind (Names = name wall), tag chips,
-  "Find for a brief" (AI via `/api/related`, keyword fallback offline), Import emails (.mbox/.eml/.json, parsed in the
-  browser, replies folded into threads, duplicates skipped by Message-ID), Sync & email sheet.
+- Sparks page (owner: "working well, keep it"): capture box, search across sparks/pages/writing (accent-insensitive),
+  "Find for a brief" (AI via `/api/related`, keyword fallback offline), shelves by kind (Names = name wall), tag chips,
+  cards. Import emails (⋯ menu; .mbox/.eml/.json, parsed in the browser, replies folded into threads, duplicates
+  skipped by Message-ID).
 - Tapping a card opens the spark sheet (`openSpark`): kind, title, full text, links, follow-ups, tags, actions.
 - "Why does this spark you?": `spark.note`, written on the full writing canvas (review kind `note`, `openNote`; sounds,
   themes, fade, lock). On close (`afterNote`) #tags in the note become tags and the AI re-reads the spark: classify gets
   the note separately and returns `facets` {tone, brands, categories, products, themes, formats} (`FACETS`), shown in the
   sheet (tap = search) and as a few chips + a note excerpt on the card. Search and brief mode include note and facets.
-- Desk shows one older spark a day (`resurfaced`), which can seed today's morning pages prompt.
+- `resurfaced`/`resurfaceHtml` (one older spark a day) is no longer shown on the Desk (owner's choice); the code remains.
 - Sync client: `spark_sync` localStorage key (separate from `spark_v1`) holds code, `since`, per-item fingerprints,
   `skew` (server clock offset), `warn`. `save()` schedules a debounced sync; also on focus and every minute.
   `saveLocal()` saves without syncing. Fingerprints are committed only after the server accepted a push (pushed in
