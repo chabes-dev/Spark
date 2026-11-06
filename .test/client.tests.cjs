@@ -199,3 +199,26 @@ module.exports.backup_restore = async ({ newDevice, ok }) => {
   ok("restore: restoring twice adds nothing", (await b.evaluate(() => S.sparks.length)) === s.sparks.length && (await b.evaluate(() => S.dumps.filter((d) => d.title === "Recovered draft").length)) === 1);
   await b.context().close();
 };
+module.exports.restore_pages_txt = async ({ newDevice, ok }) => {
+  for (const locale of ["en-US", "pt-BR"]) {
+    // the old address's only export: morning pages as .txt, dates written in the device's own locale
+    const a = await newDevice({ locale });
+    await a.evaluate(() => { SYNC.code = ""; saveSync();
+      S.dumps = [{ id: "t1", text: "first page\n\nwith a blank line", created: new Date(2026, 9, 3, 7, 5).getTime(), words: 6 },
+        { id: "t2", text: "second page", created: new Date(2026, 9, 21, 19, 40).getTime(), words: 2 }]; saveLocal(); });
+    const [dl] = await Promise.all([a.waitForEvent("download"), a.evaluate(() => exportDumps())]);
+    const file = `/tmp/claude-0/-home-user-Spark/4c9f90c7-4736-51ca-9905-9c48800840b5/scratchpad/pages-${locale}.txt`;
+    await dl.saveAs(file); await a.context().close();
+    const b = await newDevice({ locale });
+    await b.evaluate(() => { SYNC.code = ""; saveSync(); S.dumps = [{ id: "keep", text: "second page", created: 1, words: 2 }]; saveLocal(); S.ui.view = "sparks"; render(); });
+    await b.click("#backupbtn"); await b.setInputFiles("#bkfile", file); await b.waitForTimeout(400);
+    const d = await b.evaluate(() => S.dumps.map((x) => [x.text, new Date(x.created).toISOString().slice(0, 16)]));
+    const first = d.find((x) => x[0].startsWith("first page"));
+    ok(`restore .txt (${locale}): the missing page comes back with its text`, first && first[0] === "first page\n\nwith a blank line", JSON.stringify(d));
+    ok(`restore .txt (${locale}): with its date`, first && first[1] === new Date(2026, 9, 3, 7, 5).toISOString().slice(0, 16), first && first[1]);
+    ok(`restore .txt (${locale}): a page already here isn't doubled`, d.filter((x) => x[0] === "second page").length === 1);
+    await b.click("#backupbtn"); await b.setInputFiles("#bkfile", file); await b.waitForTimeout(300);
+    ok(`restore .txt (${locale}): restoring again says it's all here`, (await b.textContent("#bkres")).includes("already here"));
+    await b.context().close();
+  }
+};

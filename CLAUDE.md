@@ -30,7 +30,9 @@ The app still works fully offline/without the server: local data is the master c
 - A new domain starts with empty localStorage: on a new address the owner re-enters the sync code to pull their data.
   Settings, `dumpDraft` and `active` don't sync: **Backup** (Sparks page footer, `openBackup`) downloads all of `S` as
   `spark-backup-<date>.json`; Restore merges it (`mergeBackup`: by id, newer `updated`/`created` wins, backup settings win,
-  a second draft becomes a "Recovered draft" page). Nothing local is ever deleted by a restore.
+  a second draft becomes a "Recovered draft" page). Nothing local is ever deleted by a restore. Restore also reads the
+  older morning pages `.txt` export (`dumpsFromTxt`; dates parsed in the device's locale by `parseLocalStamp`; pages
+  whose text is already here are skipped).
 
 ## Data: handle with care
 - All user data is in the browser's `localStorage` under the key **`spark_v1`** (`const KEY` in `index.html`).

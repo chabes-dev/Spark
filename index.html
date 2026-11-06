@@ -1245,12 +1245,36 @@ function mergeBackup(B){
   if(B.active&&!S.active)S.active=B.active;
   return n;
 }
+/* the older "Export all as .txt" morning pages file: blocks of "— <local date/time> (<n> words) —" then the text.
+   Pages already here (same text) are skipped, so restoring it twice, or after sync, adds nothing. */
+function parseLocalStamp(t){
+  const n=(t.match(/\d+/g)||[]).map(Number);if(n.length<3)return null;
+  let y,mo,d,i=3;
+  if(n[0]>31){[y,mo,d]=n}
+  else{ // day or month first? ask this browser's own locale, which wrote the file
+    const probe=new Date(2001,10,22).toLocaleDateString(),dayFirst=probe.indexOf('22')<probe.indexOf('11');
+    [d,mo]=dayFirst?[n[0],n[1]]:[n[1],n[0]];y=n[2]<100?2000+n[2]:n[2];
+  }
+  let h=n[i]||0;const mi=n[i+1]||0,se=n[i+2]||0;
+  if(/p\.?\s?m/i.test(t)&&h<12)h+=12;if(/a\.?\s?m/i.test(t)&&h===12)h=0;
+  const dt=new Date(y,mo-1,d,h,mi,se);return isNaN(dt)||mo>12||d>31?null:dt.getTime();
+}
+function dumpsFromTxt(txt){
+  const parts=String(txt).replace(/\r\n?/g,'\n').split(/^— (.+?) \((\d+) words?\) —$/m);
+  if(parts.length<4)return null;
+  const have=new Set(S.dumps.map(d=>(d.text||'').trim())),dumps=[];let already=0;
+  for(let i=1;i+2<parts.length;i+=3){
+    const text=parts[i+2].replace(/^\n/,'').replace(/\n+$/,'');if(!text.trim())continue;if(have.has(text.trim())){already++;continue}
+    dumps.push({id:nid(),text,created:parseLocalStamp(parts[i])||Date.now()-(parts.length-i),words:wc(text),projectId:null});
+  }
+  return {dumps,already};
+}
 function openBackup(){
   sheet(`<h3>Backup & restore</h3>
     <p><b>Backup</b> saves one file with everything on this device: sparks, pages, entries, projects, your settings and any draft.</p>
     <div class="sheet-acts" style="justify-content:flex-start"><button class="btn btn-hot" id="bkgo">↓ Download backup</button></div>
-    <p><b>Restore</b> adds a backup to what's here. Nothing here is deleted: when both have the same item, the newer one is kept. Your settings come from the backup.</p>
-    <input type="file" id="bkfile" accept=".json,application/json" />
+    <p><b>Restore</b> adds a backup (or an older morning pages .txt export) to what's here. Nothing here is deleted: when both have the same item, the newer one is kept. Your settings come from the backup.</p>
+    <input type="file" id="bkfile" accept=".json,.txt,application/json,text/plain" />
     <div id="bkres"></div>
     <div class="sheet-acts"><button class="btn" id="ok">Close</button></div>`,
   el=>{
@@ -1258,8 +1282,10 @@ function openBackup(){
     el.querySelector('#bkgo').onclick=backupNow;
     el.querySelector('#bkfile').onchange=async e=>{
       const out=el.querySelector('#bkres'),f=e.target.files[0];if(!f)return;
-      let B=null;try{const j=JSON.parse(await f.text());B=j&&j.app==='spark'?j.data:j}catch(err){}
-      if(!B||typeof B!=='object'||!BACKUP_COLLS.some(c=>Array.isArray(B[c]))){out.innerHTML='<div class="impsum">That file isn\'t a Spark backup.</div>';return}
+      const txt=await f.text();
+      let B=null;try{const j=JSON.parse(txt);B=j&&j.app==='spark'?j.data:j}catch(err){B=dumpsFromTxt(txt)}
+      if(B&&B.already&&!B.dumps.length){out.innerHTML=`<div class="impsum">All ${B.already} pages in that file are already here.</div>`;return}
+      if(!B||typeof B!=='object'||!BACKUP_COLLS.some(c=>Array.isArray(B[c])&&B[c].length)){out.innerHTML='<div class="impsum">That file isn\'t a Spark backup or a morning pages export.</div>';return}
       const n=mergeBackup(B);
       save();closeSheet();render();
       toast(`restored · ${n.added} added${n.newer?', '+n.newer+' updated':''}`);

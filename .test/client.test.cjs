@@ -20,8 +20,8 @@ const serverHas = async (coll, id) => (await pull()).items.find((x) => x.coll ==
   await new Promise((r) => srv.stdout.on("data", (d) => String(d).includes("up") && r()));
   const b = await chromium.launch();
   const errs = [];
-  const newDevice = async () => {
-    const ctx = await b.newContext({ viewport: { width: 1100, height: 850 } }); const pg = await ctx.newPage();
+  const newDevice = async (opts = {}) => {
+    const ctx = await b.newContext({ viewport: { width: 1100, height: 850 }, ...opts }); const pg = await ctx.newPage();
     pg.on("pageerror", (e) => errs.push(e.message));
     await pg.goto("http://localhost:8800/");
     await pg.evaluate(() => { SYNC.code = "secret-code"; saveSync(); });
