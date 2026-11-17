@@ -1014,8 +1014,9 @@ function openSpark(id){
 
 /* ---- Claude: hand a spark to the owner's thought-inbox skill ----
    "Inbox it" / "Spar on it" open a new Claude chat with the message prefilled (not sent). The text leaves Spark only
-   inside that link, and only on a tap. claude:// opens the Claude app; if Spark is still on screen ~1.5 s later
-   (no app), claude.ai opens instead, or a one-tap link is offered when the browser blocks the new tab. */
+   inside that link, and only on a tap. On a computer it opens claude.ai straight away (the owner uses the web app there).
+   On a phone claude:// opens the Claude app; if Spark is still on screen ~1.5 s later (no app), claude.ai opens
+   instead, or a one-tap link is offered when the browser blocks the new tab. */
 const CLAUDE_PREFIX={inbox:'Inbox this: ',spar:'Spar with me on this: '},CLAUDE_MAX=10000;
 function claudeMessage(s,kind){
   const body=[(s.title||'').trim(),(s.text||'').trim()].filter(Boolean).join('\n');
@@ -1027,7 +1028,12 @@ let claudeNav=u=>{location.href=u}; // swapped out by the tests
 let CLAUDE_BUSY=false;
 function openClaude(msg){
   if(CLAUDE_BUSY)return;CLAUDE_BUSY=true; // a double tap opens one chat, not two
-  const {app,web}=claudeLinks(msg);let gone=false;
+  const {app,web}=claudeLinks(msg);
+  // computers: straight to claude.ai in a new tab (the owner's work laptop can't run the Claude app)
+  if(!TOUCH){let w=null;try{w=window.open(web,'_blank')}catch(e){}
+    if(w){try{w.opener=null}catch(e){}}else claudeFallbackBar(web);
+    setTimeout(()=>{CLAUDE_BUSY=false},800);return}
+  let gone=false;
   const away=()=>{gone=true},vis=()=>{if(document.hidden)gone=true};
   window.addEventListener('blur',away);window.addEventListener('pagehide',away);document.addEventListener('visibilitychange',vis);
   try{claudeNav(app)}catch(e){}

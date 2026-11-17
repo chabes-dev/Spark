@@ -392,11 +392,12 @@ module.exports.claude_review_fixes = async ({ newDevice, ok }) => {
   ok("review: an emoji at the 10,000 cut is dropped whole, and the link still builds", cut.length === 9999 && !/[\uD800-\uDBFF]$/.test(cut) && (() => { try { encodeURIComponent(cut); return true; } catch (e) { return false; } })());
   await pg.click('.spark[data-id="e1"] [data-claude="inbox"]'); await pg.click('.spark[data-id="e1"] [data-claude="inbox"]');
   await pg.waitForTimeout(1700);
-  ok("review: a double tap opens one chat, not two", (await pg.evaluate(() => window.__nav.length + "/" + window.__opened.length)) === "1/1");
+  ok("review: a double click opens one chat, not two", (await pg.evaluate(() => window.__nav.length + "/" + window.__opened.length)) === "0/1");
+  ok("computer: goes straight to claude.ai, no claude:// attempt", (await pg.evaluate(() => window.__opened[0])).startsWith("https://claude.ai/new?q=Inbox%20this%3A%20yyy"));
   await pg.click('.spark[data-id="t1"] .t'); await pg.waitForSelector(".sheet #sdtitle");
   await pg.fill("#sdtitle", "New title");
   await pg.click('.sheet [data-claude="spar"]');
-  ok("review: edits in the open spark are saved before Claude opens", (await pg.evaluate(() => S.sparks.find((x) => x.id === "t1").title)) === "New title" && (await pg.evaluate(() => window.__nav[1])).includes("New%20title"));
+  ok("review: edits in the open spark are saved before Claude opens", (await pg.evaluate(() => S.sparks.find((x) => x.id === "t1").title)) === "New title" && (await pg.evaluate(() => window.__opened[1])).includes("New%20title"));
   await pg.waitForTimeout(1700);
   await pg.context().close();
 };

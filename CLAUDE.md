@@ -153,7 +153,8 @@ The app still works fully offline/without the server: local data is the master c
 - Tapping a card opens the spark sheet (`openSpark`): kind, title, full text, links, follow-ups, tags, actions.
 - **Claude hand-off** (owner's `thought-inbox` skill): every card (top-right) and the spark sheet have **Inbox it** /
   **Spar on it** (`claudeBtns`, `wireClaude`). `claudeMessage` = "Inbox this: " | "Spar with me on this: " + title +
-  text, cut at 10,000 chars (never mid-emoji). `openClaude` opens `claude://claude.ai/new?q=` (`claudeNav`); if the page
+  text, cut at 10,000 chars (never mid-emoji). On a computer (`!TOUCH`) `openClaude` opens `https://claude.ai/new?q=` in a
+  new tab straight away (the owner's work laptop can't run the Claude app). On a phone it opens `claude://claude.ai/new?q=` (`claudeNav`); if the page
   wasn't hidden/blurred 1.5 s later it opens `https://claude.ai/new?q=`, or shows a one-tap bar (`claudeFallbackBar`)
   when the tab is blocked (iPhone Safari always blocks it). One attempt at a time (`CLAUDE_BUSY`); the sheet saves its
   edits first. Note text leaves Spark only inside that link, on a tap.
