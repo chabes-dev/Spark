@@ -152,13 +152,19 @@ The app still works fully offline/without the server: local data is the master c
   skipped by Message-ID).
 - Tapping a card opens the spark sheet (`openSpark`): kind, title, full text, links, follow-ups, tags, actions.
 - **Claude hand-off** (owner's `thought-inbox` skill): every card (top-right) and the spark sheet have **Inbox it** /
-  **Spar on it** (`claudeBtns`, `wireClaude`). `claudeMessage` = "Inbox this: " | "Spar with me on this: " + title +
-  text, cut at 10,000 chars (never mid-emoji). On a computer (`!TOUCH`) `openClaude` opens `https://claude.ai/new?q=` in a
-  new tab straight away (the owner's work laptop can't run the Claude app). On a phone it opens `claude://claude.ai/new?q=` (`claudeNav`); if the page
+  **Spar on it** (`claudeBtns`, `wireClaude`). `claudeMessage` = `/anthropic-skills:thought-inbox ` (the skill's slash
+  command, `CLAUDE_SKILL`) + "Inbox this: " | "Spar with me on this: " + title + text, cut at 10,000 chars (never
+  mid-emoji). Both open a chat in the owner's **Strategy Agent teams** project (`CLAUDE_PROJECT`, `claude.ai/project/<id>?q=`;
+  it uses account memory, so the Thursday brief run sees what lands there). Prefill on a project URL isn't documented, so
+  every tap also copies the prompt to the clipboard ("paste it if the box is empty"). On a computer (`!TOUCH`)
+  `openClaude` opens the https link in a new tab straight away (the owner's work laptop can't run the Claude app). On a
+  phone it opens the `claude://` link (`claudeNav`); if the page
   wasn't hidden/blurred 1.5 s later it opens `https://claude.ai/new?q=`, or shows a one-tap bar (`claudeFallbackBar`)
   when the tab is blocked (iPhone Safari always blocks it). One attempt at a time (`CLAUDE_BUSY`); the sheet saves its
   edits first. Note text leaves Spark only inside that link, on a tap.
-- Daily reminder strip (`.nudge`) under the header; × hides it for the day (`S.ui.nudgeHidden` = day key, per device).
+- The daily reminder strip was replaced (owner's choice) by **Jot a spark** in the Desk writing block (`.sbjot`, the
+  same `captureHtml`) and, after any capture is kept, a quiet bottom line "Kept. Inbox it · Spar on it" (`keptOffer`,
+  9 s). AI is only ever an optional next step after writing. (`S.ui.nudgeHidden` may linger in old data; unused.)
 - Capture template: **Use template** (`#captpl`, only while the box is empty) fills `CAP_TEMPLATE` (four prompts);
   never automatic. Enter walks prompt to prompt on a computer; prompts left empty are dropped on keep.
 - "Why does this spark you?": `spark.note`, written on the full writing canvas (review kind `note`, `openNote`; sounds,

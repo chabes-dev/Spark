@@ -128,13 +128,19 @@ input,textarea{font-family:inherit;color:inherit;background:none;border:none;out
 .clfail a{flex:none;font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#fff;background:var(--ember);
   border-radius:999px;padding:11px 16px;text-decoration:none}
 .clfail button{flex:none;border:0;background:none;color:var(--ink-3);font-size:20px;cursor:pointer;min-width:32px;min-height:32px}
-/* the daily reminder strip */
-.nudge{display:flex;align-items:center;gap:10px;margin:14px 0 0;padding:9px 8px 9px 16px;border-radius:12px;background:var(--ember-soft);
-  font-family:var(--serif);font-size:15.5px;color:var(--ink)}
-.nudge span{flex:1}
-.nudge button{flex:none;border:0;background:none;color:var(--ember);font-size:20px;line-height:1;cursor:pointer;min-width:36px;min-height:36px;border-radius:999px}
-.nudge button:hover{background:rgba(255,255,255,.7)}
-@media(max-width:640px){.nudge{font-size:14px;padding:7px 4px 7px 14px;line-height:1.35}}
+/* Desk: jot a spark inside the writing block; after keeping, a quiet offer to hand it to Claude */
+.sbjot{margin-top:18px;padding-top:16px;border-top:1px solid var(--ash-2)}
+.startblock.done .sbjot{border-top-color:rgba(255,255,255,.25)}
+.sbjot .capture{margin-top:8px;padding:2px 14px 10px;box-shadow:none}
+.sbjot .capture textarea{font-size:19px;min-height:44px;padding:10px 0 8px;color:var(--ink)}
+.sbjot .caphint{display:none}
+.sbjot .capbar{gap:6px}.sbjot .capbar>*{font-size:11px}
+.sbjot .capkeep{padding:8px 14px}
+.keptoffer{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:60;display:flex;gap:8px;align-items:center;max-width:calc(100% - 32px);
+  background:var(--surface);border:1.5px solid var(--ash);border-radius:16px;padding:8px 8px 8px 16px;box-shadow:var(--shadow-2);font-size:14px;color:var(--ink)}
+.keptoffer>span{font-family:var(--serif);font-size:15px;white-space:nowrap}
+.keptoffer .cl{margin:0}
+.keptoffer .x{border:0;background:none;color:var(--ink-3);font-size:20px;cursor:pointer;min-width:32px;min-height:32px}
 /* the optional capture template */
 .captpl{font-family:var(--mono);font-size:12.5px;letter-spacing:.04em;color:var(--ember);padding:8px 12px;border-radius:999px;border:1.5px solid var(--ember-2);background:transparent;cursor:pointer}
 .captpl:hover{background:var(--ember-soft)}
@@ -1017,18 +1023,23 @@ function openSpark(id){
    inside that link, and only on a tap. On a computer it opens claude.ai straight away (the owner uses the web app there).
    On a phone claude:// opens the Claude app; if Spark is still on screen ~1.5 s later (no app), claude.ai opens
    instead, or a one-tap link is offered when the browser blocks the new tab. */
-const CLAUDE_PREFIX={inbox:'Inbox this: ',spar:'Spar with me on this: '},CLAUDE_MAX=10000;
+const CLAUDE_SKILL='/anthropic-skills:thought-inbox ';
+const CLAUDE_PREFIX={inbox:CLAUDE_SKILL+'Inbox this: ',spar:CLAUDE_SKILL+'Spar with me on this: '},CLAUDE_MAX=10000;
+// the "Strategy Agent teams" project (it shares account memory, so Thursday's brief run sees what lands there)
+const CLAUDE_PROJECT='01a1e9ff-5a4d-740a-8d74-71ef3403e5cc';
 function claudeMessage(s,kind){
   const body=[(s.title||'').trim(),(s.text||'').trim()].filter(Boolean).join('\n');
   const m=(CLAUDE_PREFIX[kind]+body).slice(0,CLAUDE_MAX);
   return /[\uD800-\uDBFF]$/.test(m)?m.slice(0,-1):m; // never cut an emoji in half
 }
-const claudeLinks=msg=>{const q=encodeURIComponent(msg);return {app:'claude://claude.ai/new?q='+q,web:'https://claude.ai/new?q='+q}};
+const claudeLinks=msg=>{const q=encodeURIComponent(msg),path='claude.ai/project/'+CLAUDE_PROJECT+'?q='+q;return {app:'claude://'+path,web:'https://'+path}};
 let claudeNav=u=>{location.href=u}; // swapped out by the tests
 let CLAUDE_BUSY=false;
 function openClaude(msg){
   if(CLAUDE_BUSY)return;CLAUDE_BUSY=true; // a double tap opens one chat, not two
   const {app,web}=claudeLinks(msg);
+  // a project may open with an empty box: the prompt is on the clipboard too, ready to paste
+  try{navigator.clipboard.writeText(msg).then(()=>toast('copied · paste it if the box is empty'),()=>{})}catch(e){}
   // computers: straight to claude.ai in a new tab (the owner's work laptop can't run the Claude app)
   if(!TOUCH){let w=null;try{w=window.open(web,'_blank')}catch(e){}
     if(w){try{w.opener=null}catch(e){}}else claudeFallbackBar(web);
@@ -1044,6 +1055,15 @@ function openClaude(msg){
     let w=null;try{w=window.open(web,'_blank')}catch(e){}
     if(w){try{w.opener=null}catch(e){}}else claudeFallbackBar(web);
   },1500);
+}
+// after keeping a spark: AI as an optional next step, never the first one
+function keptOffer(id,tags){
+  document.querySelectorAll('.keptoffer').forEach(x=>x.remove());
+  const b=document.createElement('div');b.className='keptoffer';
+  b.innerHTML=`<span>Kept${esc(tags||'')}.</span>${claudeBtns(id)}<button class="x" aria-label="Close">×</button>`;
+  wireClaude(b);b.querySelectorAll('[data-claude]').forEach(x=>x.addEventListener('click',()=>b.remove()));
+  b.querySelector('.x').onclick=()=>b.remove();
+  document.body.appendChild(b);setTimeout(()=>b.remove(),9000);
 }
 function claudeFallbackBar(web){
   document.querySelectorAll('.clfail').forEach(x=>x.remove());
@@ -2633,7 +2653,6 @@ function pageHtml(view){
           <button id="syncbtn">⟳ Sync &amp; email</button><button id="backupbtn">↓ Backup &amp; restore</button>
           <button id="importbtn">✉ Import emails</button><button id="exportbtn">↧ Export morning pages (.txt)</button>
           <button id="motivbtn">✦ Motivators</button></div></div></div>
-    ${S.ui.nudgeHidden===dayKey(Date.now())||view==='project'?'':`<div class="nudge" id="nudge"><span>Got a thought? Inbox it. Got 5 minutes? Spar on one.</span><button id="nudgex" aria-label="Hide for today">×</button></div>`}
     ${!STORE_OK?`<div class="alarm"><b>This copy can't save.</b> Storage is blocked here. Download the file and open it from your own machine.</div>`:''}
     ${S.active&&S.active.paused!=null?`<div class="pausebar"><span>Paused · <b>${esc(S.active.sparkText||'Freewriting')}</b> · ${Math.max(1,Math.round(S.active.paused/60000))} min left</span>
       <button class="btn btn-hot" id="resumebtn">Resume</button><button class="btn" id="pfinishbtn">Finish</button></div>`:''}
@@ -2840,6 +2859,7 @@ function deskHtml(){
         <button class="bigstart" id="startbtn">${done?'Keep <br>going':'Start <br>writing'}</button>
         <div class="sbnote">${done?"Today's pages are done. Next: a creative session":'Morning pages first, then a creative session'}</div>
         <div class="sbrow"><button class="sbbtn" id="deskpages">✎ Today's pages</button><button class="sbbtn" id="tplbtn">▤ From template</button></div>
+        <div class="sbjot"><div class="sbwk">Jot a spark</div>${captureHtml('A thought, an idea, something you saw…',false)}</div>
         <div class="sbwis">
           <div class="sbwk">Your line for today</div>
           ${line?`<div class="sbq">${esc(line.text)}</div><button class="sbedit" id="motivhome">from your motivators · edit</button>`
@@ -3059,7 +3079,6 @@ function wire(){
   if(S.ui.view==='history')wireHistory();
   const mb=document.getElementById('morebtn'),tm=document.getElementById('topmenu');
   if(mb&&tm){mb.onclick=e=>{e.stopPropagation();tm.classList.toggle('on')};tm.onclick=()=>tm.classList.remove('on')}
-  const nx=document.getElementById('nudgex');if(nx)nx.onclick=()=>{S.ui.nudgeHidden=dayKey(Date.now());saveLocal();const n=document.getElementById('nudge');if(n)n.remove()};
   const stg=document.getElementById('synctag');if(stg)stg.onclick=openSync;
   const exb=document.getElementById('exportbtn');if(exb)exb.onclick=()=>{if(S.dumps.length)exportDumps();else toast('no morning pages yet')};
   const mvb=document.getElementById('motivbtn');if(mvb)mvb.onclick=openMotivators;
@@ -3090,7 +3109,7 @@ function wire(){
       setTimeout(()=>{render();const c=document.getElementById('cap');if(c&&!TOUCH)c.focus();
         setTimeout(()=>{S.sparks.forEach(x=>delete x.fresh);save()},650)},240);
       const t=made[0]&&made[0].tags.length?' · '+made[0].tags.map(x=>'#'+x).join(' '):'';
-      toast('kept'+t);
+      if(made[0])setTimeout(()=>keptOffer(made[0].id,t),300);else toast('kept'+t);
     };
     if(kb)kb.onclick=keep;
     // computer: Enter keeps, Shift+Enter is a new line. Phone: Enter is a new line, the Keep button keeps.
