@@ -154,9 +154,9 @@ The app still works fully offline/without the server: local data is the master c
 - **Claude hand-off** (owner's `thought-inbox` skill): every card (top-right) and the spark sheet have **Inbox it** /
   **Spar on it** (`claudeBtns`, `wireClaude`). `claudeMessage` = `/anthropic-skills:thought-inbox ` (the skill's slash
   command, `CLAUDE_SKILL`) + "Inbox this: " | "Spar with me on this: " + title + text, cut at 10,000 chars (never
-  mid-emoji). Both open a chat in the owner's **Strategy Agent teams** project (`CLAUDE_PROJECT`, `claude.ai/project/<id>?q=`;
-  it uses account memory, so the Thursday brief run sees what lands there). Prefill on a project URL isn't documented, so
-  every tap also copies the prompt to the clipboard ("paste it if the box is empty"). On a computer (`!TOUCH`)
+  mid-emoji). They open a **new chat** (`claude.ai/new?q=`): a project link (`claude.ai/project/<id>?q=`, `CLAUDE_PROJECT`
+  = Strategy Agent teams) just kept loading on the owner's laptop, so it's not used. Account memory is shared, so the
+  Thursday brief run still sees inboxed thoughts. Every tap also copies the prompt to the clipboard. On a computer (`!TOUCH`)
   `openClaude` opens the https link in a new tab straight away (the owner's work laptop can't run the Claude app). On a
   phone it opens the `claude://` link (`claudeNav`); if the page
   wasn't hidden/blurred 1.5 s later it opens `https://claude.ai/new?q=`, or shows a one-tap bar (`claudeFallbackBar`)

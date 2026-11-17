@@ -1032,7 +1032,9 @@ function claudeMessage(s,kind){
   const m=(CLAUDE_PREFIX[kind]+body).slice(0,CLAUDE_MAX);
   return /[\uD800-\uDBFF]$/.test(m)?m.slice(0,-1):m; // never cut an emoji in half
 }
-const claudeLinks=msg=>{const q=encodeURIComponent(msg),path='claude.ai/project/'+CLAUDE_PROJECT+'?q='+q;return {app:'claude://'+path,web:'https://'+path}};
+// project links with ?q= hang on the owner's laptop (2026-11-17), so chats open as new chats; CLAUDE_PROJECT is kept
+// for when a project prefill link works. Account memory is shared, so the Thursday run still sees what lands here.
+const claudeLinks=msg=>{const q=encodeURIComponent(msg),path='claude.ai/new?q='+q;return {app:'claude://'+path,web:'https://'+path}};
 let claudeNav=u=>{location.href=u}; // swapped out by the tests
 let CLAUDE_BUSY=false;
 function openClaude(msg){
