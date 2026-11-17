@@ -1023,7 +1023,7 @@ function openSpark(id){
    inside that link, and only on a tap. On a computer it opens claude.ai straight away (the owner uses the web app there).
    On a phone claude:// opens the Claude app; if Spark is still on screen ~1.5 s later (no app), claude.ai opens
    instead, or a one-tap link is offered when the browser blocks the new tab. */
-const CLAUDE_SKILL='/anthropic-skills:thought-inbox ';
+const CLAUDE_SKILL='/thought-inbox '; // what the owner types in Claude to attach the skill
 const CLAUDE_PREFIX={inbox:CLAUDE_SKILL+'Inbox this: ',spar:CLAUDE_SKILL+'Spar with me on this: '},CLAUDE_MAX=10000;
 // the "Strategy Agent teams" project (it shares account memory, so Thursday's brief run sees what lands there)
 const CLAUDE_PROJECT='01a1e9ff-5a4d-740a-8d74-71ef3403e5cc';

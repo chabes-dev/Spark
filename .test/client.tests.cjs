@@ -333,7 +333,7 @@ module.exports.claude_inbox_spar = async ({ newDevice, ok }) => {
   await pg.evaluate(() => { window.__nav = []; window.__opened = []; window.__copied = []; claudeNav = (u) => window.__nav.push(u); window.open = (u) => { window.__opened.push(u); return {}; }; navigator.clipboard.writeText = (x) => { window.__copied.push(x); return Promise.resolve(); }; });
   await pg.click('.spark[data-id="o1"] [data-claude="inbox"]');
   const nav = await pg.evaluate(() => window.__nav[0]);
-  ok("claude: Inbox it opens a new chat with /thought-inbox “Inbox this: ” + title + text", nav === "claude://claude.ai/new?q=" + encodeURIComponent("/anthropic-skills:thought-inbox Inbox this: Shower idea\nLine one of the shower idea\nline two, with ação & 100% sure?"), nav);
+  ok("claude: Inbox it opens a new chat with /thought-inbox “Inbox this: ” + title + text", nav === "claude://claude.ai/new?q=" + encodeURIComponent("/thought-inbox Inbox this: Shower idea\nLine one of the shower idea\nline two, with ação & 100% sure?"), nav);
   ok("claude: line breaks are kept as %0A", nav.includes("%0A") && !nav.includes("\n"));
   ok("claude: the prompt is also copied, in case the box opens empty", (await pg.evaluate(() => window.__copied[0])) === decodeURIComponent(nav.split("?q=")[1]));
   ok("claude: tapping a button doesn't open the spark sheet", !(await pg.$(".sheet")));
@@ -341,7 +341,7 @@ module.exports.claude_inbox_spar = async ({ newDevice, ok }) => {
   ok("claude: no app after 1.5 s → claude.ai with the same text", (await pg.evaluate(() => window.__opened[0])) === nav.replace("claude://", "https://"));
   await pg.click('.spark[data-id="o2"] [data-claude="spar"]');
   const long = await pg.evaluate(() => decodeURIComponent(window.__nav[1].split("?q=")[1]));
-  ok("claude: Spar on it uses “Spar with me on this: ” and cuts at 10,000 characters", long.startsWith("/anthropic-skills:thought-inbox Spar with me on this: xxx") && long.length === 10000, long.length);
+  ok("claude: Spar on it uses “Spar with me on this: ” and cuts at 10,000 characters", long.startsWith("/thought-inbox Spar with me on this: xxx") && long.length === 10000, long.length);
   await pg.waitForTimeout(1700);
   // the app took over (page hidden): no fallback
   await pg.evaluate(() => { window.__opened = []; claudeNav = () => window.dispatchEvent(new Event("blur")); });
@@ -350,13 +350,13 @@ module.exports.claude_inbox_spar = async ({ newDevice, ok }) => {
   // the browser blocks the delayed tab: a one-tap link instead
   await pg.evaluate(() => { claudeNav = () => {}; window.open = () => null; });
   await pg.click('.spark[data-id="o3"] [data-claude="spar"]'); await pg.waitForTimeout(1700);
-  ok("claude: a blocked tab shows a one-tap “Open claude.ai” link", (await pg.getAttribute(".clfail a", "href")).startsWith("https://claude.ai/new?q=%2Fanthropic-skills%3Athought-inbox%20Spar%20with%20me%20on%20this%3A%20an%20old%20spark"));
+  ok("claude: a blocked tab shows a one-tap “Open claude.ai” link", (await pg.getAttribute(".clfail a", "href")).startsWith("https://claude.ai/new?q=%2Fthought-inbox%20Spar%20with%20me%20on%20this%3A%20an%20old%20spark"));
   await pg.click(".clfail button");
   await pg.evaluate(() => { window.open = (u) => { window.__opened.push(u); return {}; }; window.__nav = []; claudeNav = (u) => window.__nav.push(u); });
   await pg.click('.spark[data-id="o1"] .t'); await pg.waitForSelector(".sheet .sdclaude");
   await pg.screenshot({ path: SP + "/claude-sheet-phone.png" });
   await pg.click('.sheet [data-claude="spar"]');
-  ok("claude: the opened spark has both buttons too", (await pg.evaluate(() => window.__nav[0])).startsWith("claude://claude.ai/new?q=%2Fanthropic-skills%3Athought-inbox%20Spar%20with%20me%20on%20this%3A%20Shower%20idea%0ALine%20one"));
+  ok("claude: the opened spark has both buttons too", (await pg.evaluate(() => window.__nav[0])).startsWith("claude://claude.ai/new?q=%2Fthought-inbox%20Spar%20with%20me%20on%20this%3A%20Shower%20idea%0ALine%20one"));
   await pg.waitForTimeout(1700); await pg.evaluate(() => closeSheet());
   const after = await pg.evaluate(() => JSON.stringify(S.sparks.filter((x) => /^o[123]$/.test(x.id)).sort((a, b) => a.id < b.id ? -1 : 1).map((x) => [x.id, x.text.length, x.title || null])));
   ok("claude: nothing about the sparks was changed by tapping", after === JSON.stringify([["o1", 60, "Shower idea"], ["o2", 12000, null], ["o3", 24, null]]), after);
@@ -388,7 +388,7 @@ module.exports.claude_review_fixes = async ({ newDevice, ok }) => {
   await pg.click('.spark[data-id="e1"] [data-claude="inbox"]'); await pg.click('.spark[data-id="e1"] [data-claude="inbox"]');
   await pg.waitForTimeout(1700);
   ok("review: a double click opens one chat, not two", (await pg.evaluate(() => window.__nav.length + "/" + window.__opened.length)) === "0/1");
-  ok("computer: goes straight to claude.ai, no claude:// attempt", (await pg.evaluate(() => window.__opened[0])).startsWith("https://claude.ai/new?q=%2Fanthropic-skills%3Athought-inbox%20Inbox%20this%3A%20yyy"));
+  ok("computer: goes straight to claude.ai, no claude:// attempt", (await pg.evaluate(() => window.__opened[0])).startsWith("https://claude.ai/new?q=%2Fthought-inbox%20Inbox%20this%3A%20yyy"));
   await pg.click('.spark[data-id="t1"] .t'); await pg.waitForSelector(".sheet #sdtitle");
   await pg.fill("#sdtitle", "New title");
   await pg.click('.sheet [data-claude="spar"]');
@@ -407,7 +407,7 @@ module.exports.desk_jot_and_offer = async ({ newDevice, ok }) => {
   ok("desk: then a quiet offer: Kept · Inbox it · Spar on it", (await pg.textContent(".keptoffer")).includes("Kept.") && (await pg.$$(".keptoffer [data-claude]")).length === 2);
   await pg.screenshot({ path: "/tmp/claude-0/-home-user-Spark/4c9f90c7-4736-51ca-9905-9c48800840b5/scratchpad/desk-jot.png" });
   await pg.click('.keptoffer [data-claude="spar"]');
-  ok("desk: tapping it opens the spar prompt for that spark", decodeURIComponent((await pg.evaluate(() => window.__opened[0])).split("?q=")[1]) === "/anthropic-skills:thought-inbox Spar with me on this: Grandmas filming grandkids on 0.5x zoom");
+  ok("desk: tapping it opens the spar prompt for that spark", decodeURIComponent((await pg.evaluate(() => window.__opened[0])).split("?q=")[1]) === "/thought-inbox Spar with me on this: Grandmas filming grandkids on 0.5x zoom");
   ok("desk: the offer goes away once used", !(await pg.$(".keptoffer")));
   await pg.context().close();
 };

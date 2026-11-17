@@ -152,7 +152,7 @@ The app still works fully offline/without the server: local data is the master c
   skipped by Message-ID).
 - Tapping a card opens the spark sheet (`openSpark`): kind, title, full text, links, follow-ups, tags, actions.
 - **Claude hand-off** (owner's `thought-inbox` skill): every card (top-right) and the spark sheet have **Inbox it** /
-  **Spar on it** (`claudeBtns`, `wireClaude`). `claudeMessage` = `/anthropic-skills:thought-inbox ` (the skill's slash
+  **Spar on it** (`claudeBtns`, `wireClaude`). `claudeMessage` = `/thought-inbox ` (the skill's slash
   command, `CLAUDE_SKILL`) + "Inbox this: " | "Spar with me on this: " + title + text, cut at 10,000 chars (never
   mid-emoji). They open a **new chat** (`claude.ai/new?q=`): a project link (`claude.ai/project/<id>?q=`, `CLAUDE_PROJECT`
   = Strategy Agent teams) just kept loading on the owner's laptop, so it's not used. Account memory is shared, so the
