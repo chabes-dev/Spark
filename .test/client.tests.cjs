@@ -411,3 +411,36 @@ module.exports.desk_jot_and_offer = async ({ newDevice, ok }) => {
   ok("desk: the offer goes away once used", !(await pg.$(".keptoffer")));
   await pg.context().close();
 };
+module.exports.desk_find_for_brief = async ({ newDevice, ok }) => {
+  const pg = await newDevice();
+  await pg.setViewportSize({ width: 1360, height: 950 });
+  await pg.evaluate(() => {
+    const now = Date.now();
+    S.sparks = [{ id: "b1", text: "Grandmas filming grandkids on 0.5x zoom", created: now - 86400000 }, { id: "b2", text: "Half Light, a coffee brand name", created: now }];
+    for (let i = 0; i < 7; i++) S.sparks.push({ id: "m" + i, text: "family memories on the phone " + i, created: now - i * 1000 });
+    S.projects = [{ id: "old", name: "Old one", created: now - 20 * 86400000 }];
+    S.sessions = [{ id: "os", sparkText: "x", projectId: "old", minutes: 0, startedAt: now - 15 * 86400000, endedAt: now - 15 * 86400000, actualMs: 0, notes: "two words", completed: true, untimed: true }];
+    SYNC.code = ""; saveSync(); S.ui.view = "desk"; saveLocal(); render();
+  });
+  ok("brief: the Desk has a Find for a brief card between Your writing and Your work", await pg.evaluate(() => { const c = [...document.querySelectorAll(".dleft > .card")].map((x) => x.className); return c.indexOf("card dbrief") === c.indexOf("card dcal") + 1 && c.indexOf("card dwork") === c.indexOf("card dbrief") + 1; }));
+  ok("brief: the button waits for a brief", await pg.isDisabled("#dbgo"));
+  await pg.fill("#dbq", "Mother's Day: grandmas, family memories and the phone");
+  await pg.click("#dbgo"); await pg.waitForSelector(".dbpick");
+  ok("brief: the top 5 matches show right in the card, with why", (await pg.$$(".dbpick")).length === 5 && (await pg.textContent(".dbpick")).includes("mentions"));
+  ok("brief: See all opens the rest", (await pg.textContent("#dball")).includes("See all 8"));
+  await pg.evaluate(() => render());
+  ok("brief: results stay when the Desk redraws", (await pg.$$(".dbpick")).length === 5 && (await pg.inputValue("#dbq")).startsWith("Mother's Day"));
+  const firstId = await pg.getAttribute(".dbpick", "data-open");
+  await pg.click(".dbpick");
+  ok("brief: clicking a match opens that spark", (await pg.textContent(".sheet .sdtext")) === (await pg.evaluate((id) => S.sparks.find((x) => x.id === id).text, firstId)));
+  await pg.evaluate(() => closeSheet());
+  await pg.click("#dball"); await pg.waitForSelector(".sheet .briefpick");
+  ok("brief: See all opens the full list with the brief already in", (await pg.inputValue("#brieftext")).startsWith("Mother's Day") && (await pg.$$(".sheet .briefpick")).length === 8);
+  await pg.evaluate(() => closeSheet());
+  await pg.click("#dbkeep");
+  ok("brief: Keep the brief as a spark", (await pg.evaluate(() => S.sparks[0].kind + "|" + S.sparks[0].text)) === "brief|Mother's Day: grandmas, family memories and the phone");
+  await pg.click("#dbclear");
+  ok("brief: Clear empties the card", (await pg.inputValue("#dbq")) === "" && !(await pg.$(".dbpick")));
+  ok("fix: “2 weeks ago”, not “2 week ago”", (await pg.textContent(".ptab tbody tr td:nth-child(2)")) === "2 weeks ago");
+  await pg.context().close();
+};
