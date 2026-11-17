@@ -53,10 +53,9 @@ The app still works fully offline/without the server: local data is the master c
     and sparks captured (their words, plus an orange **idea dot**). Stats: writing days in a row, pages streak (dumps only,
     `pagesByDay`), best writing streak, days written. Clicking a day (`DESK_DAY`, `deskDayHtml`) lists that day's items.
     The heatmap shows as many weeks as fit (`heatWeeks`: max 26 on phones, 44 on wide screens), so it never scrolls.
-  - **Find for a brief** card between Your writing and Your work (`deskBriefHtml`/`wireDeskBrief`, state `DBRIEF` survives
-    re-renders): one growing box + **✦ Find sparks** (⌘/Ctrl+Enter too); the top 5 matches show in the card with a "why"
-    line; See all N opens the full sheet (`openBrief(q,true)`), Keep the brief as a spark (`keepBrief`), Clear. Same
-    engine as the Sparks tab button (`findForBrief`: `/api/related` when sync + AI are on, else `localRelated`).
+  - **Find for a brief** search bar between Your writing and Your work (`.dbbar`, `deskBriefHtml`/`wireDeskBrief`): owner
+    wants it to be "just a search box". Enter or ✦ Find opens the usual brief sheet with the brief filled in and the
+    search run (`openBrief(q,true)`; same engine as the Sparks tab, `findForBrief`). Nothing is listed on the Desk.
   - Your work: "This week" line (sessions, minutes, all words) + a projects table (last edited, words, this-week bar;
     a "No project" row opens History).
   - Writing block: plain/outlined until today's morning pages exist, then green (`.startblock.done`) with "Pages ✓ ·

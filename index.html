@@ -141,26 +141,12 @@ input,textarea{font-family:inherit;color:inherit;background:none;border:none;out
 .keptoffer>span{font-family:var(--serif);font-size:15px;white-space:nowrap}
 .keptoffer .cl{margin:0}
 .keptoffer .x{border:0;background:none;color:var(--ink-3);font-size:20px;cursor:pointer;min-width:32px;min-height:32px}
-/* Desk: Find for a brief */
-.dbrief .sechead span{font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--ink-3);text-transform:none}
-.dbrow{display:flex;gap:10px;align-items:flex-start}
-.dbrow textarea{flex:1;min-width:0;resize:none;overflow:hidden;font-family:var(--serif);font-size:18px;line-height:1.45;color:var(--ink);
-  background:var(--paper);border:1.5px solid var(--ash);border-radius:14px;padding:11px 16px;min-height:48px;transition:border-color .2s}
-.dbrow textarea:focus{outline:none;border-color:var(--ember);background:var(--surface)}
-.dbrow textarea::placeholder{color:var(--ink-3);font-style:italic}
-.dbrow .btn{flex:none;padding:13px 18px;font-size:12px}
-.dbrow .btn:disabled{opacity:.45;cursor:default}
-.dbres{margin-top:14px;border-top:1px solid var(--ash-2)}
-.dbpick{display:flex;gap:12px;align-items:flex-start;width:100%;text-align:left;padding:12px 6px;border-bottom:1px solid var(--ash-2);background:none;cursor:pointer;color:var(--ink)}
-.dbpick:hover{background:var(--paper)}
-.dbk{margin-top:3px;min-width:64px;text-align:center}
-.dbt{flex:1;min-width:0}
-.dbt b{display:block;font-family:var(--serif);font-size:16.5px;font-weight:500;line-height:1.3}
-.dbt span{display:block;font-size:13.5px;color:var(--ink-2);margin-top:3px;line-height:1.4}
-.dbacts{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
-.dbacts .btn{font-size:11.5px;padding:8px 14px}
-.dbacts .dbclear{margin-left:auto;border-color:transparent;color:var(--ink-3)}
-@media(max-width:640px){.dbrow{flex-direction:column;align-items:stretch}.dbrow textarea{flex:none}.dbrow .btn{width:100%}.dbrief .sechead span{display:none}.dbk{min-width:0}.dbpick{gap:10px}}
+/* Desk: Find for a brief, a search bar like the one on the Sparks tab */
+.dbbar{display:flex;gap:10px;margin-top:22px}
+.dbbar input{flex:1;min-width:0;font-family:var(--sans);font-size:16px;padding:12px 18px;border:1.5px solid var(--ash);border-radius:999px;background:var(--surface);color:var(--ink)}
+.dbbar input:focus{outline:none;border-color:var(--ember)}
+.dbbar input::placeholder{color:var(--ink-3)}
+.dbbar .btn{flex:none;padding:12px 20px;font-size:12px}
 /* the optional capture template */
 .captpl{font-family:var(--mono);font-size:12.5px;letter-spacing:.04em;color:var(--ember);padding:8px 12px;border-radius:999px;border:1.5px solid var(--ember-2);background:transparent;cursor:pointer}
 .captpl:hover{background:var(--ember-soft)}
@@ -1144,36 +1130,16 @@ function openBrief(prev,run){
 }
 const keepBrief=v=>{S.sparks.unshift({id:nid(),text:v,created:Date.now(),explored:false,exploredAt:null,projectId:null,kind:'brief',kindByUser:true,tags:[],thread:[]});save()};
 
-/* ---- Desk: Find for a brief, answered right in the card (top 5; "See all" opens the full sheet) ---- */
-let DBRIEF={q:'',picks:null,busy:false};
+/* ---- Desk: Find for a brief as a plain search bar; Enter opens the brief sheet with the results ---- */
 function deskBriefHtml(){
-  const b=DBRIEF,ai=syncOn()&&SYNC.ai;
-  const res=b.busy?`<div class="briefwait">${ai?'Reading your sparks…':'Looking…'}</div>`
-    :b.picks?(b.picks.length?`<div class="dbres">${b.picks.slice(0,5).map(p=>{const s=S.sparks.find(x=>x.id===p.id);
-        return `<button class="dbpick" data-open="${s.id}"><span class="ktag dbk">${KIND_LABEL[kindOf(s)]}</span><span class="dbt"><b>${esc(sparkTitle(s)||s.text.split('\n')[0].slice(0,90))}</b><span>${esc(p.why)}</span></span></button>`}).join('')}</div>
-      <div class="dbacts">${b.picks.length>5?`<button class="btn" id="dball">See all ${b.picks.length}</button>`:''}<button class="btn" id="dbkeep">Keep the brief as a spark</button><button class="btn dbclear" id="dbclear">Clear</button></div>`
-      :`<div class="briefwait">Nothing in your sparks fits this one yet.</div><div class="dbacts"><button class="btn" id="dbkeep">Keep the brief as a spark</button><button class="btn dbclear" id="dbclear">Clear</button></div>`):'';
-  return `<div class="card dbrief">
-    <div class="sechead"><h2>Find for a brief</h2><span>${ai?'AI reads your whole library':'matches by shared words'}</span></div>
-    <div class="dbrow"><textarea id="dbq" rows="1" placeholder="Paste a brief… Spark finds the sparks that could feed it">${esc(b.q)}</textarea>
-      <button class="btn btn-hot" id="dbgo" ${b.q.trim()?'':'disabled'}>✦ Find sparks</button></div>
-    <div id="dbout">${res}</div></div>`;
+  return `<div class="dbbar"><input id="dbq" type="search" placeholder="Find sparks for a brief…" autocomplete="off" enterkeyhint="search" />
+    <button class="btn" id="dbgo">✦ Find</button></div>`;
 }
 function wireDeskBrief(){
-  const ta=document.getElementById('dbq');if(!ta)return;
-  const go=document.getElementById('dbgo'),out=document.getElementById('dbout');
-  autosize(ta);requestAnimationFrame(()=>autosize(ta)); // again once laid out (phones stack the button under it)
-  ta.addEventListener('input',()=>{DBRIEF.q=ta.value;autosize(ta);go.disabled=!ta.value.trim()});
-  const run=async()=>{const v=ta.value.trim();if(!v||DBRIEF.busy)return;
-    DBRIEF={q:ta.value,picks:null,busy:true};out.innerHTML=`<div class="briefwait">${syncOn()&&SYNC.ai?'Reading your sparks…':'Looking…'}</div>`;
-    const picks=await findForBrief(v);DBRIEF={q:ta.value,picks,busy:false};
-    const card=document.querySelector('.dbrief');if(card){card.outerHTML=deskBriefHtml();wireDeskBrief()}};
-  go.onclick=run;
-  ta.addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)){e.preventDefault();run()}});
-  const card=document.querySelector('.dbrief');wireSparkCards(card);
-  const all=document.getElementById('dball');if(all)all.onclick=()=>openBrief(DBRIEF.q,true);
-  const kp=document.getElementById('dbkeep');if(kp)kp.onclick=()=>{const v=DBRIEF.q.trim();if(!v)return;keepBrief(v);toast('brief kept');render()};
-  const cl=document.getElementById('dbclear');if(cl)cl.onclick=()=>{DBRIEF={q:'',picks:null,busy:false};render()};
+  const q=document.getElementById('dbq');if(!q)return;
+  const run=()=>{const v=q.value.trim();if(!v){q.focus();return}q.value='';openBrief(v,true)};
+  document.getElementById('dbgo').onclick=run;
+  q.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();run()}});
 }
 
 /* ---- import old emails: .mbox / .eml files (Apple Mail, Gmail Takeout) or a .json list ---- */
