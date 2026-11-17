@@ -18,7 +18,10 @@ The app still works fully offline/without the server: local data is the master c
 - **Since 2026-11 Spark runs on Cloudflare** (a Worker named `spark`, like the owner's Daily Ritual app). The Vercel
   account was paused on 2026-10-24 because *other* apps used up the shared free Blob allowance, which took Spark down too.
 - Deploy = commit + push to `main`. The GitHub repo is connected to the Cloudflare Worker (Workers Builds), and every
-  push to `main` goes to production. `wrangler.jsonc` + `worker/index.js`: the Worker serves the repo root as static
+  push to `main` goes to production.
+  **Caution (2026-11-17):** pushes to the cloud session's working branch (`claude/…`) went live too. Until the owner sets
+  Cloudflare → spark → Settings → Builds → Branch control (production = `main`, other branches = preview only), treat
+  any push as a deploy: show previews from local screenshots and push only after the owner approves. `wrangler.jsonc` + `worker/index.js`: the Worker serves the repo root as static
   files (`.assetsignore` keeps server code, tests, docs and config out) and runs `/api/*` through the same `api/`
   handlers via a small req/res adapter, so `api/` stays the one copy of the server logic.
 - Worker secrets (set in the Cloudflare dashboard, never in the repo): `SPARK_SYNC_CODE`, `KV_REST_API_URL`,
