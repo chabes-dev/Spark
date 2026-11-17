@@ -310,3 +310,72 @@ module.exports.desk_history_redesign = async ({ newDevice, ok }) => {
   await shot("desk-phone");
   await pg.context().close();
 };
+module.exports.claude_inbox_spar = async ({ newDevice, ok }) => {
+  const SP = "/tmp/claude-0/-home-user-Spark/4c9f90c7-4736-51ca-9905-9c48800840b5/scratchpad";
+  // an iPhone-sized device; sparks saved in the old shape (no new fields) must still load
+  const pg = await newDevice({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+  await pg.evaluate(() => {
+    const old = JSON.parse(localStorage.getItem("spark_v1"));
+    old.sparks = [
+      { id: "o1", text: "Line one of the shower idea\nline two, with ação & 100% sure?", created: Date.now() - 5000, title: "Shower idea" },
+      { id: "o2", text: "x".repeat(12000), created: Date.now() - 9000 },
+      { id: "o3", text: "an old spark from before", created: 1600000000000, explored: false, projectId: null },
+    ];
+    localStorage.setItem("spark_v1", JSON.stringify(old));
+  });
+  await pg.reload();
+  await pg.evaluate(() => { S.ui.view = "sparks"; S.ui.sparkQ = ""; S.ui.shelf = "all"; S.ui.sparkTag = null; S.ui.sparkProj = null; saveLocal(); render(); });
+  ok("claude: existing sparks still load after the change", (await pg.$$(".spark")).length === 3 && (await pg.textContent('.spark[data-id="o3"]')).includes("an old spark from before"));
+  ok("claude: every card has Inbox it and Spar on it", (await pg.$$('.spark [data-claude="inbox"]')).length === 3 && (await pg.$$('.spark [data-claude="spar"]')).length === 3);
+  const box = await pg.$eval('.spark [data-claude="inbox"]', (b) => b.getBoundingClientRect().height);
+  ok("claude: the buttons are easy to tap on an iPhone (≥ 44 px)", box >= 44, box);
+  // capture what the buttons would open, and stand in for the browser's new tab
+  await pg.evaluate(() => { window.__nav = []; window.__opened = []; claudeNav = (u) => window.__nav.push(u); window.open = (u) => { window.__opened.push(u); return {}; }; });
+  await pg.click('.spark[data-id="o1"] [data-claude="inbox"]');
+  const nav = await pg.evaluate(() => window.__nav[0]);
+  ok("claude: Inbox it opens claude:// with “Inbox this: ” + title + text", nav === "claude://claude.ai/new?q=" + encodeURIComponent("Inbox this: Shower idea\nLine one of the shower idea\nline two, with ação & 100% sure?"), nav);
+  ok("claude: line breaks are kept as %0A", nav.includes("%0A") && !nav.includes("\n"));
+  ok("claude: tapping a button doesn't open the spark sheet", !(await pg.$(".sheet")));
+  await pg.waitForTimeout(1700);
+  ok("claude: no app after 1.5 s → claude.ai with the same text", (await pg.evaluate(() => window.__opened[0])) === nav.replace("claude://claude.ai/", "https://claude.ai/"));
+  await pg.click('.spark[data-id="o2"] [data-claude="spar"]');
+  const long = await pg.evaluate(() => decodeURIComponent(window.__nav[1].split("?q=")[1]));
+  ok("claude: Spar on it uses “Spar with me on this: ” and cuts at 10,000 characters", long.startsWith("Spar with me on this: xxx") && long.length === 10000, long.length);
+  await pg.waitForTimeout(1700);
+  // the app took over (page hidden): no fallback
+  await pg.evaluate(() => { window.__opened = []; claudeNav = () => window.dispatchEvent(new Event("blur")); });
+  await pg.click('.spark[data-id="o3"] [data-claude="inbox"]'); await pg.waitForTimeout(1700);
+  ok("claude: when the app opens, claude.ai is not opened too", (await pg.evaluate(() => window.__opened.length)) === 0);
+  // the browser blocks the delayed tab: a one-tap link instead
+  await pg.evaluate(() => { claudeNav = () => {}; window.open = () => null; });
+  await pg.click('.spark[data-id="o3"] [data-claude="spar"]'); await pg.waitForTimeout(1700);
+  ok("claude: a blocked tab shows a one-tap “Open claude.ai” link", (await pg.getAttribute(".clfail a", "href")).startsWith("https://claude.ai/new?q=Spar%20with%20me%20on%20this%3A%20an%20old%20spark"));
+  await pg.click(".clfail button");
+  await pg.evaluate(() => { window.open = (u) => { window.__opened.push(u); return {}; }; window.__nav = []; claudeNav = (u) => window.__nav.push(u); });
+  await pg.click('.spark[data-id="o1"] .t'); await pg.waitForSelector(".sheet .sdclaude");
+  await pg.screenshot({ path: SP + "/claude-sheet-phone.png" });
+  await pg.click('.sheet [data-claude="spar"]');
+  ok("claude: the opened spark has both buttons too", (await pg.evaluate(() => window.__nav[0])).startsWith("claude://claude.ai/new?q=Spar%20with%20me%20on%20this%3A%20Shower%20idea%0ALine%20one"));
+  await pg.waitForTimeout(1700); await pg.evaluate(() => closeSheet());
+  const after = await pg.evaluate(() => JSON.stringify(S.sparks.filter((x) => /^o[123]$/.test(x.id)).sort((a, b) => a.id < b.id ? -1 : 1).map((x) => [x.id, x.text.length, x.title || null])));
+  ok("claude: nothing about the sparks was changed by tapping", after === JSON.stringify([["o1", 60, "Shower idea"], ["o2", 12000, null], ["o3", 24, null]]), after);
+  // reminder strip: hidden for today, back tomorrow
+  ok("strip: the reminder line shows", (await pg.textContent("#nudge")).includes("Got a thought? Inbox it. Got 5 minutes? Spar on one."));
+  await pg.screenshot({ path: SP + "/claude-cards-phone.png" });
+  await pg.click("#nudgex");
+  await pg.evaluate(() => render());
+  ok("strip: dismissed, it stays away today", !(await pg.$("#nudge")));
+  await pg.evaluate(() => { S.ui.nudgeHidden = dayKey(Date.now() - 86400000); render(); });
+  ok("strip: it comes back the next day", !!(await pg.$("#nudge")));
+  // template: only on request
+  ok("template: the capture box starts empty", (await pg.inputValue("#cap")) === "" && (await pg.isVisible("#captpl")));
+  await pg.click("#captpl");
+  ok("template: Use template fills the four prompts", (await pg.inputValue("#cap")) === "What I saw: \nWhat I think is going on: \nWhat it pushes against: \nWho it's about: ");
+  ok("template: the cursor waits after the first prompt", await pg.evaluate(() => document.getElementById("cap").selectionStart === "What I saw: ".length));
+  ok("template: the button hides while there's text", !(await pg.isVisible("#captpl")));
+  await pg.keyboard.type("a kid filming his grandma");
+  await pg.click("#capkeep"); await pg.waitForTimeout(500);
+  ok("template: kept as one spark, unanswered prompts dropped", (await pg.evaluate(() => S.sparks[0].text)) === "What I saw: a kid filming his grandma");
+  ok("template: never inserted on its own", (await pg.inputValue("#cap")) === "" && (await pg.isVisible("#captpl")));
+  await pg.context().close();
+};
