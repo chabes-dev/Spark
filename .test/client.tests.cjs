@@ -377,5 +377,26 @@ module.exports.claude_inbox_spar = async ({ newDevice, ok }) => {
   await pg.click("#capkeep"); await pg.waitForTimeout(500);
   ok("template: kept as one spark, unanswered prompts dropped", (await pg.evaluate(() => S.sparks[0].text)) === "What I saw: a kid filming his grandma");
   ok("template: never inserted on its own", (await pg.inputValue("#cap")) === "" && (await pg.isVisible("#captpl")));
+  await pg.click("#captpl"); await pg.click("#capkeep"); await pg.waitForTimeout(300);
+  ok("template: keeping only empty prompts keeps nothing and resets the box", (await pg.inputValue("#cap")) === "" && (await pg.isVisible("#captpl")) && (await pg.isDisabled("#capkeep")));
+  await pg.context().close();
+};
+module.exports.claude_review_fixes = async ({ newDevice, ok }) => {
+  const pg = await newDevice();
+  await pg.evaluate(() => {
+    S.sparks = [{ id: "e1", text: "y".repeat(9987) + "😀 tail", created: Date.now() }, { id: "t1", text: "body", created: Date.now(), title: "Old title" }];
+    S.ui.view = "sparks"; S.ui.sparkQ = ""; S.ui.shelf = "all"; S.ui.sparkTag = null; S.ui.sparkProj = null; saveLocal(); render();
+    window.__nav = []; window.__opened = []; claudeNav = (u) => window.__nav.push(u); window.open = (u) => { window.__opened.push(u); return {}; };
+  });
+  const cut = await pg.evaluate(() => claudeMessage(S.sparks.find((x) => x.id === "e1"), "inbox"));
+  ok("review: an emoji at the 10,000 cut is dropped whole, and the link still builds", cut.length === 9999 && !/[\uD800-\uDBFF]$/.test(cut) && (() => { try { encodeURIComponent(cut); return true; } catch (e) { return false; } })());
+  await pg.click('.spark[data-id="e1"] [data-claude="inbox"]'); await pg.click('.spark[data-id="e1"] [data-claude="inbox"]');
+  await pg.waitForTimeout(1700);
+  ok("review: a double tap opens one chat, not two", (await pg.evaluate(() => window.__nav.length + "/" + window.__opened.length)) === "1/1");
+  await pg.click('.spark[data-id="t1"] .t'); await pg.waitForSelector(".sheet #sdtitle");
+  await pg.fill("#sdtitle", "New title");
+  await pg.click('.sheet [data-claude="spar"]');
+  ok("review: edits in the open spark are saved before Claude opens", (await pg.evaluate(() => S.sparks.find((x) => x.id === "t1").title)) === "New title" && (await pg.evaluate(() => window.__nav[1])).includes("New%20title"));
+  await pg.waitForTimeout(1700);
   await pg.context().close();
 };

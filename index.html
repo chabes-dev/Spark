@@ -113,6 +113,7 @@ input,textarea{font-family:inherit;color:inherit;background:none;border:none;out
 .spark{cursor:pointer}
 .spark .skind{position:relative;z-index:1;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin-bottom:6px}
 .spark .skrow{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.spark .skrow .skind{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* Claude: Inbox it / Spar on it (top-right of every card, and in the spark sheet) */
 .cl{position:relative;z-index:2;display:flex;gap:6px;flex:none;margin:-4px -6px 4px 0}
 .clb{font-family:var(--mono);font-size:10.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--ember);
@@ -1002,7 +1003,7 @@ function openSpark(id){
     el.querySelector('#sdwrite').onclick=()=>{keep();closeSheet();writeSpark(id)};
     el.querySelector('#sdedit').onclick=()=>{keep();closeSheet();openReview('spark',id)};
     el.querySelector('#sdnotego').onclick=()=>{keep();openNote(id)};
-    wireFacetChips(el);wireClaude(el);
+    wireFacetChips(el);wireClaude(el,keep); // edits in the sheet are saved before Claude opens
     el.querySelector('#sdproj').onclick=()=>{keep();pickProject(s.projectId,v=>{s.projectId=v},()=>{closeSheet();render();openSpark(id)})};
     el.querySelector('#sdexp').onclick=()=>{keep();closeSheet();toggleExplored(id)};
     el.querySelector('#sddel').onclick=()=>sheetConfirm('Delete this spark?',sparkTitle(s)||s.text.slice(0,140),'Delete',()=>{S.sparks=S.sparks.filter(x=>x.id!==id);save();render()});
@@ -1018,17 +1019,21 @@ function openSpark(id){
 const CLAUDE_PREFIX={inbox:'Inbox this: ',spar:'Spar with me on this: '},CLAUDE_MAX=10000;
 function claudeMessage(s,kind){
   const body=[(s.title||'').trim(),(s.text||'').trim()].filter(Boolean).join('\n');
-  return (CLAUDE_PREFIX[kind]+body).slice(0,CLAUDE_MAX);
+  const m=(CLAUDE_PREFIX[kind]+body).slice(0,CLAUDE_MAX);
+  return /[\uD800-\uDBFF]$/.test(m)?m.slice(0,-1):m; // never cut an emoji in half
 }
 const claudeLinks=msg=>{const q=encodeURIComponent(msg);return {app:'claude://claude.ai/new?q='+q,web:'https://claude.ai/new?q='+q}};
 let claudeNav=u=>{location.href=u}; // swapped out by the tests
+let CLAUDE_BUSY=false;
 function openClaude(msg){
+  if(CLAUDE_BUSY)return;CLAUDE_BUSY=true; // a double tap opens one chat, not two
   const {app,web}=claudeLinks(msg);let gone=false;
   const away=()=>{gone=true},vis=()=>{if(document.hidden)gone=true};
   window.addEventListener('blur',away);window.addEventListener('pagehide',away);document.addEventListener('visibilitychange',vis);
   try{claudeNav(app)}catch(e){}
   setTimeout(()=>{
     window.removeEventListener('blur',away);window.removeEventListener('pagehide',away);document.removeEventListener('visibilitychange',vis);
+    CLAUDE_BUSY=false;
     if(gone||document.hidden)return;
     let w=null;try{w=window.open(web,'_blank')}catch(e){}
     if(w){try{w.opener=null}catch(e){}}else claudeFallbackBar(web);
@@ -1044,8 +1049,8 @@ function claudeFallbackBar(web){
 function claudeBtns(id,big){
   return `<span class="cl"><button class="clb inbox" data-claude="inbox" data-cid="${id}" title="Open Claude with “Inbox this: …”">${big?'→ Inbox it':'Inbox it'}</button><button class="clb spar" data-claude="spar" data-cid="${id}" title="Open Claude with “Spar with me on this: …”">${big?'⚡ Spar on it':'Spar on it'}</button></span>`;
 }
-function wireClaude(root){
-  root.querySelectorAll('[data-claude]').forEach(b=>b.onclick=e=>{e.stopPropagation();
+function wireClaude(root,before){
+  root.querySelectorAll('[data-claude]').forEach(b=>b.onclick=e=>{e.stopPropagation();if(before)before();
     const s=S.sparks.find(x=>x.id===b.dataset.cid);if(s)openClaude(claudeMessage(s,b.dataset.claude))});
 }
 
@@ -3071,7 +3076,7 @@ function wire(){
       autosize(cap);cap.focus();const e=CAP_TEMPLATE[0].length+1;cap.setSelectionRange(e,e)};
     const keep=()=>{
       // prompts left unanswered are dropped
-      const v=cap.value.split('\n').filter(l=>!CAP_TEMPLATE.includes(l.trim())).join('\n').trim();if(!v){cap.value='';CAP_DRAFT='';return}
+      const v=cap.value.split('\n').filter(l=>!CAP_TEMPLATE.includes(l.trim())).join('\n').trim();if(!v){cap.value='';CAP_DRAFT='';autosize(cap);if(kb)kb.disabled=true;if(tb)tb.hidden=false;return}
       const proj=S.ui.view==='project'?S.ui.projectId:CAP_PROJECT;
       const made=addSpark(v,proj);made.forEach(x=>x.fresh=true);
       document.getElementById('capbox').classList.add('flash');

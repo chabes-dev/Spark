@@ -151,6 +151,15 @@ The app still works fully offline/without the server: local data is the master c
   cards. Import emails (⋯ menu; .mbox/.eml/.json, parsed in the browser, replies folded into threads, duplicates
   skipped by Message-ID).
 - Tapping a card opens the spark sheet (`openSpark`): kind, title, full text, links, follow-ups, tags, actions.
+- **Claude hand-off** (owner's `thought-inbox` skill): every card (top-right) and the spark sheet have **Inbox it** /
+  **Spar on it** (`claudeBtns`, `wireClaude`). `claudeMessage` = "Inbox this: " | "Spar with me on this: " + title +
+  text, cut at 10,000 chars (never mid-emoji). `openClaude` opens `claude://claude.ai/new?q=` (`claudeNav`); if the page
+  wasn't hidden/blurred 1.5 s later it opens `https://claude.ai/new?q=`, or shows a one-tap bar (`claudeFallbackBar`)
+  when the tab is blocked (iPhone Safari always blocks it). One attempt at a time (`CLAUDE_BUSY`); the sheet saves its
+  edits first. Note text leaves Spark only inside that link, on a tap.
+- Daily reminder strip (`.nudge`) under the header; × hides it for the day (`S.ui.nudgeHidden` = day key, per device).
+- Capture template: **Use template** (`#captpl`, only while the box is empty) fills `CAP_TEMPLATE` (four prompts);
+  never automatic. Enter walks prompt to prompt on a computer; prompts left empty are dropped on keep.
 - "Why does this spark you?": `spark.note`, written on the full writing canvas (review kind `note`, `openNote`; sounds,
   themes, fade, lock). On close (`afterNote`) #tags in the note become tags and the AI re-reads the spark: classify gets
   the note separately and returns `facets` {tone, brands, categories, products, themes, formats} (`FACETS`), shown in the
