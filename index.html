@@ -397,6 +397,8 @@ mark{background:#F3E2A6;color:inherit;border-radius:3px;padding:0 1px}
 .cbody.tw>*{flex-shrink:0}
 .cbody.tw::before{content:'';flex:none;height:var(--twtop,16px)}
 .cbody.tw::after{content:'';flex:none;height:50vh}
+/* the spacers need a width: Firefox (and Zen) leave zero-width boxes out of the scrollable area, which kept the line from reaching the middle */
+.cbody.tw::before,.cbody.tw::after{align-self:stretch;min-width:1px}
 .cbody.tw .cwrite{min-height:0}
 /* templates (Energy reset): fixed questions, the owner only writes the answers */
 .tplbody{justify-content:flex-start;align-items:stretch}
