@@ -118,8 +118,8 @@ The app still works fully offline/without the server: local data is the master c
   The owner chose **no paid AI**: AI runs on the **free Gemini API** (`GEMINI_API_KEY`, Google AI Studio free tier;
   `askGemini` tries `gemini-flash-lite-latest`, `gemini-flash-latest`, `gemini-2.5-flash-lite` in order, 18 s each;
   a 429 = free quota reached, treated like the daily budget). Claude (`ANTHROPIC_API_KEY`) is only used if no Gemini key.
-  Free-tier prompts may be used by Google: don't route confidential client work through it. CloudMailin is **not set
-  up** (email-in inactive). The owner is not a developer: keep any setup they must do to a few clicks.
+  Free-tier prompts may be used by Google: don't route confidential client work through it. Email-in is **live since
+  2026-11-24** via a Google Apps Script (see `/api/inbound` below); CloudMailin is not used. The owner is not a developer: keep any setup they must do to a few clicks.
 - Storage: Upstash Redis via the Vercel Marketplace (env `UPSTASH_REDIS_REST_URL`/`_TOKEN` or `KV_REST_API_URL`/`_TOKEN`),
   called over REST with `fetch` (`api/_lib.js`). Keys: hash `items` (`<coll>:<id>` → JSON), zset `upd` (server write time,
   used for pulls), hash `msg` (email Message-ID → spark id, for threading), set `tags`.
@@ -132,6 +132,12 @@ The app still works fully offline/without the server: local data is the master c
   (not settings/ui/active/dumpDraft).
 - `POST /api/inbound` (auth: Basic, password = `INBOUND_KEY`, or `?key=INBOUND_KEY`) CloudMailin "JSON (normalized)" webhook: new email → spark (title from subject,
   AI kind/tags); a reply (In-Reply-To/References) → follow-up in `spark.thread`, quoted history stripped.
+  **How mail reaches it:** a Google Apps Script project "Spark email" (script.google.com, owner's Google account; not in
+  this repo) runs `sendSparks` every 5 min: Gmail search `to:marcelogimeneschabes+spark@gmail.com newer_than:2d`, POSTs
+  each new message in that same payload shape with Basic auth (`spark:` + `INBOUND_KEY`), and remembers handled Gmail ids
+  in its Script Properties (`done`, last 400); non-200 is retried next run. `setup()` (re)creates the timer. Worker
+  secrets: `INBOUND_KEY` (must match the script's `SPARK_KEY`; change both together) and `ALLOWED_SENDERS` (the owner's
+  work and Gmail addresses). New sparks reach a device on its next sync pull.
 - `POST /api/classify`, `POST /api/related` (brief mode) call Gemini (structured JSON via `responseJsonSchema`) or, without a
   Gemini key, Claude (`claude-opus-5-5`, structured JSON output, server-side refusal fallback). The spark library is a cached system block.
 - Hardening: wrong sync codes are rate-limited (8/IP/15 min, 200/day), items are validated and `updated` is clamped
